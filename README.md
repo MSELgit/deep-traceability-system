@@ -45,9 +45,30 @@
 - NumPy, scikit-learn（計算エンジン）
 - SQLite（ローカル版）/ PostgreSQL（Web版）
 
+## 必要な環境
+
+- Node.js 18以上
+- Python 3.10以上
+- Docker Desktop（推奨）またはSQLite
+
 ## セットアップ
 
-### ローカル開発環境
+### 方法1: Dockerを使う（推奨）
+
+```bash
+git clone https://github.com/MSELgit/deep-traceability-system.git
+cd deep-traceability-system
+docker-compose -f docker-compose.local.yml up
+```
+
+自動的に以下が起動します:
+- フロントエンド: http://localhost:5173
+- バックエンド: http://localhost:8000
+- SQLiteデータベース（自動生成）
+
+### 方法2: 手動セットアップ
+
+フロントエンドとバックエンドを別々に起動します。
 
 #### フロントエンド
 ```bash
@@ -65,17 +86,29 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-### 実行モード
+## 実行モード
 
-#### ローカルモード（デフォルト）
+### ローカルモード（デフォルト）
 ```bash
+# 方法1（Docker）の場合
+docker-compose -f docker-compose.local.yml up
+
+# 方法2（手動）の場合
 npm run dev
 ```
 
-#### Webモード
+データは端末内のSQLiteに保存されます。
+
+### Webモード
 ```bash
+# 方法1（Docker）の場合
+docker-compose -f docker-compose.web.yml up
+
+# 方法2（手動）の場合
 npm run dev:web
 ```
+
+PostgreSQLを使用し、複数デバイスから共同編集が可能です。
 
 ## プロジェクト構造
 
