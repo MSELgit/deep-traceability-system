@@ -1,0 +1,248 @@
+# backend/app/services/hhi_calculator.py
+
+"""
+HHI（Herfindahl-Hirschman Index）計算サービス
+
+Deep Traceability手法における性能の分解度を評価
+"""
+
+import numpy as np
+from typing import List, Dict
+from sqlalchemy.orm import Session
+from app.models.database import ProjectModel
+from app.schemas.project import HHIResult
+
+
+def calculate_effective_votes(up_votes: float, down_votes: float) -> float:
+    """
+    有効投票数を計算（方向性を考慮）
+    
+    I(a, b) = (a + b) * [1 + H(x)]
+    where H(x) = -x*log2(x) - (1-x)*log2(1-x) (Shannon entropy)
+    
+    Args:
+        up_votes: 上向き（高い方が良い）の票数
+        down_votes: 下向き（低い方が良い）の票数
+    
+    Returns:
+        有効投票数
+    """
+    total = up_votes + down_votes
+    if total == 0:
+        return 0
+    
+    # 完全に偏っている場合
+    if up_votes == 0 or down_votes == 0:
+        return total
+    
+    # Shannon エントロピー計算
+    x = up_votes / total
+    if x == 0 or x == 1:
+        entropy = 0
+    else:
+        entropy = -x * np.log2(x) - (1 - x) * np.log2(1 - x)
+    
+    return total * (1 + entropy)
+
+
+def distribute_votes_to_needs(project: ProjectModel, db: Session) -> Dict[str, float]:
+    """
+    各ステークホルダーの票をニーズに按分
+    
+    Args:
+        project: プロジェクトモデル
+        db: データベースセッション
+    
+    Returns:
+        {need_id: 票数}
+    """
+    need_votes = {}
+    
+    for stakeholder in project.stakeholders:
+        # このステークホルダーが関心を持つニーズを取得
+        related_needs = [
+            rel.need_id for rel in project.stakeholder_need_relations
+            if rel.stakeholder_id == stakeholder.id
+        ]
+        
+        if not related_needs:
+            continue
+        
+        # 票を均等按分
+        votes_per_need = stakeholder.votes / len(related_needs)
+        
+        for need_id in related_needs:
+            need_votes[need_id] = need_votes.get(need_id, 0) + votes_per_need
+    
+    return need_votes
+
+
+def calculate_need_weights_with_direction(
+    project: ProjectModel,
+    need_votes: Dict[str, float]
+) -> Dict[str, float]:
+    """
+    ニーズの重みを計算（方向性と有効投票数を考慮）
+    
+    Args:
+        project: プロジェクトモデル
+        need_votes: 各ニーズの票数
+    
+    Returns:
+        {need_id: 有効投票数}
+    """
+    # 各ニーズについて、性能ごとに上下の票を集計
+    need_direction_votes = {}
+    
+    for need_id, votes in need_votes.items():
+        # このニーズに関連する性能と方向を取得
+        relations = [
+            rel for rel in project.need_performance_relations
+            if rel.need_id == need_id
+        ]
+        
+        # 簡易版: ニーズレベルでは方向を考慮せず、性能レベルで考慮
+        need_direction_votes[need_id] = votes
+    
+    return need_direction_votes
+
+
+def distribute_votes_to_performances(
+    project: ProjectModel,
+    need_votes: Dict[str, float]
+) -> Dict[str, Dict[str, float]]:
+    """
+    ニーズの票を性能に按分（方向性を考慮）
+    
+    Args:
+        project: プロジェクトモデル
+        need_votes: 各ニーズの票数
+    
+    Returns:
+        {performance_id: {'up': 票数, 'down': 票数}}
+    """
+    performance_votes = {}
+    
+    for need_id, votes in need_votes.items():
+        # このニーズが関わる性能を取得
+        related_performances = [
+            (rel.performance_id, rel.direction)
+            for rel in project.need_performance_relations
+            if rel.need_id == need_id
+        ]
+        
+        if not related_performances:
+            continue
+        
+        # 票を均等按分
+        votes_per_performance = votes / len(related_performances)
+        
+        for perf_id, direction in related_performances:
+            if perf_id not in performance_votes:
+                performance_votes[perf_id] = {'up': 0, 'down': 0}
+            
+            performance_votes[perf_id][direction] += votes_per_performance
+    
+    return performance_votes
+
+
+def calculate_hhi_for_performance_group(
+    parent_id: str,
+    project: ProjectModel,
+    performance_weights: Dict[str, float]
+) -> float:
+    """
+    特定の性能グループのHHIを計算
+    
+    Args:
+        parent_id: 親性能のID（Noneの場合はルート）
+        project: プロジェクトモデル
+        performance_weights: 各性能の重み
+    
+    Returns:
+        HHI値（0~1）
+    """
+    # 子性能を取得
+    children = [
+        p for p in project.performances
+        if p.parent_id == parent_id
+    ]
+    
+    if not children:
+        return 0.0
+    
+    # 各子性能の重みを取得
+    weights = [performance_weights.get(child.id, 0) for child in children]
+    total_weight = sum(weights)
+    
+    if total_weight == 0:
+        return 0.0
+    
+    # HHI計算: Σ(w_i / W_total)^2
+    hhi = sum((w / total_weight) ** 2 for w in weights)
+    
+    return hhi
+
+
+def calculate_hhi_for_project(project: ProjectModel, db: Session) -> List[HHIResult]:
+    """
+    プロジェクト全体のHHI分析を実行
+    
+    Args:
+        project: プロジェクトモデル
+        db: データベースセッション
+    
+    Returns:
+        各性能グループのHHI結果
+    """
+    # 1. ステークホルダーの票をニーズに按分
+    need_votes = distribute_votes_to_needs(project, db)
+    
+    # 2. ニーズの票を性能に按分（方向性を考慮）
+    performance_direction_votes = distribute_votes_to_performances(project, need_votes)
+    
+    # 3. 各性能の有効投票数を計算
+    performance_weights = {}
+    for perf_id, votes in performance_direction_votes.items():
+        effective = calculate_effective_votes(votes['up'], votes['down'])
+        performance_weights[perf_id] = effective
+    
+    # 4. 階層構造を持つ性能についてHHIを計算
+    results = []
+    
+    # 親性能を取得（is_leaf=Falseのもの）
+    parent_performances = [p for p in project.performances if not p.is_leaf]
+    
+    for parent in parent_performances:
+        # 子性能の数を取得
+        children = [p for p in project.performances if p.parent_id == parent.id]
+        children_count = len(children)
+        
+        if children_count == 0:
+            continue
+        
+        # HHI計算
+        hhi = calculate_hhi_for_performance_group(parent.id, project, performance_weights)
+        
+        # p²値計算（最も重みの大きい子性能の割合の二乗）
+        child_weights = [performance_weights.get(c.id, 0) for c in children]
+        total_weight = sum(child_weights)
+        
+        if total_weight > 0:
+            max_weight = max(child_weights)
+            p_squared = (max_weight / total_weight) ** 2
+        else:
+            p_squared = 0
+        
+        results.append(HHIResult(
+            performance_id=parent.id,
+            hhi=hhi,
+            p_squared=p_squared,
+            weight=performance_weights.get(parent.id, 0),
+            children_count=children_count
+        ))
+    
+    # HHIの高い順にソート
+    results.sort(key=lambda x: x.hhi, reverse=True)
+    
+    return results

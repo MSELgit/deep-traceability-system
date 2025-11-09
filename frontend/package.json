@@ -1,0 +1,38 @@
+{
+  "name": "deep-traceability-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:web": "cross-env VITE_APP_MODE=web vite",
+    "build": "vue-tsc && vite build",
+    "build:web": "cross-env VITE_APP_MODE=web vue-tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^7.1.0",
+    "@fortawesome/free-solid-svg-icons": "^7.1.0",
+    "@fortawesome/vue-fontawesome": "^3.1.2",
+    "@types/nouislider": "^9.0.10",
+    "axios": "^1.6.2",
+    "chart.js": "^4.5.1",
+    "d3": "^7.8.5",
+    "html2canvas": "^1.4.1",
+    "nouislider": "^15.8.1",
+    "pinia": "^2.1.7",
+    "three": "^0.159.0",
+    "vue": "^3.4.0",
+    "vue-chartjs": "^5.3.2",
+    "vue-router": "^4.2.5",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/d3": "^7.4.3",
+    "@types/three": "^0.159.0",
+    "@vitejs/plugin-vue": "^4.5.0",
+    "cross-env": "^7.0.3",
+    "typescript": "^5.3.2",
+    "vite": "^5.0.4",
+    "vue-tsc": "^1.8.25"
+  }
+}

@@ -1,0 +1,544 @@
+# backend/app/services/mountain_calculator.py
+
+"""
+山の座標計算サービス
+
+設計案をMDS+円錐マッピングで3D空間に配置
+"""
+
+import numpy as np
+from sklearn.manifold import MDS
+from scipy.spatial.distance import pdist, squareform
+from typing import List, Dict
+from sqlalchemy.orm import Session
+import json
+
+from app.models.database import ProjectModel, DesignCaseModel, NeedPerformanceRelationModel
+from app.api.mds import compute_wl_kernel, kernel_to_distance, circular_mds_parallel
+
+def calculate_network_kernel(networks: List[Dict]) -> np.ndarray:
+    """
+    ネットワーク間のカーネル行列を計算
+    
+    Args:
+        networks: 各設計案のネットワーク情報のリスト
+                  [{'nodes': [...], 'edges': [...]}, ...]
+    
+    Returns:
+        カーネル行列 K (n x n)
+    """
+    n = len(networks)
+    K = np.zeros((n, n))
+    
+    print(f"\n=== Network Kernel Calculation ===")
+    print(f"Number of design cases: {n}")
+    
+    for i in range(n):
+        for j in range(i, n):
+            # 簡単なネットワーク類似度: エッジの共通度
+            edges_i = set((e['source_id'], e['target_id']) for e in networks[i]['edges'])
+            edges_j = set((e['source_id'], e['target_id']) for e in networks[j]['edges'])
+            
+            # Jaccard係数
+            intersection = len(edges_i & edges_j)
+            union = len(edges_i | edges_j)
+            similarity = intersection / union if union > 0 else 0.0
+            
+            K[i, j] = similarity
+            K[j, i] = similarity
+            
+            if i != j:
+                print(f"  Design case {i} vs {j}: similarity = {similarity:.4f}")
+    
+    print(f"Kernel matrix:\n{K}")
+    return K
+
+
+def circular_mds_one_iteration(K: np.ndarray, initial_theta: np.ndarray = None) -> np.ndarray:
+    """
+    円環MDS: 1回の反復でθを計算
+    
+    Args:
+        K: カーネル行列 (n x n)
+        initial_theta: 初期角度 (n,)。Noneの場合は等間隔に配置
+    
+    Returns:
+        更新されたθ (n,)
+    """
+    n = K.shape[0]
+    
+    print(f"\n=== Circular MDS (1 iteration) ===")
+    
+    # 初期角度の設定
+    if initial_theta is None:
+        # 等間隔に配置
+        theta = np.linspace(0, 2 * np.pi, n, endpoint=False)
+        print(f"Initial θ (equally spaced): {np.degrees(theta)}")
+    else:
+        theta = initial_theta.copy()
+        print(f"Initial θ (provided): {np.degrees(theta)}")
+    
+    # 1反復: カーネル行列から理想的な内積を計算し、角度を更新
+    # 簡易的な更新: K[i,j] ≈ cos(θ_i - θ_j) を満たすようにθを調整
+    
+    # 中心化カーネル
+    H = np.eye(n) - np.ones((n, n)) / n
+    K_centered = H @ K @ H
+    
+    # 固有値分解
+    eigenvalues, eigenvectors = np.linalg.eigh(K_centered)
+    
+    # 最大固有値に対応する固有ベクトルを使用して角度を決定
+    # 2次元埋め込みの場合、上位2つの固有ベクトルを使用
+    idx = np.argsort(eigenvalues)[::-1]
+    eigenvalues = eigenvalues[idx]
+    eigenvectors = eigenvectors[:, idx]
+    
+    print(f"Top 2 eigenvalues: {eigenvalues[:2]}")
+    
+    # 上位2つの固有ベクトルから2D座標を計算
+    if n > 1:
+        v1 = eigenvectors[:, 0] * np.sqrt(max(0, eigenvalues[0]))
+        v2 = eigenvectors[:, 1] * np.sqrt(max(0, eigenvalues[1]))
+        
+        # 角度を計算
+        theta_updated = np.arctan2(v2, v1)
+        
+        # [0, 2π)の範囲に正規化
+        theta_updated = theta_updated % (2 * np.pi)
+    else:
+        theta_updated = np.array([0.0])
+    
+    print(f"Updated θ (degrees): {np.degrees(theta_updated)}")
+    print(f"Updated θ (radians): {theta_updated}")
+    
+    return theta_updated
+
+
+# HHI calculatorから移植した関数
+def calculate_effective_votes(up_votes: float, down_votes: float) -> float:
+    """
+    有効投票数を計算（方向性を考慮）
+    
+    I(a, b) = (a + b) * [1 + H(x)]
+    where H(x) = -x*log2(x) - (1-x)*log2(1-x) (Shannon entropy)
+    """
+    total = up_votes + down_votes
+    if total == 0:
+        return 0.0
+    
+    x = up_votes / total
+    
+    # Shannon entropy
+    if x == 0 or x == 1:
+        entropy = 0
+    else:
+        entropy = -x * np.log2(x) - (1 - x) * np.log2(1 - x)
+    
+    return total * (1 + entropy)
+
+
+def distribute_votes_to_needs(project: ProjectModel) -> Dict[str, float]:
+    """ステークホルダーの票をニーズに按分"""
+    need_votes = {}
+    
+    for stakeholder in project.stakeholders:
+        related_needs = [r.need_id for r in project.stakeholder_need_relations 
+                        if r.stakeholder_id == stakeholder.id]
+        
+        if len(related_needs) > 0:
+            votes_per_need = stakeholder.votes / len(related_needs)
+            for need_id in related_needs:
+                need_votes[need_id] = need_votes.get(need_id, 0) + votes_per_need
+    
+    return need_votes
+
+
+def distribute_votes_to_performances(project: ProjectModel, need_votes: Dict[str, float]) -> Dict[tuple, Dict[str, float]]:
+    """
+    ニーズの票を性能に按分し、↑↓票を集計
+    
+    Returns:
+        {(performance_id, need_id): {'up': float, 'down': float}}
+    """
+    performance_need_votes = {}
+    
+    for need_id, votes in need_votes.items():
+        related_perfs = [r for r in project.need_performance_relations 
+                        if r.need_id == need_id]
+        
+        if len(related_perfs) > 0:
+            votes_per_perf = votes / len(related_perfs)
+            for rel in related_perfs:
+                perf_id = rel.performance_id
+                key = (perf_id, need_id)
+                
+                if key not in performance_need_votes:
+                    performance_need_votes[key] = {'up': 0.0, 'down': 0.0}
+                
+                if rel.direction == 'up':
+                    performance_need_votes[key]['up'] += votes_per_perf
+                else:
+                    performance_need_votes[key]['down'] += votes_per_perf
+    
+    return performance_need_votes
+
+
+def interpolate_utility_function(points: List[Dict], value: float) -> float:
+    """
+    効用関数を補間して効用値を計算
+    
+    Args:
+        points: [{"x": キャンバス座標, "y": キャンバス座標, "valueX": 性能値, "valueY": 効用値}, ...]
+        value: 実際の性能値
+    
+    Returns:
+        効用値（0~1）
+    """
+    if not points:
+        return 0.5  # デフォルト値
+    
+    # valueXとvalueYを使用（実際の値）
+    actual_points = []
+    for p in points:
+        if 'valueX' in p and 'valueY' in p:
+            actual_points.append({'x': p['valueX'], 'y': p['valueY']})
+        else:
+            # 古いフォーマットの場合はx,yをそのまま使用
+            actual_points.append({'x': p['x'], 'y': p['y']})
+    
+    if not actual_points:
+        return 0.5
+    
+    # x値でソート
+    sorted_points = sorted(actual_points, key=lambda p: p['x'])
+    
+    # 範囲外の処理：効用関数の定義範囲外は0を返す
+    if value < sorted_points[0]['x']:
+        return 0.0
+    if value > sorted_points[-1]['x']:
+        return 0.0
+    
+    # 線形補間
+    for i in range(len(sorted_points) - 1):
+        x1, y1 = sorted_points[i]['x'], sorted_points[i]['y']
+        x2, y2 = sorted_points[i + 1]['x'], sorted_points[i + 1]['y']
+        
+        if x1 <= value <= x2:
+            if x2 == x1:
+                return y1
+            ratio = (value - x1) / (x2 - x1)
+            return y1 + ratio * (y2 - y1)
+    
+    return 0.5
+
+
+def calculate_utility_vector(
+    design_case: DesignCaseModel,
+    project: ProjectModel,
+    performance_need_relations: List
+) -> Dict[tuple, float]:
+    """
+    設計案の効用ベクトルを計算（性能×ニーズのペアごと）
+    
+    Args:
+        design_case: 設計案モデル
+        project: プロジェクトモデル
+        performance_need_relations: 性能-ニーズ関係のリスト
+    
+    Returns:
+        {(performance_id, need_id): utility_value}
+        効用関数未設定または性能値未設定の場合は0.0
+    """
+    performance_values = json.loads(design_case.performance_values_json)
+    utility_vector = {}
+    
+    for rel in performance_need_relations:
+        key = (rel.performance_id, rel.need_id)
+        
+        # 性能値が設定されているか確認
+        perf_value = performance_values.get(rel.performance_id)
+        if perf_value is None:
+            # 性能値未設定 → 部分標高0
+            utility_vector[key] = 0.0
+            continue
+        
+        # 効用関数が設定されているか確認
+        if not rel.utility_function_json:
+            # 効用関数未設定 → 部分標高0
+            utility_vector[key] = 0.0
+            continue
+        
+        # 効用関数で補間
+        utility_func = json.loads(rel.utility_function_json)
+        func_type = utility_func.get('type', 'continuous')
+        
+        if func_type == 'discrete':
+            # 離散値の場合
+            discrete_rows = utility_func.get('discreteRows', [])
+            # labelが一致するものを探す
+            utility = 0.0
+            for row in discrete_rows:
+                if str(row.get('label')) == str(perf_value):
+                    utility = row.get('value', 0.0)
+                    break
+            utility_vector[key] = utility
+        else:
+            # 連続値の場合
+            points = utility_func.get('points', [])
+            utility = interpolate_utility_function(points, perf_value)
+            utility_vector[key] = utility
+    
+    return utility_vector
+
+
+def calculate_elevation(
+    utility_vector: Dict[tuple, float],
+    performance_need_weights: Dict[tuple, float],
+    leaf_performance_ids: set = None
+) -> float:
+    """
+    標高 H を計算
+    
+    H = Σ W_(i,j) * U_j(f_i)  （末端性能のみ）
+    
+    Args:
+        utility_vector: {(performance_id, need_id): utility_value}
+        performance_need_weights: {(performance_id, need_id): weight}
+        leaf_performance_ids: 末端性能のIDセット（指定された場合のみフィルタ）
+    
+    Returns:
+        標高値
+    """
+    H = 0.0
+    for key, utility in utility_vector.items():
+        perf_id, need_id = key
+        # 末端性能のみを対象とする
+        if leaf_performance_ids is None or perf_id in leaf_performance_ids:
+            weight = performance_need_weights.get(key, 0)
+            H += weight * utility
+    
+    return H
+
+
+def calculate_mountain_positions(
+    project: ProjectModel,
+    db: Session,
+    hemisphere_radius: float = 5.0,
+    networks: List[Dict] = None  # ネットワーク情報を追加
+) -> List[Dict]:
+    """
+    全設計案の半球座標を計算
+    
+    標高H_max（全効用関数が1.0の場合）が半球の頂点になるようにスケーリングする。
+    各設計案は半球の表面上に配置される：x² + y² + z² = R²（y ≥ 0）
+    
+    Args:
+        project: プロジェクトモデル
+        db: データベースセッション
+        hemisphere_radius: 半球の半径（デフォルト5.0）
+    
+    Returns:
+        [{'case_id': str, 'x': float, 'y': float, 'z': float, 'H': float, 'utility_vector': dict}, ...]
+    """
+    design_cases = project.design_cases
+
+    if len(design_cases) == 0:
+        return []
+    
+    # 1. 性能×ニーズペアごとの重みを計算
+    need_votes = distribute_votes_to_needs(project)
+    performance_need_votes = distribute_votes_to_performances(project, need_votes)
+    
+    # 効用関数が設定されているペアを確認
+    relations_with_utility = set()
+    for rel in project.need_performance_relations:
+        if rel.utility_function_json:
+            relations_with_utility.add((rel.performance_id, rel.need_id))
+    
+    performance_need_weights = {}
+    for key, votes in performance_need_votes.items():
+        # 効用関数が設定されているペアのみ重みを計算
+        if key in relations_with_utility:
+            weight = votes['up'] + votes['down']
+            performance_need_weights[key] = weight
+    
+    # 性能-ニーズ関係のリストを取得
+    need_perf_relations = project.need_performance_relations
+    
+    # 末端性能のIDセットを取得（実際の子の存在に基づいて再計算）
+    performance_ids = {p.id for p in project.performances}
+    leaf_performance_ids = set()
+    for perf in project.performances:
+        # この性能を親として持つ子が存在するか確認
+        has_children = any(p.parent_id == perf.id for p in project.performances)
+        if not has_children:
+            leaf_performance_ids.add(perf.id)
+    
+    # H_maxを計算（末端性能×ニーズペアが効用1.0の場合、効用関数が設定されているペアのみ）
+    H_max = sum(
+        weight for key, weight in performance_need_weights.items()
+        if key[0] in leaf_performance_ids  # key[0]はperformance_id
+    )
+    
+    if H_max == 0:
+        H_max = 1.0  # ゼロ除算回避
+    
+    # 2. 各設計案の効用ベクトルと標高を計算
+    utility_vectors = []
+    elevations = []
+    
+    for case in design_cases:
+        utility_vec = calculate_utility_vector(case, project, need_perf_relations)
+        H = calculate_elevation(utility_vec, performance_need_weights, leaf_performance_ids)
+        
+        utility_vectors.append(utility_vec)
+        elevations.append(H)
+    
+    # 3. 効用ベクトルからMDSで2D座標を計算
+    # ↓ ネットワーク情報がある場合は円環MDSを使用（テスト段階）
+    if networks is not None and len(networks) > 0:
+        
+        # WLカーネル計算（反復1回）
+        print(f"\n[1/3] Computing WL Kernel...")
+        K = compute_wl_kernel(networks, iterations=int(1))
+        print(f"Kernel matrix shape: {K.shape}")
+        print(f"Kernel matrix:\n{K}")
+
+        # カーネル→距離行列変換
+        print(f"\n[2/3] Converting kernel to distance matrix...")
+        distance_matrix = kernel_to_distance(K)
+        print(f"Distance matrix shape: {distance_matrix.shape}")
+        print(f"Distance matrix:\n{distance_matrix}")
+        
+        # 円環MDS（並列版、n_init=500）
+        print(f"\n[3/3] Computing Circular MDS (n_init=500, parallel)...")
+        circular_mds_angles, circular_stress = circular_mds_parallel(
+            distance_matrix,
+            n_init=500,
+            n_workers=None  # 自動でCPU数に応じて設定
+        )
+        
+        print(f"Circular Stress: {circular_stress:.6f}")
+        print(f"\nθ values for each design case:")
+        for i, theta in enumerate(circular_mds_angles):
+            case_name = design_cases[i].name if i < len(design_cases) else f"Case {i}"
+            print(f"  {case_name:30s}: θ = {theta:.4f} rad ({np.degrees(theta):7.2f}°)")
+        
+        mds_angles = circular_mds_angles
+    else:
+        # 既存のMDS処理（効用ベクトルベース）
+        print("\n" + "="*60)
+        print("UTILITY-BASED MDS (Fallback)")
+        print("="*60 + "\n")
+    
+        # 既存のMDS処理（効用ベクトルベース）
+        if len(design_cases) == 1:
+            # 1案のみの場合は原点に配置
+            mds_coords = np.array([[0, 0]])
+            mds_angles = np.array([0])
+        else:
+            # 効用ベクトルを行列に変換
+            # (performance_id, need_id)のキーを統一
+            all_keys = sorted(utility_vectors[0].keys())
+            U_matrix = np.array([
+                [uv.get(key, 0.0) for key in all_keys]
+                for uv in utility_vectors
+            ])
+            
+            # ユークリッド距離行列を計算
+            distances = squareform(pdist(U_matrix, metric='euclidean'))
+            
+            # MDSで2次元に削減
+            mds = MDS(n_components=2, dissimilarity='precomputed', random_state=42)
+            mds_coords = mds.fit_transform(distances)
+            
+            # 4. MDS座標を極座標に変換（第1案を基準に回転）
+            # 第1案を角度0に固定
+            mds_angles = np.arctan2(mds_coords[:, 1], mds_coords[:, 0])
+            mds_angles = mds_angles - mds_angles[0]  # 第1案を0度に
+    
+    # 5. 最高標高の案を正面（角度0）に配置するため回転
+    max_H_index = np.argmax(elevations)
+    rotation_offset = -mds_angles[max_H_index]
+    mds_angles = mds_angles + rotation_offset
+    
+    # 6. 円錐座標に変換（半球の制約に従う）
+    # 半球の半径を設定（H_maxが頂点になるように）
+    hemisphere_radius = 10.0  # 半球の半径
+    
+    positions = []
+    
+    for i, case in enumerate(design_cases):
+        H = elevations[i]
+        theta = mds_angles[i]
+        
+        # 標高をスケーリング（H_max → hemisphere_radius）
+        y = (H / H_max) * hemisphere_radius
+        
+        # 半球の制約：x² + z² = R² - y²
+        # 標高に応じた半径を計算
+        r_squared = hemisphere_radius ** 2 - y ** 2
+        r = np.sqrt(max(0, r_squared))  # 負にならないように
+        
+        x = r * np.cos(theta)
+        z = r * np.sin(theta)
+
+        print(f"\n  {case.name:30s}:")
+        print(f"    H = {H:.4f}, θ = {theta:.4f} rad ({np.degrees(theta):7.2f}°)")
+        print(f"    → (x={x:.4f}, y={y:.4f}, z={z:.4f})")
+        
+        # 部分標高を計算（末端性能ごとに集計）
+        partial_heights = {}
+        performance_total_weights = {}  # 性能ごとの合計票数
+        
+        for key, utility in utility_vectors[i].items():
+            perf_id, need_id = key
+            # 末端性能のみを対象
+            if perf_id in leaf_performance_ids:
+                weight = performance_need_weights.get(key, 0)
+                partial_h = weight * utility
+                
+                if perf_id not in partial_heights:
+                    partial_heights[perf_id] = 0.0
+                    performance_total_weights[perf_id] = 0.0
+                partial_heights[perf_id] += partial_h
+                performance_total_weights[perf_id] += weight
+        
+        positions.append({
+            'case_id': case.id,
+            'x': float(x),
+            'y': float(y),
+            'z': float(z),
+            'H': float(H),
+            'utility_vector': utility_vectors[i],
+            'partial_heights': partial_heights,  # 性能ごとの部分標高
+            'performance_weights': performance_total_weights  # 性能ごとの合計票数
+        })
+    
+    # 7. データベースに座標を保存（オプション）
+    for i, case in enumerate(design_cases):
+        case.mountain_position_json = json.dumps({
+            'x': positions[i]['x'],
+            'y': positions[i]['y'],
+            'z': positions[i]['z'],
+            'H': positions[i]['H']
+        })
+        # utility_vectorはタプルキーをJSON化できないので文字列キーに変換
+        utility_vec_str_keys = {
+            f"{k[0]}_{k[1]}": v for k, v in positions[i]['utility_vector'].items()
+        }
+        case.utility_vector_json = json.dumps(utility_vec_str_keys)
+        
+        # 部分標高も保存
+        case.partial_heights_json = json.dumps(positions[i]['partial_heights'])
+        
+        # 性能ごとの合計票数も保存
+        case.performance_weights_json = json.dumps(positions[i]['performance_weights'])
+    
+    db.commit()
+    
+    return {
+        'positions': positions,
+        'H_max': float(H_max)
+    }
