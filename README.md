@@ -99,4 +99,3 @@ deep-traceability-system/
 ## ライセンス
 
 MIT License
-
