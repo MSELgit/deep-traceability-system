@@ -15,6 +15,16 @@
               {{ currentProject.description }}
             </p>
           </div>
+          <div class="project-actions">
+            <button 
+              class="icon-button" 
+              @click="exportProject"
+              title="プロジェクトをエクスポート"
+            >
+              <FontAwesomeIcon :icon="['fas', 'share-from-square']" />
+              エクスポート
+            </button>
+          </div>
         </div>
 
         <!-- タブナビゲーション -->
@@ -72,6 +82,8 @@ import { ref, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectStore } from '../stores/projectStore'
 import { storeToRefs } from 'pinia'
+import { projectApi } from '../utils/api'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import StakeholderMatrix from '../components/stakeholder/StakeholderMatrix.vue'
 import PerformanceManagement from '../components/performance/PerformanceManagement.vue'
 import NeedPerformanceMatrix from '../components/matrix/NeedPerformanceMatrix.vue'
@@ -106,6 +118,27 @@ function handleTabChange(tabKey: string) {
         }
       }, 200); // 200msに増やして確実にレンダリング完了を待つ
     });
+  }
+}
+
+// プロジェクトをエクスポート
+async function exportProject() {
+  if (!currentProject.value) return
+  
+  try {
+    const response = await projectApi.export(currentProject.value.id)
+    const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `project_${currentProject.value.id}_${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('プロジェクトのエクスポートに失敗:', error)
+    alert('プロジェクトのエクスポートに失敗しました')
   }
 }
 
@@ -179,5 +212,31 @@ onMounted(async () => {
   text-align: center;
   padding: 40px;
   color: #e74c3c;
+}
+
+.project-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.icon-button {
+  padding: 10px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.icon-button:hover {
+  background: #5a67d8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 </style>

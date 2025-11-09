@@ -1015,6 +1015,303 @@ def update_design_case_color(
     return {"message": "Color updated successfully", "color": db_design_case.color}
 
 
+# ========== エクスポート/インポート機能 ==========
+
+@router.get("/{project_id}/export")
+def export_project(
+    project_id: str,
+    db: Session = Depends(get_db)
+):
+    """プロジェクトの全データをエクスポート"""
+    # プロジェクト取得
+    project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # ステークホルダー取得
+    stakeholders = db.query(StakeholderModel).filter(
+        StakeholderModel.project_id == project_id
+    ).all()
+    
+    # ニーズ取得
+    needs = db.query(NeedModel).filter(
+        NeedModel.project_id == project_id
+    ).all()
+    
+    # ステークホルダー・ニーズ関係取得
+    stakeholder_need_relations = db.query(StakeholderNeedRelationModel).filter(
+        StakeholderNeedRelationModel.project_id == project_id
+    ).all()
+    
+    # 性能取得
+    performances = db.query(PerformanceModel).filter(
+        PerformanceModel.project_id == project_id
+    ).all()
+    
+    # ニーズ・性能関係取得
+    need_performance_relations = db.query(NeedPerformanceRelationModel).filter(
+        NeedPerformanceRelationModel.project_id == project_id
+    ).all()
+    
+    # 設計案取得
+    design_cases = db.query(DesignCaseModel).filter(
+        DesignCaseModel.project_id == project_id
+    ).all()
+    
+    # エクスポートデータ構築
+    export_data = {
+        "project": {
+            "id": project.id,
+            "name": project.name,
+            "description": project.description,
+            "created_at": project.created_at.isoformat(),
+            "updated_at": project.updated_at.isoformat()
+        },
+        "stakeholders": [
+            {
+                "id": s.id,
+                "name": s.name,
+                "category": s.category,
+                "votes": s.votes,
+                "description": s.description
+            } for s in stakeholders
+        ],
+        "needs": [
+            {
+                "id": n.id,
+                "name": n.name,
+                "category": n.category,
+                "description": n.description
+            } for n in needs
+        ],
+        "stakeholder_need_relations": [
+            {
+                "stakeholder_id": r.stakeholder_id,
+                "need_id": r.need_id
+            } for r in stakeholder_need_relations
+        ],
+        "performances": [
+            {
+                "id": p.id,
+                "name": p.name,
+                "parent_id": p.parent_id,
+                "level": p.level,
+                "is_leaf": p.is_leaf,
+                "unit": p.unit,
+                "description": p.description,
+                "utility_function_json": p.utility_function_json
+            } for p in performances
+        ],
+        "need_performance_relations": [
+            {
+                "need_id": r.need_id,
+                "performance_id": r.performance_id,
+                "direction": r.direction,
+                "utility_function_json": r.utility_function_json
+            } for r in need_performance_relations
+        ],
+        "design_cases": [
+            {
+                "id": d.id,
+                "name": d.name,
+                "description": d.description,
+                "color": d.color,
+                "performance_values_json": d.performance_values_json,
+                "network_json": d.network_json,
+                "performance_snapshot_json": d.performance_snapshot_json,
+                "mountain_position_json": d.mountain_position_json,
+                "utility_vector_json": d.utility_vector_json,
+                "partial_heights_json": d.partial_heights_json,
+                "performance_weights_json": d.performance_weights_json,
+                "created_at": d.created_at.isoformat(),
+                "updated_at": d.updated_at.isoformat()
+            } for d in design_cases
+        ]
+    }
+    
+    return export_data
+
+
+@router.post("/import")
+def import_project(
+    import_data: dict,
+    db: Session = Depends(get_db)
+):
+    """プロジェクトデータをインポート"""
+    try:
+        # 新しいプロジェクトIDを生成
+        new_project_id = str(uuid.uuid4())
+        
+        # プロジェクト作成
+        project_data = import_data["project"]
+        db_project = ProjectModel(
+            id=new_project_id,
+            name=project_data["name"] + " (imported)",
+            description=project_data.get("description", "")
+        )
+        db.add(db_project)
+        
+        # IDマッピング辞書（旧ID→新ID）
+        stakeholder_id_map = {}
+        need_id_map = {}
+        performance_id_map = {}
+        design_case_id_map = {}
+        
+        # ステークホルダーインポート
+        for stakeholder in import_data.get("stakeholders", []):
+            new_id = str(uuid.uuid4())
+            stakeholder_id_map[stakeholder["id"]] = new_id
+            db_stakeholder = StakeholderModel(
+                id=new_id,
+                project_id=new_project_id,
+                name=stakeholder["name"],
+                category=stakeholder.get("category"),
+                votes=stakeholder.get("votes", 100),
+                description=stakeholder.get("description")
+            )
+            db.add(db_stakeholder)
+        
+        # ニーズインポート
+        for need in import_data.get("needs", []):
+            new_id = str(uuid.uuid4())
+            need_id_map[need["id"]] = new_id
+            db_need = NeedModel(
+                id=new_id,
+                project_id=new_project_id,
+                name=need["name"],
+                category=need.get("category"),
+                description=need.get("description")
+            )
+            db.add(db_need)
+        
+        # ステークホルダー・ニーズ関係インポート
+        for relation in import_data.get("stakeholder_need_relations", []):
+            if relation["stakeholder_id"] in stakeholder_id_map and relation["need_id"] in need_id_map:
+                db_relation = StakeholderNeedRelationModel(
+                    project_id=new_project_id,
+                    stakeholder_id=stakeholder_id_map[relation["stakeholder_id"]],
+                    need_id=need_id_map[relation["need_id"]]
+                )
+                db.add(db_relation)
+        
+        # 性能インポート（親子関係を考慮）
+        performance_parent_map = {}  # 旧ID→旧parent_ID
+        for performance in import_data.get("performances", []):
+            new_id = str(uuid.uuid4())
+            performance_id_map[performance["id"]] = new_id
+            if performance.get("parent_id"):
+                performance_parent_map[performance["id"]] = performance["parent_id"]
+        
+        # 性能を作成
+        for performance in import_data.get("performances", []):
+            new_parent_id = None
+            if performance["id"] in performance_parent_map:
+                old_parent_id = performance_parent_map[performance["id"]]
+                if old_parent_id in performance_id_map:
+                    new_parent_id = performance_id_map[old_parent_id]
+            
+            db_performance = PerformanceModel(
+                id=performance_id_map[performance["id"]],
+                project_id=new_project_id,
+                name=performance["name"],
+                parent_id=new_parent_id,
+                level=performance["level"],
+                is_leaf=performance["is_leaf"],
+                unit=performance.get("unit"),
+                description=performance.get("description"),
+                utility_function_json=performance.get("utility_function_json")
+            )
+            db.add(db_performance)
+        
+        # ニーズ・性能関係インポート
+        for relation in import_data.get("need_performance_relations", []):
+            if relation["need_id"] in need_id_map and relation["performance_id"] in performance_id_map:
+                db_relation = NeedPerformanceRelationModel(
+                    project_id=new_project_id,
+                    need_id=need_id_map[relation["need_id"]],
+                    performance_id=performance_id_map[relation["performance_id"]],
+                    direction=relation["direction"],
+                    utility_function_json=relation.get("utility_function_json")
+                )
+                db.add(db_relation)
+        
+        # 設計案インポート
+        for design_case in import_data.get("design_cases", []):
+            new_id = str(uuid.uuid4())
+            design_case_id_map[design_case["id"]] = new_id
+            
+            # performance_values_jsonのキーを新しいIDに更新
+            if design_case.get("performance_values_json"):
+                old_values = json.loads(design_case["performance_values_json"])
+                new_values = {}
+                for old_perf_id, value in old_values.items():
+                    if old_perf_id in performance_id_map:
+                        new_values[performance_id_map[old_perf_id]] = value
+                performance_values_json = json.dumps(new_values)
+            else:
+                performance_values_json = "{}"
+            
+            # networkのノードIDを更新（性能ノードのみ）
+            if design_case.get("network_json"):
+                old_network = json.loads(design_case["network_json"])
+                new_nodes = []
+                node_id_map = {}
+                
+                for node in old_network.get("nodes", []):
+                    if node.get("layer") == 1 and node.get("performance_id") in performance_id_map:
+                        # 性能ノードの場合はIDを更新
+                        new_node = node.copy()
+                        new_node["performance_id"] = performance_id_map[node["performance_id"]]
+                        new_nodes.append(new_node)
+                        node_id_map[node["id"]] = new_node["id"]
+                    else:
+                        # その他のノードはそのまま
+                        new_nodes.append(node)
+                        node_id_map[node["id"]] = node["id"]
+                
+                # エッジもコピー
+                new_edges = []
+                for edge in old_network.get("edges", []):
+                    if edge["source_id"] in node_id_map and edge["target_id"] in node_id_map:
+                        new_edge = edge.copy()
+                        new_edges.append(new_edge)
+                
+                network_json = json.dumps({"nodes": new_nodes, "edges": new_edges})
+            else:
+                network_json = '{"nodes": [], "edges": []}'
+            
+            db_design_case = DesignCaseModel(
+                id=new_id,
+                project_id=new_project_id,
+                name=design_case["name"],
+                description=design_case.get("description"),
+                color=design_case.get("color", "#3357FF"),
+                performance_values_json=performance_values_json,
+                network_json=network_json,
+                performance_snapshot_json=design_case.get("performance_snapshot_json", "[]"),
+                mountain_position_json=design_case.get("mountain_position_json"),
+                utility_vector_json=design_case.get("utility_vector_json"),
+                partial_heights_json=design_case.get("partial_heights_json"),
+                performance_weights_json=design_case.get("performance_weights_json")
+            )
+            db.add(db_design_case)
+        
+        db.commit()
+        
+        # 作成したプロジェクトを返す
+        return {
+            "id": db_project.id,
+            "name": db_project.name,
+            "description": db_project.description,
+            "created_at": db_project.created_at.isoformat(),
+            "updated_at": db_project.updated_at.isoformat()
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Import failed: {str(e)}")
+
+
 # ========== ヘルパー関数 ==========
 
 def format_design_case_response(db_design_case: DesignCaseModel) -> DesignCase:

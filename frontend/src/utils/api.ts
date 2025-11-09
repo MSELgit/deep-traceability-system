@@ -46,14 +46,6 @@ apiClient.interceptors.response.use(
 
 // ========== プロジェクト ==========
 
-export const projectApi = {
-  list: () => apiClient.get<Project[]>('/projects'),
-  get: (id: string) => apiClient.get<Project>(`/projects/${id}`),
-  create: (data: ProjectCreate) => apiClient.post<Project>('/projects', data),
-  update: (id: string, data: ProjectCreate) => apiClient.put<Project>(`/projects/${id}`, data),
-  delete: (id: string) => apiClient.delete(`/projects/${id}`),
-};
-
 // ========== ステークホルダー ==========
 
 export const stakeholderApi = {
@@ -166,6 +158,18 @@ export const calculationApi = {
     }>>(`/calculations/mountain/${projectId}`),
   calculateUtility: (projectId: string, caseId: string) =>
     apiClient.get<{ [key: string]: number }>(`/calculations/utility/${projectId}/${caseId}`),
+};
+
+// ========== エクスポート・インポート ==========
+
+export const projectApi = {
+  list: () => apiClient.get<Project[]>('/projects'),
+  get: (id: string) => apiClient.get<Project>(`/projects/${id}`),
+  create: (data: ProjectCreate) => apiClient.post<Project>('/projects', data),
+  update: (id: string, data: ProjectCreate) => apiClient.put<Project>(`/projects/${id}`, data),
+  delete: (id: string) => apiClient.delete(`/projects/${id}`),
+  export: (id: string) => apiClient.get(`/projects/${id}/export`),
+  import: (data: any) => apiClient.post<Project>('/projects/import', data),
 };
 
 export default apiClient;
