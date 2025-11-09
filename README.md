@@ -53,7 +53,7 @@
 
 ## セットアップ
 
-### 方法1: Dockerを使う（推奨）
+### 方法1: Dockerを使う
 
 ```bash
 git clone https://github.com/MSELgit/deep-traceability-system.git
@@ -119,16 +119,3 @@ deep-traceability-system/
 ├── data/              # ローカルデータ保存先
 └── docs/              # ドキュメント
 ```
-
-## 開発ロードマップ
-
-- [ ] Phase 1: 基礎構築
-- [ ] Phase 2: マトリクス機能
-- [ ] Phase 3: 効用関数
-- [ ] Phase 4: 設計案管理
-- [ ] Phase 5: 山の可視化
-- [ ] Phase 6: 統合・最適化
-
-## ライセンス
-
-MIT License
