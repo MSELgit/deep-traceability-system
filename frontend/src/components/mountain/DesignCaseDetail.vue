@@ -13,14 +13,6 @@
             <div class="stat-label">標高</div>
             <div class="stat-value">{{ designCase.mountain_position.H.toFixed(2) }}</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-label">X座標</div>
-            <div class="stat-value small">{{ designCase.mountain_position.x.toFixed(2) }}</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Z座標</div>
-            <div class="stat-value small">{{ designCase.mountain_position.z.toFixed(2) }}</div>
-          </div>
         </div>
       </section>
 
@@ -28,9 +20,13 @@
 
       <!-- 基本情報 -->
       <section class="detail-section">
-        <h3>基本情報</h3>
+        <h3 @click="toggleSection('basicInfo')" class="section-header">
+          <FontAwesomeIcon :icon="['fas', sectionStates.basicInfo ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
+          基本情報
+        </h3>
         
-        <div class="info-row">
+        <div v-show="sectionStates.basicInfo" class="section-content">
+          <div class="info-row">
           <span class="info-label">名前</span>
           <span class="info-value">{{ designCase.name }}</span>
         </div>
@@ -41,19 +37,8 @@
             <div 
               class="color-box" 
               :style="{ background: designCase.color }"
-              @click="showColorPicker = !showColorPicker"
             ></div>
             <span class="color-text">{{ designCase.color }}</span>
-            
-            <!-- カラーピッカー -->
-            <div v-if="showColorPicker" class="color-picker-popup">
-              <input
-                type="color"
-                :value="designCase.color"
-                @input="handleColorChange"
-                class="color-picker-input"
-              />
-            </div>
           </div>
         </div>
 
@@ -67,9 +52,10 @@
           <span class="info-value">{{ formatDateTime(designCase.updated_at) }}</span>
         </div>
 
-        <div v-if="designCase.description" class="info-row vertical">
-          <span class="info-label">説明</span>
-          <p class="description-text">{{ designCase.description }}</p>
+          <div v-if="designCase.description" class="info-row vertical">
+            <span class="info-label">説明</span>
+            <p class="description-text">{{ designCase.description }}</p>
+          </div>
         </div>
       </section>
 
@@ -77,9 +63,13 @@
 
       <!-- 性能値 -->
       <section class="detail-section">
-        <h3>性能値</h3>
+        <h3 @click="toggleSection('performance')" class="section-header">
+          <FontAwesomeIcon :icon="['fas', sectionStates.performance ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
+          性能値
+        </h3>
         
-        <div class="performance-list">
+        <div v-show="sectionStates.performance" class="section-content">
+          <div class="performance-list">
           <div
             v-for="perf in performancesWithValues"
             :key="perf.id"
@@ -92,8 +82,9 @@
             <div class="perf-value">{{ formatValue(designCase.performance_values[perf.id]) }}</div>
           </div>
 
-          <div v-if="performancesWithValues.length === 0" class="empty-state">
-            性能値がありません
+            <div v-if="performancesWithValues.length === 0" class="empty-state">
+              性能値がありません
+            </div>
           </div>
         </div>
       </section>
@@ -102,12 +93,18 @@
 
       <!-- 平均効用 -->
       <section class="detail-section">
-        <h3>平均効用（性能ごと）</h3>  
-        <div v-if="!designCase.partial_heights || !designCase.performance_weights" class="empty-state">
+        <h3 @click="toggleSection('utility')" class="section-header">
+          <FontAwesomeIcon :icon="['fas', sectionStates.utility ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
+          平均効用（性能ごと）
+        </h3>
+        
+        <div v-show="sectionStates.utility" class="section-content">
+          <div v-if="!designCase.partial_heights || !designCase.performance_weights" class="empty-state">
           平均効用を計算するには、再計算ボタン（<FontAwesomeIcon :icon="['fas', 'rotate-right']" />）をクリックしてください
-        </div>
-        <div v-else class="radar-chart-container">
-          <Radar :data="radarChartData" :options="radarChartOptions" />
+          </div>
+          <div v-else class="radar-chart-container">
+            <Radar :data="radarChartData" :options="radarChartOptions" />
+          </div>
         </div>
       </section>
 
@@ -115,9 +112,13 @@
 
       <!-- 残り標高（改善余地） -->
       <section v-if="remainingHeights.length > 0" class="detail-section">
-        <h3>残り標高（改善余地が大きい順）</h3>
+        <h3 @click="toggleSection('remaining')" class="section-header">
+          <FontAwesomeIcon :icon="['fas', sectionStates.remaining ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
+          残り標高（改善余地が大きい順）
+        </h3>
         
-        <div class="remaining-heights-list">
+        <div v-show="sectionStates.remaining" class="section-content">
+          <div class="remaining-heights-list">
           <div 
             v-for="item in remainingHeights" 
             :key="item.perfId"
@@ -131,6 +132,7 @@
               </span>
             </div>
           </div>
+          </div>
         </div>
       </section>
 
@@ -138,20 +140,25 @@
 
       <!-- ネットワーク構造 -->
       <section class="detail-section">
-  <h3><FontAwesomeIcon :icon="['fas', 'hexagon-nodes']" /> ネットワーク構造</h3>
-        <div class="network-viewer-wrapper">
+        <h3 @click="toggleSection('network')" class="section-header">
+          <FontAwesomeIcon :icon="['fas', sectionStates.network ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
+          <FontAwesomeIcon :icon="['fas', 'hexagon-nodes']" /> 
+          ネットワーク構造
+        </h3>
+        
+        <div v-show="sectionStates.network" class="section-content">
+          <div class="network-viewer-wrapper">
 
           <NetworkViewer 
             v-if="designCase.network.nodes.length > 0"
             :network="designCase.network"
             :performances="performances"
           />
-          <div v-else class="empty-state">
-            ネットワークが未定義です
+            <div v-else class="empty-state">
+              ネットワークが未定義です
+            </div>
           </div>
         </div>
-
-        <!-- ネットワーク情報 -->
       </section>
     </div>
   </div>
@@ -161,6 +168,7 @@
 import { ref, computed } from 'vue';
 import type { DesignCase, Performance } from '../../types/project';
 import NetworkViewer from '../network/NetworkViewer.vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { Radar } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -240,10 +248,21 @@ const emit = defineEmits<{
   edit: [designCase: DesignCase];
   copy: [designCase: DesignCase];
   delete: [designCase: DesignCase];
-  'color-change': [designCase: DesignCase, color: string];
 }>();
 
-const showColorPicker = ref(false);
+// セクションの開閉状態
+const sectionStates = ref({
+  basicInfo: true,
+  performance: true,
+  utility: true,
+  remaining: true,
+  network: true
+});
+
+// セクションの開閉切り替え
+function toggleSection(section: keyof typeof sectionStates.value) {
+  sectionStates.value[section] = !sectionStates.value[section];
+}
 
 // 値を持つ性能のみ
 const performancesWithValues = computed(() => {
@@ -410,11 +429,6 @@ const remainingHeights = computed(() => {
   return results.sort((a, b) => b.remaining - a.remaining);
 });
 
-function handleColorChange(event: Event) {
-  const input = event.target as HTMLInputElement;
-  emit('color-change', props.designCase, input.value);
-  showColorPicker.value = false;
-}
 </script>
 
 <style scoped>
@@ -473,6 +487,42 @@ function handleColorChange(event: Event) {
   color: #333;
 }
 
+/* セクションヘッダー */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s;
+  margin: 0 0 16px 0 !important;
+}
+
+.section-header:hover {
+  color: #667eea;
+}
+
+.toggle-icon {
+  font-size: 12px;
+  color: #999;
+  transition: transform 0.2s;
+}
+
+.section-content {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .divider {
   height: 1px;
   background: #e0e0e0;
@@ -518,11 +568,6 @@ function handleColorChange(event: Event) {
   font-size: 32px;
   font-weight: 700;
 
-}
-
-.stat-value.small {
-  font-size: 20px;
-  color: black;
 }
 
 /* 基本情報 */
@@ -571,13 +616,6 @@ function handleColorChange(event: Event) {
   height: 32px;
   border-radius: 6px;
   border: 2px solid #e0e0e0;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.color-box:hover {
-  border-color: #999;
-  transform: scale(1.1);
 }
 
 .color-text {
@@ -586,24 +624,6 @@ function handleColorChange(event: Event) {
   color: #666;
 }
 
-.color-picker-popup {
-  position: absolute;
-  top: 40px;
-  right: 0;
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 10;
-}
-
-.color-picker-input {
-  width: 120px;
-  height: 120px;
-  border: none;
-  cursor: pointer;
-}
 
 /* 性能値 */
 .performance-list {
@@ -819,6 +839,5 @@ function handleColorChange(event: Event) {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 16px;
 }
 </style>
