@@ -11,6 +11,12 @@
         <h3>基本情報</h3>
         
         <div class="section-content">
+          <!-- 構造不一致警告 -->
+          <div v-if="isStructureMismatch" class="structure-warning">
+            <FontAwesomeIcon :icon="['fas', 'triangle-exclamation']" />
+            <span>この設計案の性能ツリー構造は最新のものと異なります</span>
+          </div>
+          
           <div class="info-row">
             <span class="info-label">標高</span>
             <span class="info-value">{{ designCase.mountain_position ? designCase.mountain_position.H.toFixed(2) : '-' }}</span>
@@ -100,11 +106,11 @@
 
       <div class="divider"></div>
 
-      <!-- 残り標高（改善余地） -->
+      <!-- 性能分析（残り標高＋エネルギー） -->
       <section v-if="remainingHeights.length > 0" class="detail-section">
         <h3 @click="toggleSection('remaining')" class="section-header">
           <FontAwesomeIcon :icon="['fas', sectionStates.remaining ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
-          残り標高
+          性能分析
         </h3>
         
         <div v-show="sectionStates.remaining" class="section-content">
@@ -114,48 +120,20 @@
             :key="item.perfId"
             class="remaining-height-item"
           >
-            <div class="remaining-height-name">{{ item.perfName }}</div>
+            <div class="remaining-height-header">
+              <span class="remaining-height-name">{{ item.perfName }}</span>
+              <span class="performance-importance">重要度: {{ getPerformanceImportance(item.perfId).toFixed(1) }}</span>
+            </div>
             <div class="remaining-height-values">
               <span class="remaining-value">残り: {{ item.remaining.toFixed(2) }}</span>
               <span class="detail-values">
                 (実際: {{ item.actual.toFixed(2) }} / 最大: {{ item.hMax.toFixed(2) }})
               </span>
+              <span v-if="energyData && energyData.partial_energies[item.perfId]" class="energy-value">
+                エネルギー: {{ energyData.partial_energies[item.perfId].toFixed(3) }}
+              </span>
             </div>
           </div>
-          </div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- エネルギー分析 -->
-      <section v-if="energyData" class="detail-section">
-        <h3 @click="toggleSection('energy')" class="section-header">
-          <FontAwesomeIcon :icon="['fas', sectionStates.energy ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
-          エネルギー分析
-        </h3>
-        
-        <div v-show="sectionStates.energy" class="section-content">
-          <div class="energy-overview">
-            <div class="energy-total">
-              <span class="label">総合エネルギー</span>
-              <span class="value">{{ energyData.total_energy.toFixed(3) }}</span>
-            </div>
-          </div>
-          
-          <div class="partial-energies-list">
-            <h4>部分エネルギー（性能ごと）</h4>
-            <div 
-              v-for="(energy, perfId) in energyData.partial_energies" 
-              :key="perfId"
-              class="partial-energy-item"
-            >
-              <div class="energy-info">
-                <div class="energy-name">{{ getPerformanceName(perfId) }}</div>
-                <div class="energy-importance">重要度: {{ getPerformanceImportance(perfId).toFixed(1) }}</div>
-              </div>
-              <div class="energy-value">{{ energy.toFixed(3) }}</div>
-            </div>
           </div>
         </div>
       </section>
@@ -218,7 +196,7 @@ ChartJS.register(
 // 基準線を描画するカスタムプラグイン（n角形）
 const referenceLinePlugin = {
   id: 'customLines',
-  afterDatasetsDraw(chart: any, args: any, options: any) {
+  afterDatasetsDraw(chart: any, _args: any, options: any) {
     const { ctx, scales } = chart;
     const { r } = scales;
     
@@ -277,6 +255,34 @@ const emit = defineEmits<{
 
 const projectStore = useProjectStore();
 
+// 構造不一致チェック
+const isStructureMismatch = computed(() => {
+  if (!props.designCase.performance_snapshot) return false;
+  
+  const currentPerformances = projectStore.currentProject?.performances || [];
+  
+  // スナップショットと現在の性能数が違えば不一致
+  if (props.designCase.performance_snapshot.length !== currentPerformances.length) return true;
+  
+  // 各性能の詳細を比較
+  const snapshotMap = new Map(props.designCase.performance_snapshot.map(p => [p.id, p]));
+  
+  for (const currentPerf of currentPerformances) {
+    const snapshotPerf = snapshotMap.get(currentPerf.id);
+    if (!snapshotPerf) return true;  // IDが見つからない
+    
+    // 主要な属性を比較
+    if (snapshotPerf.name !== currentPerf.name ||
+        snapshotPerf.parent_id !== currentPerf.parent_id ||
+        snapshotPerf.level !== currentPerf.level ||
+        snapshotPerf.unit !== currentPerf.unit) {
+      return true;
+    }
+  }
+  
+  return false;
+});
+
 // エネルギーデータ
 const energyData = ref<{
   total_energy: number;
@@ -289,7 +295,6 @@ const sectionStates = ref({
   performance: true,
   utility: true,
   remaining: true,
-  energy: true,
   network: true
 });
 
@@ -298,11 +303,15 @@ function toggleSection(section: keyof typeof sectionStates.value) {
   sectionStates.value[section] = !sectionStates.value[section];
 }
 
-// 値を持つ性能のみ
+// 値を持つ性能のみ（スナップショットから取得）
 const performancesWithValues = computed(() => {
-  return props.performances.filter(perf => 
-    props.designCase.performance_values[perf.id] !== undefined
-  );
+  // スナップショットがある場合はそれを使用、なければ現在の性能ツリーを使用（後方互換性）
+  const performances = props.designCase.performance_snapshot || props.performances;
+  
+  // 末端性能のみ抽出して、値を持つものだけフィルタ
+  return performances
+    .filter(perf => perf.is_leaf)
+    .filter(perf => props.designCase.performance_values[perf.id] !== undefined);
 });
 
 // レーダーチャートのデータ
@@ -313,9 +322,6 @@ const radarChartData = computed(() => {
 
   const labels = performancesWithValues.value.map(perf => perf.name);
   const data = performancesWithValues.value.map(perf => getAverageUtilityForPerf(perf.id));
-  
-  // 0.5未満の性能を検出
-  const belowThreshold = data.map(value => value < 0.5);
 
   return {
     labels,
@@ -326,12 +332,12 @@ const radarChartData = computed(() => {
         backgroundColor: 'rgba(51, 87, 255, 0.2)',
         borderColor: 'rgba(51, 87, 255, 1)',
         borderWidth: 2,
-        pointBackgroundColor: data.map((value, index) => 
+        pointBackgroundColor: data.map((value) => 
           value < 0.5 ? 'rgba(255, 68, 68, 1)' : 'rgba(51, 87, 255, 1)'
         ),
         pointBorderColor: '#fff',
         pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: data.map((value, index) => 
+        pointHoverBorderColor: data.map((value) => 
           value < 0.5 ? 'rgba(255, 68, 68, 1)' : 'rgba(51, 87, 255, 1)'
         ),
         pointRadius: 5
@@ -403,30 +409,6 @@ function formatValue(value: number | string): string {
   return Number(value).toFixed(2);
 }
 
-// 性能ごとの平均効用値を計算（全ニーズの平均）
-function getAverageUtility(perfId: string): number {
-  if (!props.designCase.utility_vector) return 0;
-  
-  const utilities: number[] = [];
-  Object.entries(props.designCase.utility_vector).forEach(([key, value]) => {
-    const [pid] = key.split('_');
-    if (pid === perfId) {
-      utilities.push(value as number);
-    }
-  });
-  
-  if (utilities.length === 0) return 0;
-  return utilities.reduce((sum, u) => sum + u, 0) / utilities.length;
-}
-
-// 部分標高の比率を計算（最大標高に対する割合）
-function getPartialHeightRatio(perfId: string): number {
-  if (!props.designCase.partial_heights || !props.designCase.mountain_position) return 0;
-  const H = props.designCase.mountain_position.H;
-  if (H === 0) return 0;
-  const partialH = props.designCase.partial_heights[perfId] || 0;
-  return partialH / H;
-}
 
 // 平均効用を計算（部分標高 / 合計票数）
 function getAverageUtilityForPerf(perfId: string): number {
@@ -481,9 +463,17 @@ async function fetchEnergyData() {
   }
 }
 
-// 性能名を取得
+// 性能名を取得（スナップショットから優先的に取得）
 function getPerformanceName(perfId: string | number): string {
   const perfIdStr = String(perfId);
+  
+  // まずスナップショットから探す
+  if (props.designCase.performance_snapshot) {
+    const snapPerf = props.designCase.performance_snapshot.find(p => p.id === perfIdStr);
+    if (snapPerf) return snapPerf.name;
+  }
+  
+  // スナップショットにない場合は現在の性能ツリーから（後方互換性）
   const perf = props.performances.find(p => p.id === perfIdStr);
   return perf ? perf.name : perfIdStr;
 }
@@ -795,23 +785,33 @@ onMounted(() => {
 .remaining-height-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
   padding: 12px;
   background: #f8f9fa;
   border-radius: 8px;
   border-left: 4px solid #667eea;
 }
 
+.remaining-height-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .remaining-height-name {
   font-weight: 600;
   color: #333;
-  font-size: 14px;
+  font-size: 15px;
+}
+
+.performance-importance {
+  color: #666;
+  font-size: 12px;
 }
 
 .remaining-height-values {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 12px;
   font-size: 13px;
 }
 
@@ -823,7 +823,14 @@ onMounted(() => {
 
 .detail-values {
   color: #666;
-  font-size: 12px;
+  font-size: 14px;
+}
+
+.energy-value {
+  color: #667eea;
+  font-weight: 700;
+  font-size: 14px;
+  margin-left: auto;
 }
 
 .utility-item {
@@ -944,32 +951,6 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* エネルギー分析 */
-.energy-overview {
-  margin-bottom: 24px;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.energy-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.energy-total .label {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-}
-
-.energy-total .value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #667eea;
-}
-
 .partial-energies-list h4 {
   margin: 0 0 12px 0;
   font-size: 14px;
@@ -988,27 +969,22 @@ onMounted(() => {
   border-left: 3px solid #667eea;
 }
 
-.energy-info {
+/* 構造不一致警告 */
+.structure-warning {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.energy-name {
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  margin: -4px -4px 16px -4px;
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
-  color: #333;
 }
 
-.energy-importance {
-  font-size: 12px;
-  color: #666;
+.structure-warning svg {
+  flex-shrink: 0;
+  color: #f39c12;
 }
-
-.energy-value {
-  font-size: 16px;
-  font-weight: 600;
-  color: #667eea;
-}
-
 </style>

@@ -944,9 +944,12 @@ def copy_design_case(
     
     # 現在の性能ツリーからスナップショットを作成
     current_performances = project.performances
-    current_snapshot = []
     
-    for perf in current_performances:
+    # ソート済みの性能リスト
+    sorted_performances = sort_performances_by_tree(current_performances)
+    
+    current_snapshot = []
+    for perf in sorted_performances:
         # この性能が末端かどうかを判定（子がいなければ末端）
         is_leaf = not any(p.parent_id == perf.id for p in current_performances)
         
@@ -961,6 +964,121 @@ def copy_design_case(
             'order': getattr(perf, 'order', 0)
         })
     
+    # 性能値のマッピング
+    new_performance_values = {}
+    if original.performance_values_json:
+        original_values = json.loads(original.performance_values_json)
+        
+        # 元のスナップショットがある場合は、それを使ってマッピング
+        if original.performance_snapshot_json:
+            original_snapshot = json.loads(original.performance_snapshot_json)
+            
+            # 元のスナップショットと現在の性能ツリーでマッチングを行う
+            for current_perf in current_performances:
+                # この性能が末端かどうかを判定
+                current_is_leaf = not any(p.parent_id == current_perf.id for p in current_performances)
+                if not current_is_leaf:  # 末端性能のみ対象
+                    continue
+                    
+                # 同じ条件の性能を元のスナップショットから探す
+                for orig_perf in original_snapshot:
+                    if (orig_perf.get('name') == current_perf.name and 
+                        orig_perf.get('parent_id') == current_perf.parent_id and
+                        orig_perf.get('unit') == current_perf.unit and
+                        orig_perf.get('level') == current_perf.level and
+                        orig_perf.get('is_leaf', False)):
+                        # マッチした場合、値をコピー
+                        orig_id = orig_perf.get('id')
+                        if orig_id in original_values:
+                            new_performance_values[current_perf.id] = original_values[orig_id]
+                        break
+        else:
+            # スナップショットがない場合は、IDが一致するものをそのままコピー（後方互換性）
+            new_performance_values = original_values
+    
+    # ネットワークの更新
+    updated_network = {'nodes': [], 'edges': []}
+    
+    if original.network_json:
+        original_network = json.loads(original.network_json)
+        
+        # 現在の性能IDのセット
+        current_perf_ids = {perf.id for perf in current_performances}
+        
+        # ノードの処理
+        node_id_mapping = {}  # 古いノードID -> 新しいノードIDのマッピング
+        
+        # 末端性能のIDセットを作成
+        leaf_perf_ids = {perf.id for perf in current_performances 
+                         if not any(p.parent_id == perf.id for p in current_performances)}
+        
+        for node in original_network.get('nodes', []):
+            if node.get('type') == 'performance' or node.get('layer') == 1:
+                # 性能ノードの場合
+                perf_id = node.get('performance_id')
+                
+                # 性能が現在も存在し、かつ末端性能である場合のみ保持
+                if perf_id in current_perf_ids and perf_id in leaf_perf_ids:
+                    updated_network['nodes'].append(node)
+                    node_id_mapping[node['id']] = node['id']
+                # else: 性能が削除されているか、末端でなくなった場合はノードも削除
+            else:
+                # 性能以外のノード（プロパティ、ニーズ）はそのまま保持
+                updated_network['nodes'].append(node)
+                node_id_mapping[node['id']] = node['id']
+        
+        # レイヤー1のノードを収集して並び替え
+        layer1_nodes = [n for n in updated_network['nodes'] if n.get('layer') == 1]
+        layer1_nodes.sort(key=lambda n: n.get('x', 0))  # X座標でソート
+        
+        # 新規追加された性能のノードを作成（末端性能のみ）
+        existing_perf_ids = {node.get('performance_id') for node in original_network.get('nodes', []) 
+                            if node.get('type') == 'performance' or node.get('layer') == 1}
+        
+        new_nodes_to_add = []
+        for perf in current_performances:
+            # 末端性能かどうかチェック
+            is_leaf = not any(p.parent_id == perf.id for p in current_performances)
+            
+            if is_leaf and perf.id not in existing_perf_ids:
+                # 新しい末端性能なのでノードを追加
+                new_node = {
+                    'id': str(uuid.uuid4()),
+                    'layer': 1,
+                    'type': 'performance',
+                    'label': perf.name,
+                    'x': 0,  # 後で計算
+                    'y': 100,  # レイヤー1の固定Y座標
+                    'performance_id': perf.id
+                }
+                new_nodes_to_add.append(new_node)
+        
+        # 新しいノードを追加
+        updated_network['nodes'].extend(new_nodes_to_add)
+        
+        # レイヤー1の全ノードを再配置（均等配置）
+        all_layer1_nodes = [n for n in updated_network['nodes'] if n.get('layer') == 1]
+        if all_layer1_nodes:
+            # 名前でソート（性能の自然な順序を保つ）
+            all_layer1_nodes.sort(key=lambda n: n.get('label', ''))
+            
+            # 均等配置（キャンバス幅=1200）
+            canvas_width = 1200
+            spacing = canvas_width / (len(all_layer1_nodes) + 1)
+            
+            for i, node in enumerate(all_layer1_nodes):
+                node['x'] = spacing * (i + 1)
+                node['y'] = 100  # 確実に100に設定
+        
+        # エッジの処理（両端のノードが存在する場合のみ保持）
+        for edge in original_network.get('edges', []):
+            source_exists = edge['source_id'] in node_id_mapping
+            target_exists = edge['target_id'] in node_id_mapping
+            
+            if source_exists and target_exists:
+                updated_network['edges'].append(edge)
+            # else: どちらかのノードが削除されている場合はエッジも削除
+    
     # 新しい設計案を作成
     db_copy = DesignCaseModel(
         id=str(uuid.uuid4()),
@@ -968,8 +1086,8 @@ def copy_design_case(
         name=f"{original.name}のコピー",
         description=original.description,
         color=new_color,
-        performance_values_json=original.performance_values_json,  # そのままコピー
-        network_json=original.network_json,  # そのままコピー
+        performance_values_json=json.dumps(new_performance_values),  # マッピングした値
+        network_json=json.dumps(updated_network),  # 更新されたネットワーク
         performance_snapshot_json=json.dumps(current_snapshot),  # 現在の性能ツリーをスナップショット
         # mountain_position_jsonとutility_vector_jsonはnull（後で再計算）
     )
@@ -1376,6 +1494,33 @@ def format_design_case_response(db_design_case: DesignCaseModel) -> DesignCase:
         performance_weights=performance_weights,
         performance_snapshot=performance_snapshot  # 追加！
     )
+
+
+def sort_performances_by_tree(performances):
+    """深さ優先探索でツリー構造順にソート"""
+    # 親子関係のマップを作成
+    children_map = {}
+    for perf in performances:
+        parent_id = perf.parent_id
+        if parent_id not in children_map:
+            children_map[parent_id] = []
+        children_map[parent_id].append(perf)
+    
+    # 各グループを名前順にソート
+    for children in children_map.values():
+        children.sort(key=lambda p: p.name)
+    
+    # 深さ優先探索で順序を構築
+    result = []
+    
+    def traverse(parent_id):
+        children = children_map.get(parent_id, [])
+        for child in children:
+            result.append(child)
+            traverse(child.id)
+    
+    traverse(None)  # ルートから開始
+    return result
 
 
 def get_next_available_color(existing_colors: List[str]) -> str:

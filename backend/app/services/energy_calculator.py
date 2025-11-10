@@ -266,7 +266,14 @@ def calculate_energy_for_project(project: ProjectModel, db: Session) -> List[Dic
     results = []
     
     for design_case in project.design_cases:
-        energy_result = calculate_energy_for_case(design_case, project.performances, db)
+        # 設計案のスナップショットがある場合はそれを使用
+        if design_case.performance_snapshot:
+            from app.schemas.project import Performance
+            case_performances = [Performance(**perf_data) for perf_data in design_case.performance_snapshot]
+            energy_result = calculate_energy_for_case(design_case, case_performances, db)
+        else:
+            # スナップショットがない場合は現在の性能ツリーを使用
+            energy_result = calculate_energy_for_case(design_case, project.performances, db)
         
         results.append({
             "case_id": design_case.id,

@@ -69,7 +69,7 @@
             />
             <button 
               class="import-button" 
-              @click="$refs.fileInput.click()"
+              @click="fileInput?.click()"
             >
               <FontAwesomeIcon :icon="['fas', 'file-import']" />
               ファイルを選択

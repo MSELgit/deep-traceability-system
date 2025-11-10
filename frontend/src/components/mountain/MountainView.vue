@@ -91,62 +91,6 @@
         </button>
         <span v-if="recalculateMessage" class="recalculate-message">{{ recalculateMessage }}</span>
       </div>
-      
-      <!-- デバッグ情報: 性能ごとの部分標高最大値 
-      <div v-if="Object.keys(performance_h_max).length > 0" class="performance-h-max-debug">
-        <h4>性能ごとの部分標高最大値 (H_max)</h4>
-        <div class="performance-h-max-list">
-          <div 
-            v-for="(value, perfId) in performance_h_max" 
-            :key="perfId"
-            class="performance-h-max-item"
-          >
-            <span class="perf-name">{{ getPerformanceName(String(perfId)) }}</span>
-            <span class="perf-h-max">{{ value.toFixed(2) }}</span>
-          </div>
-        </div>
-      </div>
-      -->
-      
-      <!-- デバッグ用: 設計案の座標一覧 -->
-      <!-- <div class="debug-coordinates">
-        <h4>設計案の座標 (デバッグ)</h4>
-        <div v-if="H_max !== null" class="h-max-info">
-          頂点標高 H_max: {{ H_max.toFixed(2) }}
-        </div>
-        <div v-if="designCases.length === 0" class="no-cases">
-          設計案がありません
-        </div>
-        <div v-else class="case-list">
-          <div 
-            v-for="designCase in designCases" 
-            :key="designCase.id"
-            class="case-item"
-            :class="{ 'no-position': !designCase.mountain_position }"
-            @click="selectCaseFromDebug(designCase)"
-          >
-            <div class="case-name">
-              <span class="color-dot" :style="{ background: designCase.color }"></span>
-              {{ designCase.name }}
-            </div>
-            <div v-if="designCase.mountain_position" class="coordinates">
-              x: {{ designCase.mountain_position.x.toFixed(2) }}, 
-              y: {{ designCase.mountain_position.y.toFixed(2) }}, 
-              z: {{ designCase.mountain_position.z.toFixed(2) }}, 
-              H: {{ designCase.mountain_position.H.toFixed(2) }}
-            </div>
-            <div v-if="designCase.performance_values" class="performance-values">
-              性能値: {{ formatPerformanceValues(designCase) }}
-            </div>
-            <div v-if="designCase.utility_vector" class="partial-heights">
-              部分標高: {{ formatPartialHeights(designCase) }}
-            </div>
-            <div v-else class="coordinates">
-              座標未計算
-            </div>
-          </div>
-        </div>
-      </div> -->
     </div>
 
     <!-- 右パネル -->
@@ -226,6 +170,39 @@ const casePoints = new Map<string, THREE.Mesh>();
 // 設計案一覧
 const designCases = computed(() => {
   const cases = currentProject.value?.design_cases || [];
+  
+  // デバッグ: 現在の性能ツリーと各設計案のスナップショットを表示
+  console.log('=== 性能ツリーとスナップショット比較 ===');
+  
+  // 現在の性能ツリー
+  const currentPerfs = currentProject.value?.performances || [];
+  console.log('【現在の性能ツリー】');
+  console.log(`  全性能数: ${currentPerfs.length}`);
+  console.log('  ツリー順（最初の10件）:');
+  const sortedCurrent = sortPerformancesByTree(currentPerfs);
+  sortedCurrent.slice(0, 10).forEach((p, idx) => {
+    console.log(`    ${idx + 1}. ${p.name} (ID: ${p.id}, is_leaf: ${p.is_leaf}, level: ${p.level})`);
+  });
+  
+  console.log('\n【各設計案のスナップショット】');
+  cases.forEach(dc => {
+    console.log(`設計案: ${dc.name}`);
+    if (dc.performance_snapshot) {
+      console.log(`  スナップショット件数: ${dc.performance_snapshot.length}`);
+      console.log('  最初の5件:');
+      dc.performance_snapshot.slice(0, 5).forEach((p, idx) => {
+        console.log(`    ${idx + 1}. ${p.name} (ID: ${p.id}, is_leaf: ${p.is_leaf}, level: ${p.level})`);
+      });
+      
+      // 末端性能のみ
+      const leafOnly = dc.performance_snapshot.filter(p => p.is_leaf);
+      console.log(`  末端性能数: ${leafOnly.length}`);
+    } else {
+      console.log('  スナップショット: なし');
+    }
+  });
+  console.log('=============================\n');
+  
   return cases;
 });
 

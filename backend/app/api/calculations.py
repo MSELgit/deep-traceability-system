@@ -124,7 +124,15 @@ def calculate_case_energy(
         raise HTTPException(status_code=404, detail="Design case not found")
     
     try:
-        result = calculate_energy_for_case(design_case, project.performances, db)
+        # 設計案のスナップショットがある場合はそれを使用
+        if design_case.performance_snapshot:
+            from app.schemas.project import Performance
+            case_performances = [Performance(**perf_data) for perf_data in design_case.performance_snapshot]
+            result = calculate_energy_for_case(design_case, case_performances, db)
+        else:
+            # スナップショットがない場合は現在の性能ツリーを使用
+            result = calculate_energy_for_case(design_case, project.performances, db)
+        
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Calculation error: {str(e)}")

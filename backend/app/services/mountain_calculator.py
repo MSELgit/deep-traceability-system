@@ -372,19 +372,18 @@ def calculate_mountain_positions(
     # 性能-ニーズ関係のリストを取得
     need_perf_relations = project.need_performance_relations
     
-    # 末端性能のIDセットを取得（実際の子の存在に基づいて再計算）
-    performance_ids = {p.id for p in project.performances}
-    leaf_performance_ids = set()
+    # 現在の性能ツリーから末端性能を取得（H_max計算用）
+    current_leaf_performance_ids = set()
     for perf in project.performances:
         # この性能を親として持つ子が存在するか確認
         has_children = any(p.parent_id == perf.id for p in project.performances)
         if not has_children:
-            leaf_performance_ids.add(perf.id)
+            current_leaf_performance_ids.add(perf.id)
     
-    # H_maxを計算（末端性能×ニーズペアが効用1.0の場合、効用関数が設定されているペアのみ）
+    # H_maxを計算（最新の性能ツリーの末端性能×ニーズペアが効用1.0の場合）
     H_max = sum(
         weight for key, weight in performance_need_weights.items()
-        if key[0] in leaf_performance_ids  # key[0]はperformance_id
+        if key[0] in current_leaf_performance_ids  # key[0]はperformance_id
     )
     
     if H_max == 0:
@@ -395,8 +394,24 @@ def calculate_mountain_positions(
     elevations = []
     
     for case in design_cases:
+        # 設計案のスナップショットから末端性能を取得
+        if case.performance_snapshot:
+            # スナップショットが存在する場合（すでにリスト形式）
+            case_performances = case.performance_snapshot
+            case_leaf_performance_ids = set()
+            
+            # スナップショット内で末端性能を判定
+            for perf in case_performances:
+                # この性能を親として持つ子が存在するか確認
+                has_children = any(p.get('parent_id') == perf['id'] for p in case_performances)
+                if not has_children:
+                    case_leaf_performance_ids.add(perf['id'])
+        else:
+            # スナップショットがない場合は現在の性能ツリーを使用（後方互換性）
+            case_leaf_performance_ids = current_leaf_performance_ids
+        
         utility_vec = calculate_utility_vector(case, project, need_perf_relations)
-        H = calculate_elevation(utility_vec, performance_need_weights, leaf_performance_ids)
+        H = calculate_elevation(utility_vec, performance_need_weights, case_leaf_performance_ids)
         
         utility_vectors.append(utility_vec)
         elevations.append(H)
@@ -494,24 +509,40 @@ def calculate_mountain_positions(
         print(f"    H = {H:.4f}, θ = {theta:.4f} rad ({np.degrees(theta):7.2f}°)")
         print(f"    → (x={x:.4f}, y={y:.4f}, z={z:.4f})")
         
+        # 設計案のスナップショットから末端性能を取得（部分標高計算用）
+        if case.performance_snapshot:
+            # スナップショットが存在する場合（すでにリスト形式）
+            case_performances = case.performance_snapshot
+            case_leaf_performance_ids = set()
+            
+            # スナップショット内で末端性能を判定
+            for perf in case_performances:
+                # この性能を親として持つ子が存在するか確認
+                has_children = any(p.get('parent_id') == perf['id'] for p in case_performances)
+                if not has_children:
+                    case_leaf_performance_ids.add(perf['id'])
+        else:
+            # スナップショットがない場合は現在の性能ツリーを使用（後方互換性）
+            case_leaf_performance_ids = current_leaf_performance_ids
+        
         # 部分標高を計算（末端性能ごとに集計）
         partial_heights = {}
         performance_total_weights = {}  # 性能ごとの合計票数（全ペアから集計）
         
         # まず全性能の合計票数を計算（効用関数の有無に関わらず）
         for key, weight in performance_need_weights_all.items():
-            perf_id, need_id = key
-            # 末端性能のみを対象
-            if perf_id in leaf_performance_ids:
+            perf_id, _ = key
+            # 設計案のスナップショットの末端性能のみを対象
+            if perf_id in case_leaf_performance_ids:
                 if perf_id not in performance_total_weights:
                     performance_total_weights[perf_id] = 0.0
                 performance_total_weights[perf_id] += weight
         
         # 部分標高を計算（効用関数があるペアのみ）
         for key, utility in utility_vectors[i].items():
-            perf_id, need_id = key
-            # 末端性能のみを対象
-            if perf_id in leaf_performance_ids:
+            perf_id, _ = key
+            # 設計案のスナップショットの末端性能のみを対象
+            if perf_id in case_leaf_performance_ids:
                 weight = performance_need_weights.get(key, 0)  # 効用関数があるペアのみ
                 partial_h = weight * utility
                 
@@ -557,8 +588,16 @@ def calculate_mountain_positions(
         # 性能ごとの合計票数も保存
         case.performance_weights_json = json.dumps(positions[i]['performance_weights'])
         
-        # エネルギーを計算して保存
-        energy_result = calculate_energy_for_case(case, project.performances, db)
+        # エネルギーを計算して保存（スナップショットがある場合はそれを使用）
+        if case.performance_snapshot:
+            # スナップショットの性能リストをPerformanceオブジェクトに変換（すでにリスト形式）
+            from app.schemas.project import Performance
+            case_performances = [Performance(**perf_data) for perf_data in case.performance_snapshot]
+            energy_result = calculate_energy_for_case(case, case_performances, db)
+        else:
+            # スナップショットがない場合は現在の性能ツリーを使用
+            energy_result = calculate_energy_for_case(case, project.performances, db)
+        
         positions[i]['energy'] = {
             'total_energy': energy_result['total_energy'],
             'partial_energies': energy_result['partial_energies']

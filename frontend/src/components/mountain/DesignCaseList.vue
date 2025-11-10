@@ -7,7 +7,7 @@
 
     <!-- 頂点標高表示 -->
     <div v-if="hMax !== null" class="h-max-display">
-      <span class="label">頂点標高 H<sub>max</sub>:</span>
+      <span class="label">頂点標高 H<sub>max</sub></span>
       <span class="value">{{ hMax.toFixed(2) }}</span>
     </div>
 

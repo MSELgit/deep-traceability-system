@@ -12,14 +12,16 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { 
 	faPenToSquare, faTrash, faEye, faCopy, faRotateRight,
 	faHexagonNodes, faExpand, faAlignJustify, faFloppyDisk, faArrowPointer,
-	faFolder, faFolderOpen, faShareFromSquare, faFileImport, faChevronDown, faChevronRight
+	faFolder, faFolderOpen, faShareFromSquare, faFileImport, faChevronDown, faChevronRight,
+	faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons'
 
 // アイコンをライブラリに追加
 library.add(
 	faPenToSquare, faTrash, faEye, faCopy, faRotateRight,
 	faHexagonNodes, faExpand, faAlignJustify, faFloppyDisk, faArrowPointer,
-	faFolder, faFolderOpen, faShareFromSquare, faFileImport, faChevronDown, faChevronRight
+	faFolder, faFolderOpen, faShareFromSquare, faFileImport, faChevronDown, faChevronRight,
+	faTriangleExclamation
 )
 
 const app = createApp(App)

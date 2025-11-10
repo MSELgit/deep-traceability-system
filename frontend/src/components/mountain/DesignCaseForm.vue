@@ -72,7 +72,7 @@
           </div>
 
           <div
-            v-for="perf in performances"
+            v-for="perf in displayPerformances"
             :key="perf.id"
             class="table-row"
           >
@@ -115,7 +115,7 @@
             </div>
           </div>
 
-          <div v-if="performances.length === 0" class="empty-performances">
+          <div v-if="displayPerformances.length === 0" class="empty-performances">
             <p>性能が定義されていません</p>
             <p class="empty-hint">先に「性能管理」タブで性能を作成してください</p>
           </div>
@@ -125,7 +125,7 @@
         <div class="input-status" :class="{ complete: isAllPerformancesFilled }">
           <span v-if="isAllPerformancesFilled" class="status-icon">✓</span>
           <span v-else class="status-icon">⚠️</span>
-          {{ filledCount }} / {{ performances.length }} 入力済み
+          {{ filledCount }} / {{ displayPerformances.length }} 入力済み
         </div>
       </section>
 
@@ -200,7 +200,7 @@ import { isDesignCaseEditable, getPerformanceMismatchMessage } from '../../utils
 
 const props = defineProps<{
   designCase: DesignCase | null;
-  performances: Performance[];
+  performances: Performance[];  // 現在の性能ツリー（新規作成時に使用）
 }>();
 
 const showNetworkEditor = ref(false);
@@ -229,6 +229,50 @@ const projectStore = useProjectStore();
 const { currentProject } = storeToRefs(projectStore);
 
 const isEdit = computed(() => props.designCase !== null);
+
+// ツリー構造の順序で性能をソート（深さ優先探索）
+const sortPerformancesByTree = (performances: any[]): any[] => {
+  if (!performances || performances.length === 0) return [];
+  
+  // 親子関係のマップを作成
+  const childrenMap = new Map<string | null, any[]>();
+  performances.forEach(perf => {
+    const parentId = perf.parent_id || null;
+    if (!childrenMap.has(parentId)) {
+      childrenMap.set(parentId, []);
+    }
+    childrenMap.get(parentId)!.push(perf);
+  });
+  
+  // 各グループを名前順にソート
+  childrenMap.forEach((children) => {
+    children.sort((a, b) => a.name.localeCompare(b.name));
+  });
+  
+  // 深さ優先探索で順序を構築
+  const result: any[] = [];
+  const traverse = (parentId: string | null) => {
+    const children = childrenMap.get(parentId) || [];
+    children.forEach(child => {
+      result.push(child);
+      traverse(child.id);
+    });
+  };
+  
+  traverse(null); // ルートから開始
+  return result;
+};
+
+// 表示する性能リスト（編集時はスナップショット、新規時は現在の末端性能）
+const displayPerformances = computed(() => {
+  if (isEdit.value && props.designCase?.performance_snapshot) {
+    // 編集時: スナップショットから末端性能のみ抽出（スナップショットは既にソート済み）
+    return props.designCase.performance_snapshot.filter(p => p.is_leaf);
+  } else {
+    // 新規作成時: 現在の末端性能を使用（既にソート済み）
+    return props.performances;
+  }
+});
 
 // 性能ツリーの整合性チェック
 const isEditable = computed(() => {
@@ -341,8 +385,8 @@ function initializeForm() {
       network: { nodes: [], edges: [] }
     };
     
-    // 性能値を初期化
-    props.performances.forEach(perf => {
+    // 性能値を初期化（現在の末端性能に対して）
+    displayPerformances.value.forEach(perf => {
       if (isDiscretePerformance(perf.id)) {
         // 離散値の場合は空文字列
         formData.value.performance_values[perf.id] = '';
@@ -370,7 +414,7 @@ const filledCount = computed(() => {
 
 // 全ての性能が入力されているか
 const isAllPerformancesFilled = computed(() => {
-  return filledCount.value === props.performances.length && props.performances.length > 0;
+  return filledCount.value === displayPerformances.value.length && displayPerformances.value.length > 0;
 });
 
 // バリデーション
@@ -402,7 +446,9 @@ function handleSave() {
 
   // 新規作成時のみperformance_snapshotを追加
   if (!isEdit.value) {
-    data.performance_snapshot = currentProject.value?.performances || [];
+    // 全性能をツリー構造順にソートしてからスナップショットとして保存
+    const allPerfs = currentProject.value?.performances || [];
+    data.performance_snapshot = sortPerformancesByTree(allPerfs);
   }
 
   emit('save', data);
