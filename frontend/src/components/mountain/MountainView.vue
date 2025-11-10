@@ -603,7 +603,7 @@ function openCreateForm() {
   leftPanelState.value = 'level2';
 }
 
-function openEditForm(designCase: DesignCase) {  
+function openEditForm(designCase: DesignCase) {
   editingCase.value = designCase;
   leftPanelState.value = 'level2';
 }

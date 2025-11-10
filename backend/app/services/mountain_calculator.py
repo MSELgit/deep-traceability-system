@@ -15,6 +15,7 @@ import json
 
 from app.models.database import ProjectModel, DesignCaseModel, NeedPerformanceRelationModel
 from app.api.mds import compute_wl_kernel, kernel_to_distance, circular_mds_parallel
+from app.services.energy_calculator import calculate_energy_for_case
 
 def calculate_network_kernel(networks: List[Dict]) -> np.ndarray:
     """
@@ -350,17 +351,22 @@ def calculate_mountain_positions(
     need_votes = distribute_votes_to_needs(project)
     performance_need_votes = distribute_votes_to_performances(project, need_votes)
     
-    # 効用関数が設定されているペアを確認
+    # 効用関数が設定されているペアを確認（標高計算用）
     relations_with_utility = set()
     for rel in project.need_performance_relations:
         if rel.utility_function_json:
             relations_with_utility.add((rel.performance_id, rel.need_id))
     
-    performance_need_weights = {}
+    # 全ペアの重みを計算（エネルギー計算用）
+    performance_need_weights_all = {}
     for key, votes in performance_need_votes.items():
-        # 効用関数が設定されているペアのみ重みを計算
+        weight = votes['up'] + votes['down']
+        performance_need_weights_all[key] = weight
+    
+    # 効用関数が設定されているペアの重み（標高計算用）
+    performance_need_weights = {}
+    for key, weight in performance_need_weights_all.items():
         if key in relations_with_utility:
-            weight = votes['up'] + votes['down']
             performance_need_weights[key] = weight
     
     # 性能-ニーズ関係のリストを取得
@@ -490,20 +496,35 @@ def calculate_mountain_positions(
         
         # 部分標高を計算（末端性能ごとに集計）
         partial_heights = {}
-        performance_total_weights = {}  # 性能ごとの合計票数
+        performance_total_weights = {}  # 性能ごとの合計票数（全ペアから集計）
         
+        # まず全性能の合計票数を計算（効用関数の有無に関わらず）
+        for key, weight in performance_need_weights_all.items():
+            perf_id, need_id = key
+            # 末端性能のみを対象
+            if perf_id in leaf_performance_ids:
+                if perf_id not in performance_total_weights:
+                    performance_total_weights[perf_id] = 0.0
+                performance_total_weights[perf_id] += weight
+        
+        # 部分標高を計算（効用関数があるペアのみ）
         for key, utility in utility_vectors[i].items():
             perf_id, need_id = key
             # 末端性能のみを対象
             if perf_id in leaf_performance_ids:
-                weight = performance_need_weights.get(key, 0)
+                weight = performance_need_weights.get(key, 0)  # 効用関数があるペアのみ
                 partial_h = weight * utility
                 
                 if perf_id not in partial_heights:
                     partial_heights[perf_id] = 0.0
-                    performance_total_weights[perf_id] = 0.0
                 partial_heights[perf_id] += partial_h
-                performance_total_weights[perf_id] += weight
+        
+        # デバッグ：性能ごとの重要度を出力
+        print(f"\n    性能ごとの重要度（合計票数）:")
+        for perf_id, weight in performance_total_weights.items():
+            perf = next((p for p in project.performances if p.id == perf_id), None)
+            perf_name = perf.name if perf else perf_id
+            print(f"      {perf_name}: {weight:.1f}")
         
         positions.append({
             'case_id': case.id,
@@ -535,6 +556,13 @@ def calculate_mountain_positions(
         
         # 性能ごとの合計票数も保存
         case.performance_weights_json = json.dumps(positions[i]['performance_weights'])
+        
+        # エネルギーを計算して保存
+        energy_result = calculate_energy_for_case(case, project.performances, db)
+        positions[i]['energy'] = {
+            'total_energy': energy_result['total_energy'],
+            'partial_energies': energy_result['partial_energies']
+        }
     
     db.commit()
     

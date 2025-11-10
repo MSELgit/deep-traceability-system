@@ -1,56 +1,46 @@
 <template>
   <div class="design-case-detail">
     <div class="detail-header">
-      <h2>設計案の詳細</h2>
+      <h2>{{ designCase.name }}の詳細</h2>
       <button class="close-btn" @click="$emit('close')">✕</button>
     </div>
 
     <div class="detail-content">
-      <!-- 山の座標情報 -->
-      <section v-if="designCase.mountain_position" class="detail-section mountain-info">
-        <div class="mountain-stats">
-          <div class="stat-card primary">
-            <div class="stat-label">標高</div>
-            <div class="stat-value">{{ designCase.mountain_position.H.toFixed(2) }}</div>
-          </div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- 基本情報 -->
-      <section class="detail-section">
-        <h3 @click="toggleSection('basicInfo')" class="section-header">
-          <FontAwesomeIcon :icon="['fas', sectionStates.basicInfo ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
-          基本情報
-        </h3>
+      <!-- 基本情報（常に表示） -->
+      <section class="detail-section basic-info-section">
+        <h3>基本情報</h3>
         
-        <div v-show="sectionStates.basicInfo" class="section-content">
+        <div class="section-content">
           <div class="info-row">
-          <span class="info-label">名前</span>
-          <span class="info-value">{{ designCase.name }}</span>
-        </div>
-
-        <div class="info-row">
-          <span class="info-label">色</span>
-          <div class="color-display">
-            <div 
-              class="color-box" 
-              :style="{ background: designCase.color }"
-            ></div>
-            <span class="color-text">{{ designCase.color }}</span>
+            <span class="info-label">標高</span>
+            <span class="info-value">{{ designCase.mountain_position ? designCase.mountain_position.H.toFixed(2) : '-' }}</span>
           </div>
-        </div>
+          
+          <div class="info-row">
+            <span class="info-label">エネルギー</span>
+            <span class="info-value">{{ energyData ? energyData.total_energy.toFixed(2) : '-' }}</span>
+          </div> 
 
-        <div class="info-row">
-          <span class="info-label">作成日時</span>
-          <span class="info-value">{{ formatDateTime(designCase.created_at) }}</span>
-        </div>
+          <div class="info-row">
+            <span class="info-label">色</span>
+            <div class="color-display">
+              <div 
+                class="color-box" 
+                :style="{ background: designCase.color }"
+              ></div>
+              <span class="color-text">{{ designCase.color }}</span>
+            </div>
+          </div>
 
-        <div class="info-row">
-          <span class="info-label">更新日時</span>
-          <span class="info-value">{{ formatDateTime(designCase.updated_at) }}</span>
-        </div>
+          <div class="info-row">
+            <span class="info-label">作成日時</span>
+            <span class="info-value">{{ formatDateTime(designCase.created_at) }}</span>
+          </div>
+
+          <div class="info-row">
+            <span class="info-label">更新日時</span>
+            <span class="info-value">{{ formatDateTime(designCase.updated_at) }}</span>
+          </div>
 
           <div v-if="designCase.description" class="info-row vertical">
             <span class="info-label">説明</span>
@@ -95,7 +85,7 @@
       <section class="detail-section">
         <h3 @click="toggleSection('utility')" class="section-header">
           <FontAwesomeIcon :icon="['fas', sectionStates.utility ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
-          平均効用（性能ごと）
+          効用レーダーチャート
         </h3>
         
         <div v-show="sectionStates.utility" class="section-content">
@@ -114,7 +104,7 @@
       <section v-if="remainingHeights.length > 0" class="detail-section">
         <h3 @click="toggleSection('remaining')" class="section-header">
           <FontAwesomeIcon :icon="['fas', sectionStates.remaining ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
-          残り標高（改善余地が大きい順）
+          残り標高
         </h3>
         
         <div v-show="sectionStates.remaining" class="section-content">
@@ -138,11 +128,44 @@
 
       <div class="divider"></div>
 
+      <!-- エネルギー分析 -->
+      <section v-if="energyData" class="detail-section">
+        <h3 @click="toggleSection('energy')" class="section-header">
+          <FontAwesomeIcon :icon="['fas', sectionStates.energy ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
+          エネルギー分析
+        </h3>
+        
+        <div v-show="sectionStates.energy" class="section-content">
+          <div class="energy-overview">
+            <div class="energy-total">
+              <span class="label">総合エネルギー</span>
+              <span class="value">{{ energyData.total_energy.toFixed(3) }}</span>
+            </div>
+          </div>
+          
+          <div class="partial-energies-list">
+            <h4>部分エネルギー（性能ごと）</h4>
+            <div 
+              v-for="(energy, perfId) in energyData.partial_energies" 
+              :key="perfId"
+              class="partial-energy-item"
+            >
+              <div class="energy-info">
+                <div class="energy-name">{{ getPerformanceName(perfId) }}</div>
+                <div class="energy-importance">重要度: {{ getPerformanceImportance(perfId).toFixed(1) }}</div>
+              </div>
+              <div class="energy-value">{{ energy.toFixed(3) }}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
       <!-- ネットワーク構造 -->
       <section class="detail-section">
         <h3 @click="toggleSection('network')" class="section-header">
           <FontAwesomeIcon :icon="['fas', sectionStates.network ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
-          <FontAwesomeIcon :icon="['fas', 'hexagon-nodes']" /> 
           ネットワーク構造
         </h3>
         
@@ -165,10 +188,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import type { DesignCase, Performance } from '../../types/project';
 import NetworkViewer from '../network/NetworkViewer.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { calculationApi } from '../../utils/api';
+import { useProjectStore } from '../../stores/projectStore';
 import { Radar } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -250,12 +275,21 @@ const emit = defineEmits<{
   delete: [designCase: DesignCase];
 }>();
 
-// セクションの開閉状態
+const projectStore = useProjectStore();
+
+// エネルギーデータ
+const energyData = ref<{
+  total_energy: number;
+  partial_energies: { [key: string]: number };
+} | null>(null);
+
+
+// セクションの開閉状態（基本情報は常に開いているので除外）
 const sectionStates = ref({
-  basicInfo: true,
   performance: true,
   utility: true,
   remaining: true,
+  energy: true,
   network: true
 });
 
@@ -429,6 +463,51 @@ const remainingHeights = computed(() => {
   return results.sort((a, b) => b.remaining - a.remaining);
 });
 
+// エネルギーデータを取得
+async function fetchEnergyData() {
+  if (!projectStore.currentProject || !props.designCase) return;
+  
+  try {
+    const response = await calculationApi.calculateCaseEnergy(
+      projectStore.currentProject.id,
+      props.designCase.id
+    );
+    energyData.value = {
+      total_energy: response.data.total_energy,
+      partial_energies: response.data.partial_energies
+    };
+  } catch (error) {
+    console.error('エネルギー計算エラー:', error);
+  }
+}
+
+// 性能名を取得
+function getPerformanceName(perfId: string | number): string {
+  const perfIdStr = String(perfId);
+  const perf = props.performances.find(p => p.id === perfIdStr);
+  return perf ? perf.name : perfIdStr;
+}
+
+// 性能の重要度を取得
+function getPerformanceImportance(perfId: string | number): number {
+  const perfIdStr = String(perfId);
+  // performance_weightsは性能ごとの合計票数
+  if (props.designCase.performance_weights && props.designCase.performance_weights[perfIdStr] !== undefined) {
+    return props.designCase.performance_weights[perfIdStr];
+  }
+  return 0.0; // デフォルト値
+}
+
+// 設計案が変更されたらエネルギーを再計算
+watch(() => props.designCase.id, () => {
+  fetchEnergyData();
+});
+
+// 初回ロード時にエネルギーを取得
+onMounted(() => {
+  fetchEnergyData();
+});
+
 </script>
 
 <style scoped>
@@ -571,12 +650,36 @@ const remainingHeights = computed(() => {
 }
 
 /* 基本情報 */
+.basic-info-section h3 {
+  margin-bottom: 16px !important;
+}
+
 .info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 12px 0;
   border-bottom: 1px solid #f0f0f0;
+}
+
+.info-row.highlight {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px;
+  margin: -16px -16px 16px -16px;
+  border-radius: 8px;
+  border-bottom: none;
+}
+
+.info-row.highlight .info-label {
+  color: white;
+  opacity: 0.9;
+}
+
+.info-value-large {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
 }
 
 .info-row.vertical {
@@ -840,4 +943,72 @@ const remainingHeights = computed(() => {
   border-radius: 8px;
   overflow: hidden;
 }
+
+/* エネルギー分析 */
+.energy-overview {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.energy-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.energy-total .label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.energy-total .value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.partial-energies-list h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+}
+
+.partial-energy-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  border-left: 3px solid #667eea;
+}
+
+.energy-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.energy-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.energy-importance {
+  font-size: 12px;
+  color: #666;
+}
+
+.energy-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #667eea;
+}
+
 </style>

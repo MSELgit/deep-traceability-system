@@ -8,6 +8,7 @@ from app.models.database import get_db, ProjectModel
 from app.schemas.project import MountainPosition
 # from app.services.hhi_calculator import calculate_hhi_for_project  # HHI分析削除
 from app.services.mountain_calculator import calculate_mountain_positions
+from app.services.energy_calculator import calculate_energy_for_project, calculate_energy_for_case
 
 router = APIRouter()
 
@@ -74,3 +75,56 @@ def calculate_case_utility(
     """
     # TODO: 実装予定
     raise HTTPException(status_code=501, detail="Not implemented yet")
+
+
+@router.post("/energy/{project_id}", response_model=List[Dict])
+def calculate_project_energy(project_id: str, db: Session = Depends(get_db)):
+    """
+    プロジェクトの全設計案についてエネルギーを計算
+    
+    Args:
+        project_id: プロジェクトID
+    
+    Returns:
+        各設計案のエネルギー {case_id, case_name, total_energy, partial_energies, match_matrix}
+    """
+    project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    try:
+        results = calculate_energy_for_project(project, db)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Calculation error: {str(e)}")
+
+
+@router.get("/energy/{project_id}/{case_id}", response_model=Dict)
+def calculate_case_energy(
+    project_id: str,
+    case_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    特定の設計案のエネルギーを計算
+    
+    Args:
+        project_id: プロジェクトID
+        case_id: 設計案ID
+    
+    Returns:
+        {total_energy, partial_energies, match_matrix}
+    """
+    project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    design_case = next((dc for dc in project.design_cases if dc.id == case_id), None)
+    if not design_case:
+        raise HTTPException(status_code=404, detail="Design case not found")
+    
+    try:
+        result = calculate_energy_for_case(design_case, project.performances, db)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Calculation error: {str(e)}")

@@ -942,6 +942,25 @@ def copy_design_case(
     existing_colors = [dc.color for dc in project.design_cases if hasattr(dc, 'color') and dc.color]
     new_color = get_next_available_color(existing_colors)
     
+    # 現在の性能ツリーからスナップショットを作成
+    current_performances = project.performances
+    current_snapshot = []
+    
+    for perf in current_performances:
+        # この性能が末端かどうかを判定（子がいなければ末端）
+        is_leaf = not any(p.parent_id == perf.id for p in current_performances)
+        
+        current_snapshot.append({
+            'id': perf.id,
+            'name': perf.name,
+            'parent_id': perf.parent_id,
+            'level': perf.level,
+            'is_leaf': is_leaf,
+            'unit': perf.unit,
+            'description': perf.description,
+            'order': getattr(perf, 'order', 0)
+        })
+    
     # 新しい設計案を作成
     db_copy = DesignCaseModel(
         id=str(uuid.uuid4()),
@@ -949,8 +968,9 @@ def copy_design_case(
         name=f"{original.name}のコピー",
         description=original.description,
         color=new_color,
-        performance_values_json=original.performance_values_json,
-        network_json=original.network_json,
+        performance_values_json=original.performance_values_json,  # そのままコピー
+        network_json=original.network_json,  # そのままコピー
+        performance_snapshot_json=json.dumps(current_snapshot),  # 現在の性能ツリーをスナップショット
         # mountain_position_jsonとutility_vector_jsonはnull（後で再計算）
     )
     db.add(db_copy)

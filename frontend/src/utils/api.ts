@@ -158,6 +158,22 @@ export const calculationApi = {
     }>>(`/calculations/mountain/${projectId}`),
   calculateUtility: (projectId: string, caseId: string) =>
     apiClient.get<{ [key: string]: number }>(`/calculations/utility/${projectId}/${caseId}`),
+  calculateEnergy: (projectId: string) =>
+    apiClient.post<Array<{
+      case_id: string;
+      case_name: string;
+      total_energy: number;
+      partial_energies: { [key: string]: number };
+      match_matrix: { [key: string]: number };
+    }>>(`/calculations/energy/${projectId}`),
+  calculateCaseEnergy: (projectId: string, caseId: string) =>
+    apiClient.get<{
+      total_energy: number;
+      partial_energies: { [key: string]: number };
+      partial_energies_by_node: { [key: string]: number };
+      match_matrix: { [key: string]: number };
+      importance: { [key: string]: number };
+    }>(`/calculations/energy/${projectId}/${caseId}`),
 };
 
 // ========== エクスポート・インポート ==========

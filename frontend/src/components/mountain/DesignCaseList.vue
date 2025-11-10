@@ -91,11 +91,12 @@
 <script setup lang="ts">
 import type { DesignCase } from '../../types/project';
 
-defineProps<{
+const props = defineProps<{
   designCases: DesignCase[];
   sortBy: string;
   hMax: number | null;
 }>();
+
 
 defineEmits<{
   'toggle-panel': [];

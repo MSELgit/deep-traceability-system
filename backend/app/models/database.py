@@ -185,6 +185,12 @@ class DesignCaseModel(Base):
         """partial_heights_jsonをパース"""
         import json
         return json.loads(self.partial_heights_json) if self.partial_heights_json else None
+    
+    @property
+    def performance_weights(self):
+        """performance_weights_jsonをパース"""
+        import json
+        return json.loads(self.performance_weights_json) if self.performance_weights_json else None
 
 
 # テーブル作成

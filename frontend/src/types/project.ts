@@ -157,6 +157,10 @@ export interface DesignCase {
   utility_vector?: { [performanceId: string]: number };
   partial_heights?: { [performanceId: string]: number };  // 性能ごとの部分標高
   performance_weights?: { [performanceId: string]: number };  // 性能ごとの合計票数
+  energy?: {
+    total_energy: number;
+    partial_energies: { [performanceId: string]: number };
+  }; // エネルギー計算結果
 }
 
 /**
