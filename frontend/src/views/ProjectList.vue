@@ -41,6 +41,13 @@
             >
               <FontAwesomeIcon :icon="['fas', 'share-from-square']" />
             </button>
+            <button 
+              class="icon-button delete-button" 
+              @click.stop="deleteProject(project.id, project.name)"
+              title="削除"
+            >
+              <FontAwesomeIcon :icon="['fas', 'trash']" />
+            </button>
           </div>
         </div>
       </div>
@@ -126,7 +133,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProjectStore } from '../stores/projectStore'
 import { storeToRefs } from 'pinia'
-import { projectApi, calculationApi } from '../utils/api'
+import { projectApi } from '../utils/api'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const router = useRouter()
@@ -192,6 +199,22 @@ async function exportProject(projectId: string) {
   } catch (error) {
     console.error('プロジェクトのエクスポートに失敗:', error)
     alert('プロジェクトのエクスポートに失敗しました')
+  }
+}
+
+// プロジェクトを削除
+async function deleteProject(projectId: string, projectName: string) {
+  const confirmed = confirm(`プロジェクト「${projectName}」を削除してもよろしいですか？\n\nこの操作は取り消せません。`)
+  
+  if (!confirmed) return
+  
+  try {
+    await projectApi.delete(projectId)
+    await projectStore.loadProjects()
+    alert('プロジェクトを削除しました')
+  } catch (error) {
+    console.error('プロジェクトの削除に失敗:', error)
+    alert('プロジェクトの削除に失敗しました')
   }
 }
 
@@ -328,6 +351,11 @@ async function handleFileSelect(event: Event) {
   color: white;
   border-color: #667eea;
   transform: scale(1.05);
+}
+
+.icon-button.delete-button:hover {
+  background: #dc3545;
+  border-color: #dc3545;
 }
 
 .empty-state {
