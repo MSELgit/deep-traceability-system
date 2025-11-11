@@ -87,6 +87,15 @@
             </div>
           </div>
 
+          <!-- 立体OPM -->
+          <div v-show="activeTab === 'opm3d'">
+            <div class="opm3d-container">
+              <h3>立体OPM（Object Process Methodology）</h3>
+              <p>3D空間でのオブジェクト・プロセス・関係の可視化</p>
+              <!-- ここに立体OPMコンポーネントを追加 -->
+            </div>
+          </div>
+
           <!-- ネットワークデモ -->
           <div v-show="activeTab === 'demo'">
             <NetworkDemo ref="networkDemoRef" />
@@ -195,7 +204,8 @@ const tabs = [
   { key: 'performances', label: '性能管理' },
   { key: 'matrix', label: 'マトリクス' },
   { key: 'mountain', label: '山の可視化' },
-    { key: 'twoaxis', label: '2軸評価' },
+  { key: 'twoaxis', label: '2軸評価' },
+  { key: 'opm3d', label: '立体OPM' },
   { key: 'demo', label: 'ネットワークデモ' },
 ];
 
@@ -385,5 +395,24 @@ onMounted(async () => {
   background: #5a67d8;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* 立体OPM */
+.opm3d-container {
+  padding: 24px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  min-height: 600px;
+}
+
+.opm3d-container h3 {
+  font-size: 24px;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.opm3d-container p {
+  color: #666;
+  margin-bottom: 24px;
 }
 </style>

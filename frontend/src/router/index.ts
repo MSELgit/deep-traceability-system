@@ -20,21 +20,6 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/ProjectDetail.vue')
   },
   {
-    path: '/project/:id/stakeholders',
-    name: 'Stakeholders',
-    component: () => import('../views/StakeholderManagement.vue')
-  },
-  {
-    path: '/project/:id/performances',
-    name: 'Performances',
-    component: () => import('../views/PerformanceManagement.vue')
-  },
-  {
-    path: '/project/:id/design-cases',
-    name: 'DesignCases',
-    component: () => import('../views/DesignCaseList.vue')
-  },
-  {
     path: '/project/:id/mountain',
     name: 'Mountain',
     component: () => import('../views/MountainView.vue')
