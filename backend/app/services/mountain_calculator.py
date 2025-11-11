@@ -417,19 +417,12 @@ def calculate_mountain_positions(
     if networks is not None and len(networks) > 0:
         
         # WLカーネル計算（反復1回）
-        # print(f"\n[1/3] Computing WL Kernel...")
         K = compute_wl_kernel(networks, iterations=int(1))
-        # print(f"Kernel matrix shape: {K.shape}")
-        # print(f"Kernel matrix:\n{K}")
-
+        
         # カーネル→距離行列変換
-        #print(f"\n[2/3] Converting kernel to distance matrix...")
         distance_matrix = kernel_to_distance(K)
-        #print(f"Distance matrix shape: {distance_matrix.shape}")
-        #print(f"Distance matrix:\n{distance_matrix}")
         
         # 円環MDS（並列版、n_init=500）
-        #print(f"\n[3/3] Computing Circular MDS (n_init=500, parallel)...")
         circular_mds_angles, circular_stress = circular_mds_parallel(
             distance_matrix,
             n_init=500,

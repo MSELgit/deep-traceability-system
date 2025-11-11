@@ -1,38 +1,13 @@
-# backend/app/api/calculations.py
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Dict
 
 from app.models.database import get_db, ProjectModel
 from app.schemas.project import MountainPosition
-# from app.services.hhi_calculator import calculate_hhi_for_project  # HHI分析削除
 from app.services.mountain_calculator import calculate_mountain_positions
 from app.services.energy_calculator import calculate_energy_for_project, calculate_energy_for_case
 
 router = APIRouter()
-
-
-# @router.post("/hhi/{project_id}", response_model=List[HHIResult])
-# def calculate_project_hhi(project_id: str, db: Session = Depends(get_db)):
-#     """
-#     プロジェクトの全性能についてHHI値とp²値を計算
-#     
-#     Args:
-#         project_id: プロジェクトID
-#     
-#     Returns:
-#         各性能のHHI値、p²値、重み、子要素数
-#     """
-#     project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
-#     if not project:
-#         raise HTTPException(status_code=404, detail="Project not found")
-#     
-#     try:
-#         results = calculate_hhi_for_project(project, db)
-#         return results
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Calculation error: {str(e)}")
 
 
 @router.post("/mountain/{project_id}", response_model=List[Dict])
@@ -51,17 +26,14 @@ def calculate_project_mountain(project_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Project not found")
     
     try:
-        print(f"\n[API] Calculating mountain positions for project {project_id}")
         positions = calculate_mountain_positions(project, db)
         
         # 計算結果をデータベースにコミット
         db.commit()
-        print(f"[API] Mountain positions calculated and saved for {len(positions)} cases")
         
         return positions
     except Exception as e:
         db.rollback()
-        print(f"[API] Error calculating mountain positions: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Calculation error: {str(e)}")
 
 
@@ -132,13 +104,11 @@ def calculate_case_energy(
         raise HTTPException(status_code=404, detail="Design case not found")
     
     try:
-        # 設計案のスナップショットがある場合はそれを使用
         if design_case.performance_snapshot:
             from app.schemas.project import Performance
             case_performances = [Performance(**perf_data) for perf_data in design_case.performance_snapshot]
             result = calculate_energy_for_case(design_case, case_performances, db)
         else:
-            # スナップショットがない場合は現在の性能ツリーを使用
             result = calculate_energy_for_case(design_case, project.performances, db)
         
         return result

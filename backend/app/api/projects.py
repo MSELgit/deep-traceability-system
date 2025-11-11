@@ -1196,32 +1196,6 @@ def export_project(
         DesignCaseModel.project_id == project_id
     ).all()
     
-    # デバッグ情報を出力
-    print(f"\n==== EXPORT DEBUG INFO ====")
-    print(f"Project: {project.name} (ID: {project_id})")
-    print(f"Number of design cases: {len(design_cases)}")
-    
-    for i, d in enumerate(design_cases):
-        print(f"\nDesign Case {i+1}: {d.name} (ID: {d.id})")
-        print(f"  - mountain_position_json: {d.mountain_position_json}")
-        print(f"  - utility_vector_json: {d.utility_vector_json}")
-        print(f"  - partial_heights_json: {d.partial_heights_json}")
-        print(f"  - performance_weights_json: {d.performance_weights_json}")
-        
-        if d.mountain_position_json:
-            pos = json.loads(d.mountain_position_json)
-            print(f"  - Mountain Position: x={pos.get('x')}, y={pos.get('y')}, z={pos.get('z')}, H={pos.get('H')}")
-        else:
-            print(f"  - Mountain Position: NULL")
-            
-        if d.utility_vector_json:
-            vec = json.loads(d.utility_vector_json)
-            print(f"  - Utility Vector: {len(vec)} entries")
-        else:
-            print(f"  - Utility Vector: NULL")
-    
-    print(f"==========================\n")
-    
     # エクスポートデータ構築
     export_data = {
         "project": {

@@ -4,38 +4,10 @@ from typing import List, Optional, Dict
 import numpy as np
 from scipy.linalg import eigh
 from scipy.optimize import minimize
-import time
-from typing import Any
-import logging
 from concurrent.futures import ProcessPoolExecutor
 import multiprocessing
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 router = APIRouter()
-
-# ===== パフォーマンス計測 =====
-
-class PerformanceTimer:
-    """パフォーマンス計測用のコンテキストマネージャ"""
-    def __init__(self, name: str, timing_dict: dict = None):
-        self.name = name
-        self.timing_dict = timing_dict
-        self.start_time = None
-        
-    def __enter__(self):
-        self.start_time = time.perf_counter()
-        logger.info(f"⏱️  [{self.name}] 開始")
-        return self
-    
-    def __exit__(self, *args):
-        elapsed = time.perf_counter() - self.start_time
-        logger.info(f"✅ [{self.name}] 完了: {elapsed:.4f}秒")
-        if self.timing_dict is not None:
-            self.timing_dict[self.name] = round(elapsed, 4)
-
-# ===== Pydanticモデル =====
 
 class NetworkComparisonRequest(BaseModel):
     networks: List[dict]
@@ -57,7 +29,6 @@ class NetworkComparisonResponse(BaseModel):
     stress: float
     circular_stress: float
     comparison: Optional[dict] = None
-    timing: Optional[Dict[str, float]] = None
 
 # ===== 並列化用のヘルパー関数（トップレベル関数として定義） =====
 
@@ -186,27 +157,18 @@ def circular_mds_parallel(distance_matrix: np.ndarray, n_init: int = 50, n_worke
     if n_workers is None:
         n_workers = min(multiprocessing.cpu_count(), n_init)
     
-    logger.info(f"   並列Circular MDS: {n_init}回の試行を{n_workers}ワーカーで実行")
-    
     # 並列実行の準備（各試行に異なるシードを割り当て）
     args_list = [(D_normalized, n, seed) for seed in range(n_init)]
-    
-    optimization_start = time.perf_counter()
     
     # 並列実行
     with ProcessPoolExecutor(max_workers=n_workers) as executor:
         results = list(executor.map(_optimize_single_trial, args_list))
-    
-    optimization_time = time.perf_counter() - optimization_start
     
     # 最良の結果を選択
     best_stress, best_thetas = min(results, key=lambda x: x[0])
     
     # ストレスを正規化
     normalized_stress = np.sqrt(best_stress / (n * (n-1) / 2))
-    
-    logger.info(f"   並列最適化完了: {optimization_time:.4f}秒")
-    logger.info(f"   実効速度: {n_init/optimization_time:.1f}試行/秒 (理論値: {n_workers}並列)")
     
     return best_thetas, normalized_stress
 
@@ -238,8 +200,6 @@ def circular_mds_sequential(distance_matrix: np.ndarray, n_init: int = 50) -> tu
     # 複数の初期値で最適化
     best_result = None
     best_stress = float('inf')
-    
-    logger.info(f"  🔄 逐次Circular MDS: {n_init}回の試行")
     
     for trial in range(n_init):
         theta0 = np.random.uniform(0, 2*np.pi, n)
@@ -394,35 +354,20 @@ def kernel_to_distance(kernel: np.ndarray) -> np.ndarray:
 @router.post("/compute_network_comparison", response_model=NetworkComparisonResponse)
 async def compute_network_comparison(request: NetworkComparisonRequest):
     """ネットワーク構造比較の全計算を一括実行"""
-    timing = {}
-    total_start = time.perf_counter()
     
     try:
-        logger.info(f"\n{'='*60}")
-        logger.info(f"🚀 ネットワーク比較計算開始")
-        logger.info(f"  ネットワーク数: {len(request.networks)}")
-        logger.info(f"  WL反復回数: {request.iterations}")
-        logger.info(f"  MDS手法: {request.method}")
-        logger.info(f"  n_init: {request.n_init}")
-        logger.info(f"  並列ワーカー数: {request.n_workers or 'auto'}")
-        logger.info(f"  比較モード: {request.compare_methods}")
-        logger.info(f"{'='*60}\n")
-        
         # WLカーネル計算
-        with PerformanceTimer("WLカーネル計算", timing):
-            kernel_matrix = compute_wl_kernel(request.networks, request.iterations)
+        kernel_matrix = compute_wl_kernel(request.networks, request.iterations)
         
         # 距離行列計算
-        with PerformanceTimer("距離行列計算", timing):
-            distance_matrix = kernel_to_distance(kernel_matrix)
+        distance_matrix = kernel_to_distance(kernel_matrix)
         
         # ユニークラベル数
-        with PerformanceTimer("ラベル数集計", timing):
-            label_count = len(set(
-                f"L{node['layer']}-{node['type'][0]}"
-                for net in request.networks
-                for node in net['nodes']
-            ))
+        label_count = len(set(
+            f"L{node['layer']}-{node['type'][0]}"
+            for net in request.networks
+            for node in net['nodes']
+        ))
         
         # MDS計算（比較）
         comparison_results = {}
@@ -431,33 +376,22 @@ async def compute_network_comparison(request: NetworkComparisonRequest):
         methods = ['mds_polar', 'circular_mds'] if request.compare_methods else [request.method]
         
         for method in methods:
-            method_start = time.perf_counter()
-            logger.info(f"\n📊 MDS計算開始: {method}")
-            
             if method == 'mds_polar':
-                with PerformanceTimer(f"MDS計算 ({method})", timing):
-                    mds_result = classical_mds(distance_matrix.tolist(), 2)
-                    coords = np.array(mds_result['coordinates'])
-                    thetas = np.arctan2(coords[:, 1], coords[:, 0])
-                    thetas = (thetas + 2*np.pi) % (2*np.pi)
-                
-                with PerformanceTimer(f"円環ストレス計算 ({method})", timing):
-                    circular_stress = compute_circular_stress(distance_matrix, thetas)
-                
+                mds_result = classical_mds(distance_matrix.tolist(), 2)
+                coords = np.array(mds_result['coordinates'])
+                thetas = np.arctan2(coords[:, 1], coords[:, 0])
+                thetas = (thetas + 2*np.pi) % (2*np.pi)
+                circular_stress = compute_circular_stress(distance_matrix, thetas)
                 stress = mds_result['stress']
             else:  # circular_mds
-                with PerformanceTimer(f"Circular MDS計算 ({method})", timing):
-                    # 並列版を使用
-                    thetas, circular_stress = circular_mds_parallel(
-                        distance_matrix,
-                        request.n_init,
-                        request.n_workers
-                    )
-                    stress = circular_stress
-                    coords = np.column_stack([np.cos(thetas), np.sin(thetas)])
-            
-            method_time = time.perf_counter() - method_start
-            logger.info(f"✅ {method} 完了: {method_time:.4f}秒")
+                # 並列版を使用
+                thetas, circular_stress = circular_mds_parallel(
+                    distance_matrix,
+                    request.n_init,
+                    request.n_workers
+                )
+                stress = circular_stress
+                coords = np.column_stack([np.cos(thetas), np.sin(thetas)])
             
             result = {
                 'stress': float(stress),
@@ -472,25 +406,11 @@ async def compute_network_comparison(request: NetworkComparisonRequest):
                 selected_result = result
         
         # 円環座標（可視化用）
-        with PerformanceTimer("円環座標変換", timing):
-            radius = 250
-            circular_coords = [
-                [radius * np.cos(theta), radius * np.sin(theta)]
-                for theta in selected_result['thetas']
-            ]
-        
-        total_time = time.perf_counter() - total_start
-        timing['total'] = round(total_time, 4)
-        
-        logger.info(f"\n{'='*60}")
-        logger.info(f"🎉 全計算完了: {total_time:.4f}秒")
-        logger.info(f"{'='*60}\n")
-        
-        logger.info("⏱️  処理時間サマリー:")
-        for key, value in sorted(timing.items(), key=lambda x: -x[1]):
-            percentage = (value / total_time * 100) if total_time > 0 else 0
-            logger.info(f"  {key:.<40} {value:.4f}秒 ({percentage:>5.1f}%)")
-        logger.info("")
+        radius = 250
+        circular_coords = [
+            [radius * np.cos(theta), radius * np.sin(theta)]
+            for theta in selected_result['thetas']
+        ]
         
         return NetworkComparisonResponse(
             success=True,
@@ -503,8 +423,7 @@ async def compute_network_comparison(request: NetworkComparisonRequest):
             circular_coordinates=circular_coords,
             stress=selected_result['stress'],
             circular_stress=selected_result['circular_stress'],
-            comparison=comparison_results if request.compare_methods else None,
-            timing=timing
+            comparison=comparison_results if request.compare_methods else None
         )
         
     except Exception as e:
