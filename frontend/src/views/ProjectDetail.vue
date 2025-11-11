@@ -61,6 +61,32 @@
             <MountainView :is-active="activeTab === 'mountain'" />
           </div>
 
+          <!-- 2軸評価（複数ビュー管理） -->
+          <div v-show="activeTab === 'twoaxis'">
+            <div v-if="energyCalculated">
+              <div class="twoaxis-multiview-header">
+                <button class="add-view-btn" @click="addTwoAxisView">＋ 新しいビューを追加</button>
+              </div>
+              <div class="twoaxis-multiview-row">
+                <TwoAxisEvaluation
+                  v-for="view in twoAxisViews"
+                  :key="view.id"
+                  :viewId="view.id"
+                  :designCases="currentProject?.design_cases || []"
+                  :performances="currentProject?.performances || []"
+                  :initialX="view.x_axis"
+                  :initialY="view.y_axis"
+                  :onRemove="removeTwoAxisView"
+                  @axis-change="handleAxisChange"
+                />
+              </div>
+            </div>
+            <div v-else class="loading">
+              <div class="spinner"></div>
+              <p>エネルギーを計算中...</p>
+            </div>
+          </div>
+
           <!-- ネットワークデモ -->
           <div v-show="activeTab === 'demo'">
             <NetworkDemo ref="networkDemoRef" />
@@ -82,13 +108,15 @@ import { ref, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectStore } from '../stores/projectStore'
 import { storeToRefs } from 'pinia'
-import { projectApi } from '../utils/api'
+import { projectApi, calculationApi } from '../utils/api'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import StakeholderMatrix from '../components/stakeholder/StakeholderMatrix.vue'
 import PerformanceManagement from '../components/performance/PerformanceManagement.vue'
 import NeedPerformanceMatrix from '../components/matrix/NeedPerformanceMatrix.vue'
 import NetworkDemo from '../components/demo/NetworkDemo.vue'
 import MountainView from '../components/mountain/MountainView.vue'
+
+import TwoAxisEvaluation from '../components/twoaxis/TwoAxisEvaluation.vue'
 
 
 const route = useRoute()
@@ -97,12 +125,77 @@ const { currentProject, loading, error } = storeToRefs(projectStore)
 
 const activeTab = ref('stakeholders')
 const networkDemoRef = ref<InstanceType<typeof NetworkDemo> | null>(null);
+const energyCalculated = ref(false)
+
+// 2軸ビュー管理
+interface TwoAxisView {
+  id: string;
+  x_axis: string;
+  y_axis: string;
+}
+const twoAxisViews = ref<TwoAxisView[]>([]);
+
+// 2軸プロットをバックエンドに保存
+async function saveTwoAxisPlots() {
+  if (!currentProject.value) return;
+  
+  try {
+    await projectApi.updateTwoAxisPlots(currentProject.value.id, twoAxisViews.value);
+  } catch (error) {
+    console.error('2軸プロットの保存に失敗:', error);
+  }
+}
+
+function addTwoAxisView() {
+  const perfs = currentProject.value?.performances || [];
+  const x = perfs[0]?.id || '';
+  const y = perfs[1]?.id || perfs[0]?.id || '';
+  const newView: TwoAxisView = {
+    id: `view-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+    x_axis: x,
+    y_axis: y
+  };
+  twoAxisViews.value.push(newView);
+  saveTwoAxisPlots();
+}
+
+function removeTwoAxisView(id: string | number) {
+  twoAxisViews.value = twoAxisViews.value.filter(v => v.id !== id);
+  saveTwoAxisPlots();
+}
+
+// 2軸プロットの初期化
+async function initializeTwoAxisPlots() {
+  if (!currentProject.value) return;
+  
+  // プロジェクトから保存された設定を読み込む
+  if (currentProject.value.two_axis_plots && currentProject.value.two_axis_plots.length > 0) {
+    twoAxisViews.value = currentProject.value.two_axis_plots;
+  } else if (twoAxisViews.value.length === 0) {
+    // 保存された設定がない場合は新規作成
+    addTwoAxisView();
+  }
+}
+
+// 軸変更時の処理
+function handleAxisChange(viewId: string, axis: 'x' | 'y', value: string) {
+  const view = twoAxisViews.value.find(v => v.id === viewId);
+  if (view) {
+    if (axis === 'x') {
+      view.x_axis = value;
+    } else {
+      view.y_axis = value;
+    }
+    saveTwoAxisPlots();
+  }
+}
 
 const tabs = [
   { key: 'stakeholders', label: 'ステークホルダー' },
   { key: 'performances', label: '性能管理' },
   { key: 'matrix', label: 'マトリクス' },
   { key: 'mountain', label: '山の可視化' },
+    { key: 'twoaxis', label: '2軸評価' },
   { key: 'demo', label: 'ネットワークデモ' },
 ];
 
@@ -146,6 +239,23 @@ onMounted(async () => {
   const projectId = route.params.id as string
   try {
     await projectStore.loadProject(projectId)
+    // 設計案一覧取得後にエネルギーをAPIで取得して設計案にマージ
+    if (currentProject.value && currentProject.value.design_cases?.length) {
+      const energyResults = await calculationApi.calculateEnergy(projectId)
+      // case_idで設計案にマージ
+      for (const energy of energyResults.data) {
+        const dc = currentProject.value.design_cases.find(d => d.id === energy.case_id)
+        if (dc) {
+          dc.energy = {
+            total_energy: energy.total_energy,
+            partial_energies: energy.partial_energies
+          }
+        }
+      }
+    }
+    energyCalculated.value = true
+    // 2軸プロットの初期化
+    await initializeTwoAxisPlots()
   } catch (e) {
     console.error('プロジェクトの読み込みに失敗:', e)
   }
@@ -153,6 +263,31 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.twoaxis-multiview-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+.add-view-btn {
+  background: #667eea;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.add-view-btn:hover {
+  background: #5a67d8;
+}
+.twoaxis-multiview-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  align-items: stretch;
+}
 .project-header {
   display: flex;
   justify-content: space-between;
@@ -206,6 +341,18 @@ onMounted(async () => {
 
 .tab-content {
   min-height: 400px;
+}
+
+.two-axis-placeholder {
+  padding: 16px;
+}
+
+.placeholder-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 .error {

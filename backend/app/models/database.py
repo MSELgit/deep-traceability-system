@@ -44,6 +44,27 @@ class ProjectModel(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # 2軸プロット設定（JSON形式）
+    # [{"id": "view1", "x_axis": "perf_id_or_special", "y_axis": "perf_id_or_special"}, ...]
+    _two_axis_plots = Column('two_axis_plots', Text, nullable=True)
+    
+    @property
+    def two_axis_plots(self):
+        """JSON文字列をパースして返す"""
+        import json
+        if self._two_axis_plots:
+            return json.loads(self._two_axis_plots)
+        return []
+    
+    @two_axis_plots.setter
+    def two_axis_plots(self, value):
+        """辞書をJSON文字列として保存"""
+        import json
+        if value is None:
+            self._two_axis_plots = None
+        else:
+            self._two_axis_plots = json.dumps(value, ensure_ascii=False)
+    
     # リレーション
     stakeholders = relationship('StakeholderModel', back_populates='project', cascade='all, delete-orphan')
     needs = relationship('NeedModel', back_populates='project', cascade='all, delete-orphan')

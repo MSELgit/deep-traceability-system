@@ -18,6 +18,9 @@ export interface Project {
   // マトリクス関係
   stakeholder_need_relations: StakeholderNeedRelation[];
   need_performance_relations: NeedPerformanceRelation[];
+  
+  // 2軸プロット設定
+  two_axis_plots: TwoAxisPlot[];
 }
 
 /**
@@ -227,6 +230,15 @@ export interface NetworkEdge {
   target_id: string;
   type: 'type1' | 'type2' | 'type3' | 'type4';
   weight?: 3 | 1 | 0.33 | 0 | -0.33 | -1 | -3; // 因果関係の重み
+}
+
+/**
+ * 2軸プロット設定
+ */
+export interface TwoAxisPlot {
+  id: string;
+  x_axis: string; // performance_id or "__height" or "__energy"
+  y_axis: string; // performance_id or "__height" or "__energy"
 }
 
 /**

@@ -940,7 +940,6 @@ function handleCopyUtilityFunction() {
     interpolationType: interpolationType.value
   }
   
-  console.log('効用関数をコピーしました')
 }
 
 function handleDownloadGraph() {
@@ -1109,7 +1108,6 @@ function handleImportExcel() {
           
           // 補完方法を取得（B3セル = インデックス[2][1]）
           const interpolationValue = dataJson[2]?.[1]
-          console.log('インポートした補完方法:', interpolationValue)
           
           let newInterpolationType: 'linear' | 'step' | 'smooth' = 'linear'
           if (typeof interpolationValue === 'string') {
@@ -1123,7 +1121,6 @@ function handleImportExcel() {
             }
           }
           
-          console.log('変換後の補完方法:', newInterpolationType)
           
           // 軸範囲を取得
           const minValue = Number(dataJson[3]?.[1])
@@ -1155,8 +1152,6 @@ function handleImportExcel() {
           interpolationType.value = newInterpolationType
           utilityPoints.value = points
           
-          console.log('適用後のinterpolationType:', interpolationType.value)
-          console.log('適用後のutilityPoints:', utilityPoints.value.length, 'points')
           
           // 次のティックでスライダーを再初期化し、グラフを強制再描画
           nextTick(() => {
@@ -1373,7 +1368,6 @@ async function downloadMatrixAsImageVertical() {
       element.style.color = color
     })
     
-    console.log('Base canvas created:', baseCanvas.width, 'x', baseCanvas.height)
     
     if (baseCanvas.width === 0 || baseCanvas.height === 0) {
       alert('画像生成に失敗しました（サイズが0です）')
@@ -1412,7 +1406,6 @@ async function downloadMatrixAsImageVertical() {
       const width = rect.width * 2
       const height = rect.height * 2
       
-      console.log('Cell:', htmlEl.textContent?.trim(), 'x:', x, 'y:', y, 'w:', width, 'h:', height)
       
       // 元の背景色を取得して描画
       const bgColor = computedStyle.backgroundColor
@@ -1439,7 +1432,6 @@ async function downloadMatrixAsImageVertical() {
       }
     })
     
-    console.log('Vertical text rendering completed')
     
     // ダウンロード
     finalCanvas.toBlob((blob: Blob | null) => {
@@ -1455,7 +1447,6 @@ async function downloadMatrixAsImageVertical() {
       link.click()
       URL.revokeObjectURL(url)
       
-      console.log('Image download completed')
     }, 'image/png', 0.95)
     
     if (button) {
@@ -1697,7 +1688,6 @@ function handlePasteUtilityFunction() {
     })
   }
   
-  console.log('効用関数を貼り付けました')
 }
 
 // 効用関数が登録されているかチェック
@@ -2500,9 +2490,21 @@ function navigateToPerformanceManagement() {
 
 // 効用関数管理
 function getUtilityFunction(needId: string, performanceId: string): UtilityFunction | undefined {
-  return utilityFunctions.value.find(
+  const result = utilityFunctions.value.find(
     u => u.need_id === needId && u.performance_id === performanceId && !u.archived
   )
+  
+  // デバッグログは削除（正常に動作することが確認できたため）
+  // if (!result && utilityFunctions.value.length > 0) {
+  //   // [NeedPerformanceMatrix] 効用関数が見つかりません: {
+  //     探しているneed_id: needId,
+  //     探しているperformance_id: performanceId,
+  //     利用可能な効用関数数: utilityFunctions.value.length,
+  //     最初の効用関数: utilityFunctions.value[0]
+  //   })
+  // }
+  
+  return result
 }
 
 function getUtilityButtonType(needId: string, performanceId: string): 'none' | 'add' | 'check' | 'warning' {
@@ -2719,7 +2721,6 @@ async function saveUtilityFunction() {
       // 効用関数が未設定のセルには何もしない
     }
     
-    console.log(`性能「${performanceId}」の列の軸範囲を同期しました`)
     closeUtilityModal()
   } catch (error) {
     console.error('効用関数の保存に失敗しました:', error)
@@ -2877,7 +2878,6 @@ async function normalizeUtilityFunctionsByColumn() {
   }
   
   if (totalNormalized > 0) {
-    console.log(`✅ ${totalNormalized}件の効用関数を列基準に統一しました`)
   }
 }
 

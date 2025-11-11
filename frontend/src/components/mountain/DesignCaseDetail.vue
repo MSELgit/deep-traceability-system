@@ -119,19 +119,64 @@
             v-for="item in remainingHeights" 
             :key="item.perfId"
             class="remaining-height-item"
+            :class="{ expanded: expandedPerfId === item.perfId }"
           >
-            <div class="remaining-height-header">
-              <span class="remaining-height-name">{{ item.perfName }}</span>
-              <span class="performance-importance">重要度: {{ getPerformanceImportance(item.perfId).toFixed(1) }}</span>
+            <div 
+              class="remaining-height-content"
+              @click="togglePerfExpand(item.perfId)"
+            >
+              <div class="remaining-height-header">
+                <div class="header-left">
+                  <FontAwesomeIcon 
+                    :icon="['fas', expandedPerfId === item.perfId ? 'chevron-down' : 'chevron-right']" 
+                    class="expand-indicator"
+                  />
+                  <span class="remaining-height-name">{{ item.perfName }}</span>
+                </div>
+                <span class="performance-importance">重要度: {{ getPerformanceImportance(item.perfId).toFixed(1) }}</span>
+              </div>
+              <div class="remaining-height-values">
+                <span class="remaining-value">残り: {{ item.remaining.toFixed(2) }}</span>
+                <span class="detail-values">
+                  (実際: {{ item.actual.toFixed(2) }} / 最大: {{ item.hMax.toFixed(2) }})
+                </span>
+                <span v-if="energyData" class="energy-value">
+                  部分エネルギー: {{ (energyData.partial_energies[item.perfId] || 0).toFixed(3) }}
+                </span>
+              </div>
             </div>
-            <div class="remaining-height-values">
-              <span class="remaining-value">残り: {{ item.remaining.toFixed(2) }}</span>
-              <span class="detail-values">
-                (実際: {{ item.actual.toFixed(2) }} / 最大: {{ item.hMax.toFixed(2) }})
-              </span>
-              <span v-if="energyData && energyData.partial_energies[item.perfId]" class="energy-value">
-                エネルギー: {{ energyData.partial_energies[item.perfId].toFixed(3) }}
-              </span>
+            
+            <!-- 展開部分：エネルギー詳細 -->
+            <div v-if="expandedPerfId === item.perfId && energyData" class="energy-details">
+              <!-- ネットワークビュー -->
+              <div class="perf-network-view">
+                <NetworkHighlightViewer 
+                  v-if="designCase.network.nodes.length > 0"
+                  :network="designCase.network"
+                  :performances="performances"
+                  :highlighted-perf-id="item.perfId"
+                  :height="300"
+                />
+              </div>
+              
+              <h5>他性能との相性（Match値）</h5>
+              <div class="match-details">
+                <div 
+                  v-for="(matchData, index) in getMatchDetailsForPerformance(item.perfId)"
+                  :key="index"
+                  class="match-item"
+                >
+                  <span class="match-perf-name">
+                    {{ matchData.perfName }}
+                    <span class="match-perf-importance">(重要度: {{ matchData.perfImportance.toFixed(1) }})</span>
+                  </span>
+                  <span class="match-value">Match: {{ matchData.match.toFixed(4) }}</span>
+                  <span class="partial-partial-energy">エネルギー: {{ matchData.energy.toFixed(4) }}</span>
+                </div>
+                <div v-if="getMatchDetailsForPerformance(item.perfId).length === 0" class="no-matches">
+                  他の性能との相性データがありません
+                </div>
+              </div>
             </div>
           </div>
           </div>
@@ -169,6 +214,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import type { DesignCase, Performance } from '../../types/project';
 import NetworkViewer from '../network/NetworkViewer.vue';
+import NetworkHighlightViewer from '../network/NetworkHighlightViewer.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { calculationApi } from '../../utils/api';
 import { useProjectStore } from '../../stores/projectStore';
@@ -287,7 +333,11 @@ const isStructureMismatch = computed(() => {
 const energyData = ref<{
   total_energy: number;
   partial_energies: { [key: string]: number };
+  match_matrix?: { [key: string]: number }; // "perfId1_perfId2": value の形式
 } | null>(null);
+
+// 展開された性能ID
+const expandedPerfId = ref<string | null>(null);
 
 
 // セクションの開閉状態（基本情報は常に開いているので除外）
@@ -456,7 +506,8 @@ async function fetchEnergyData() {
     );
     energyData.value = {
       total_energy: response.data.total_energy,
-      partial_energies: response.data.partial_energies
+      partial_energies: response.data.partial_energies,
+      match_matrix: response.data.match_matrix
     };
   } catch (error) {
     console.error('エネルギー計算エラー:', error);
@@ -487,6 +538,70 @@ function getPerformanceImportance(perfId: string | number): number {
   }
   return 0.0; // デフォルト値
 }
+
+// 性能カードの展開/折りたたみ
+function togglePerfExpand(perfId: string) {
+  if (expandedPerfId.value === perfId) {
+    expandedPerfId.value = null;
+  } else {
+    expandedPerfId.value = perfId;
+  }
+}
+
+// 特定性能のMatch詳細を取得
+function getMatchDetailsForPerformance(perfId: string): Array<{perfName: string, perfImportance: number, match: number, energy: number}> {
+  if (!energyData.value?.match_matrix || !props.designCase.performance_values) {
+    return [];
+  }
+  
+  const matrix = energyData.value.match_matrix;
+  const details: Array<{perfName: string, perfImportance: number, match: number, energy: number}> = [];
+  
+  // 他の性能とのMatch値を取得
+  const perfIds = Object.keys(props.designCase.performance_values);
+  
+  // match_matrixからnode_idを取得するための変換が必要
+  // バックエンドはnode_idで保存しているが、フロントエンドはperformance_idを使用
+  // ここでは簡易的にperformance_idのペアを検索
+  
+  for (const otherPerfId of perfIds) {
+    if (otherPerfId === perfId) continue; // 自分自身は除外
+    
+    // Match値を取得（キーは "perfId1_perfId2" の形式）
+    let matchValue = 0;
+    
+    // 両方の順番を試す（対称行列なので）
+    const key1 = `${perfId}_${otherPerfId}`;
+    const key2 = `${otherPerfId}_${perfId}`;
+    
+    if (matrix[key1] !== undefined) {
+      matchValue = matrix[key1];
+    } else if (matrix[key2] !== undefined) {
+      matchValue = matrix[key2];
+    }
+    
+    // 重要度を取得
+    const qi = getPerformanceImportance(perfId);
+    const qj = getPerformanceImportance(otherPerfId);
+    
+    // r = √2(1-Match)
+    const r = Math.sqrt(2 * (1 - matchValue));
+    
+    // 部分部分エネルギー = qi * qj / r / 2 （両方向で計算されるので半分）
+    const partialEnergy = r > 0 ? (qi * qj) / r / 2 : 0;
+    
+    details.push({
+      perfName: getPerformanceName(otherPerfId),
+      perfImportance: qj,
+      match: matchValue,
+      energy: partialEnergy
+    });
+  }
+  
+  // エネルギーの大きい順にソート
+  return details.sort((a, b) => b.energy - a.energy);
+}
+
 
 // 設計案が変更されたらエネルギーを再計算
 watch(() => props.designCase.id, () => {
@@ -785,16 +900,43 @@ onMounted(() => {
 .remaining-height-item {
   display: flex;
   flex-direction: column;
-  padding: 12px;
   background: #f8f9fa;
   border-radius: 8px;
   border-left: 4px solid #667eea;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+}
+
+.remaining-height-item.expanded {
+  background: #f0f4ff;
+}
+
+.remaining-height-content {
+  padding: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.remaining-height-content:hover {
+  background: rgba(102, 126, 234, 0.05);
 }
 
 .remaining-height-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.expand-indicator {
+  font-size: 12px;
+  color: #667eea;
+  transition: transform 0.3s ease;
 }
 
 .remaining-height-name {
@@ -813,6 +955,20 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 12px;
   font-size: 13px;
+}
+
+/* ホバー時の追加効果 */
+.remaining-height-content:hover .expand-indicator {
+  transform: scale(1.2);
+  color: #5566dd;
+}
+
+.remaining-height-item:not(.expanded) .remaining-height-content:hover::after {
+  opacity: 1;
+}
+
+.remaining-height-item {
+  position: relative;
 }
 
 .remaining-value {
@@ -986,5 +1142,92 @@ onMounted(() => {
 .structure-warning svg {
   flex-shrink: 0;
   color: #f39c12;
+}
+
+/* エネルギー詳細展開部分 */
+.energy-details {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border-top: 1px solid rgba(102, 126, 234, 0.2);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.energy-details h5 {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+}
+
+.match-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.match-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 12px;
+  border: 1px solid #e0e0e0;
+}
+
+.match-perf-name {
+  flex: 1;
+  font-weight: 500;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.match-perf-importance {
+  font-size: 11px;
+  color: #666;
+  font-weight: 400;
+}
+
+.match-value {
+  color: #666;
+  font-family: 'Courier New', monospace;
+}
+
+.partial-partial-energy {
+  color: #ff6b6b;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+}
+
+.no-matches {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+  padding: 16px;
+  font-style: italic;
+}
+
+/* 性能ネットワークビュー */
+.perf-network-view {
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  overflow: hidden;
 }
 </style>

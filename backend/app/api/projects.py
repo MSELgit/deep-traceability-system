@@ -1196,6 +1196,32 @@ def export_project(
         DesignCaseModel.project_id == project_id
     ).all()
     
+    # デバッグ情報を出力
+    print(f"\n==== EXPORT DEBUG INFO ====")
+    print(f"Project: {project.name} (ID: {project_id})")
+    print(f"Number of design cases: {len(design_cases)}")
+    
+    for i, d in enumerate(design_cases):
+        print(f"\nDesign Case {i+1}: {d.name} (ID: {d.id})")
+        print(f"  - mountain_position_json: {d.mountain_position_json}")
+        print(f"  - utility_vector_json: {d.utility_vector_json}")
+        print(f"  - partial_heights_json: {d.partial_heights_json}")
+        print(f"  - performance_weights_json: {d.performance_weights_json}")
+        
+        if d.mountain_position_json:
+            pos = json.loads(d.mountain_position_json)
+            print(f"  - Mountain Position: x={pos.get('x')}, y={pos.get('y')}, z={pos.get('z')}, H={pos.get('H')}")
+        else:
+            print(f"  - Mountain Position: NULL")
+            
+        if d.utility_vector_json:
+            vec = json.loads(d.utility_vector_json)
+            print(f"  - Utility Vector: {len(vec)} entries")
+        else:
+            print(f"  - Utility Vector: NULL")
+    
+    print(f"==========================\n")
+    
     # エクスポートデータ構築
     export_data = {
         "project": {
@@ -1203,7 +1229,8 @@ def export_project(
             "name": project.name,
             "description": project.description,
             "created_at": project.created_at.isoformat(),
-            "updated_at": project.updated_at.isoformat()
+            "updated_at": project.updated_at.isoformat(),
+            "two_axis_plots": project.two_axis_plots
         },
         "stakeholders": [
             {
@@ -1266,6 +1293,12 @@ def export_project(
             } for d in design_cases
         ]
     }
+    
+    # JSONファイルに保存（デバッグ用）
+    output_file = "/Users/shimamon/deep-traceability-system/backend/exported_project.json"
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(export_data, f, ensure_ascii=False, indent=2)
+    print(f"\nExported data saved to: {output_file}")
     
     return export_data
 
@@ -1364,12 +1397,21 @@ def import_project(
         # ニーズ・性能関係インポート
         for relation in import_data.get("need_performance_relations", []):
             if relation["need_id"] in need_id_map and relation["performance_id"] in performance_id_map:
+                # 効用関数JSON内のIDも更新
+                utility_json = relation.get("utility_function_json")
+                if utility_json:
+                    utility_data = json.loads(utility_json)
+                    # need_idとperformance_idを新しいIDに更新
+                    utility_data["need_id"] = need_id_map[relation["need_id"]]
+                    utility_data["performance_id"] = performance_id_map[relation["performance_id"]]
+                    utility_json = json.dumps(utility_data)
+                
                 db_relation = NeedPerformanceRelationModel(
                     project_id=new_project_id,
                     need_id=need_id_map[relation["need_id"]],
                     performance_id=performance_id_map[relation["performance_id"]],
                     direction=relation["direction"],
-                    utility_function_json=relation.get("utility_function_json")
+                    utility_function_json=utility_json
                 )
                 db.add(db_relation)
         
@@ -1418,6 +1460,23 @@ def import_project(
             else:
                 network_json = '{"nodes": [], "edges": []}'
             
+            # performance_snapshotのIDも更新
+            if design_case.get("performance_snapshot_json"):
+                old_snapshot = json.loads(design_case["performance_snapshot_json"])
+                new_snapshot = []
+                for perf in old_snapshot:
+                    if perf["id"] in performance_id_map:
+                        new_perf = perf.copy()
+                        new_perf["id"] = performance_id_map[perf["id"]]
+                        # parent_idも更新
+                        if perf.get("parent_id") and perf["parent_id"] in performance_id_map:
+                            new_perf["parent_id"] = performance_id_map[perf["parent_id"]]
+                        new_snapshot.append(new_perf)
+                performance_snapshot_json = json.dumps(new_snapshot)
+            else:
+                performance_snapshot_json = "[]"
+            
+            
             db_design_case = DesignCaseModel(
                 id=new_id,
                 project_id=new_project_id,
@@ -1426,7 +1485,7 @@ def import_project(
                 color=design_case.get("color", "#3357FF"),
                 performance_values_json=performance_values_json,
                 network_json=network_json,
-                performance_snapshot_json=design_case.get("performance_snapshot_json", "[]"),
+                performance_snapshot_json=performance_snapshot_json,
                 mountain_position_json=design_case.get("mountain_position_json"),
                 utility_vector_json=design_case.get("utility_vector_json"),
                 partial_heights_json=design_case.get("partial_heights_json"),
@@ -1434,7 +1493,45 @@ def import_project(
             )
             db.add(db_design_case)
         
+        # 2軸プロット設定のインポート（性能IDをマッピング）
+        if "two_axis_plots" in project_data and project_data["two_axis_plots"]:
+            old_plots = project_data["two_axis_plots"]
+            new_plots = []
+            for i, plot in enumerate(old_plots):
+                new_plot = plot.copy()
+                skip_plot = False
+                
+                # x軸の性能IDをマッピング（特殊値は除く）
+                if plot.get("x_axis") and plot["x_axis"] not in ["__height", "__energy"]:
+                    if plot["x_axis"] in performance_id_map:
+                        new_plot["x_axis"] = performance_id_map[plot["x_axis"]]
+                    else:
+                        # マッピングできない場合はプロットをスキップ
+                        skip_plot = True
+                
+                # y軸の性能IDをマッピング（特殊値は除く）
+                if plot.get("y_axis") and plot["y_axis"] not in ["__height", "__energy"]:
+                    if plot["y_axis"] in performance_id_map:
+                        new_plot["y_axis"] = performance_id_map[plot["y_axis"]]
+                    else:
+                        # マッピングできない場合はプロットをスキップ
+                        skip_plot = True
+                
+                # 両軸がマッピング可能な場合のみ追加
+                if not skip_plot:
+                    new_plots.append(new_plot)
+            db_project.two_axis_plots = new_plots
+        
         db.commit()
+        
+        # プロジェクトを再読み込み（リレーション含む）
+        db.refresh(db_project)
+        
+        # 全設計案を取得（山の座標計算とエネルギー計算で共通使用）
+        all_design_cases = db.query(DesignCaseModel).filter(
+            DesignCaseModel.project_id == new_project_id
+        ).all()
+        
         
         # 作成したプロジェクトを返す
         return {
@@ -1442,7 +1539,8 @@ def import_project(
             "name": db_project.name,
             "description": db_project.description,
             "created_at": db_project.created_at.isoformat(),
-            "updated_at": db_project.updated_at.isoformat()
+            "updated_at": db_project.updated_at.isoformat(),
+            "needs_recalculation": True  # 山の座標とエネルギーの再計算が必要
         }
         
     except Exception as e:
@@ -1676,3 +1774,37 @@ def get_h_max(project_id: str, db: Session = Depends(get_db)):
         print(f"❌ H_max calculation error: {str(e)}")
         print(f"   Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"H_max calculation failed: {str(e)}")
+
+
+# ========== 2軸プロット ==========
+
+@router.get("/{project_id}/two-axis-plots", response_model=List[dict])
+def get_two_axis_plots(project_id: str, db: Session = Depends(get_db)):
+    """プロジェクトの2軸プロット設定を取得"""
+    project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    return project.two_axis_plots
+
+
+@router.put("/{project_id}/two-axis-plots")
+def update_two_axis_plots(
+    project_id: str, 
+    plots: List[dict], 
+    db: Session = Depends(get_db)
+):
+    """プロジェクトの2軸プロット設定を更新"""
+    project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # 各プロットのバリデーション
+    for plot in plots:
+        if 'id' not in plot or 'x_axis' not in plot or 'y_axis' not in plot:
+            raise HTTPException(status_code=400, detail="Each plot must have id, x_axis, and y_axis")
+    
+    project.two_axis_plots = plots
+    db.commit()
+    
+    return {"message": "Two-axis plots updated successfully", "plots": plots}

@@ -471,7 +471,6 @@ function handleNetworkSave() {
   // 新規作成時のみperformance_snapshotを追加
   if (!isEdit.value) {
     data.performance_snapshot = currentProject.value?.performances || [];
-    console.log(data.performance_snapshot);
   }
 
   emit('save', data);

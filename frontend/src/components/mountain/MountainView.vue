@@ -170,39 +170,6 @@ const casePoints = new Map<string, THREE.Mesh>();
 // 設計案一覧
 const designCases = computed(() => {
   const cases = currentProject.value?.design_cases || [];
-  
-  // デバッグ: 現在の性能ツリーと各設計案のスナップショットを表示
-  console.log('=== 性能ツリーとスナップショット比較 ===');
-  
-  // 現在の性能ツリー
-  const currentPerfs = currentProject.value?.performances || [];
-  console.log('【現在の性能ツリー】');
-  console.log(`  全性能数: ${currentPerfs.length}`);
-  console.log('  ツリー順（最初の10件）:');
-  const sortedCurrent = sortPerformancesByTree(currentPerfs);
-  sortedCurrent.slice(0, 10).forEach((p, idx) => {
-    console.log(`    ${idx + 1}. ${p.name} (ID: ${p.id}, is_leaf: ${p.is_leaf}, level: ${p.level})`);
-  });
-  
-  console.log('\n【各設計案のスナップショット】');
-  cases.forEach(dc => {
-    console.log(`設計案: ${dc.name}`);
-    if (dc.performance_snapshot) {
-      console.log(`  スナップショット件数: ${dc.performance_snapshot.length}`);
-      console.log('  最初の5件:');
-      dc.performance_snapshot.slice(0, 5).forEach((p, idx) => {
-        console.log(`    ${idx + 1}. ${p.name} (ID: ${p.id}, is_leaf: ${p.is_leaf}, level: ${p.level})`);
-      });
-      
-      // 末端性能のみ
-      const leafOnly = dc.performance_snapshot.filter(p => p.is_leaf);
-      console.log(`  末端性能数: ${leafOnly.length}`);
-    } else {
-      console.log('  スナップショット: なし');
-    }
-  });
-  console.log('=============================\n');
-  
   return cases;
 });
 
@@ -368,7 +335,6 @@ watch(() => currentProject.value?.id, async (newId) => {
   if (designCases.value.length > 0) {
     const hasUnpositionedCases = designCases.value.some(dc => !dc.mountain_position);
     if (hasUnpositionedCases) {
-      console.log('座標未計算の設計案があるため自動再計算を実行します');
       await handleRecalculate();
     }
   }
@@ -480,13 +446,16 @@ async function loadAndRenderCases() {
 }
 
 function updateMountainView() {
+
   // 既存のポイントを削除
   casePoints.forEach(mesh => scene.remove(mesh));
   casePoints.clear();
 
   // 各設計案をポイントとして配置
   designCases.value.forEach((designCase: DesignCase) => {
-    if (!designCase.mountain_position) return;
+    if (!designCase.mountain_position) {
+      return;
+    }
     
     const geometry = new THREE.SphereGeometry(0.4, 16, 16);
     const material = new THREE.MeshPhongMaterial({
@@ -686,6 +655,9 @@ async function handleRecalculate() {
     
     // プロジェクトを再取得して最新の座標を反映
     await projectStore.loadProject(currentProject.value.id);
+    
+    // 再取得後の座標を確認
+    await loadAndRenderCases();
     
     setTimeout(() => {
       recalculateMessage.value = '';

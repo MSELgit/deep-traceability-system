@@ -21,10 +21,6 @@ def calculate_energy_for_case(
             "match_matrix": Dict[str, float]  # Match値の行列
         }
     """
-    print(f"\n{'='*60}")
-    print(f"エネルギー計算開始: {design_case.name}")
-    print(f"{'='*60}")
-    
     network = design_case.network
     if not network or 'nodes' not in network or 'edges' not in network:
         print("ネットワーク情報が不足しています")
@@ -37,16 +33,6 @@ def calculate_energy_for_case(
     # 性能ノードと特性ノードを抽出
     performance_nodes = [n for n in network['nodes'] if n['layer'] == 1]
     property_nodes = [n for n in network['nodes'] if n['layer'] == 2]
-    
-    print(f"\n性能ノード数: {len(performance_nodes)}")
-    for pnode in performance_nodes:
-        print(f"  - {pnode['label']} (id: {pnode['id']})")
-    
-    print(f"\n特性ノード数: {len(property_nodes)}")
-    for pnode in property_nodes[:5]:  # 最初の5個だけ表示
-        print(f"  - {pnode['label']} (id: {pnode['id']})")
-    if len(property_nodes) > 5:
-        print(f"  ... 他 {len(property_nodes) - 5} 個")
     
     # 性能ノードIDのマッピング
     perf_id_to_node = {n['id']: n for n in performance_nodes}
@@ -63,9 +49,6 @@ def calculate_energy_for_case(
     n = len(performance_nodes)
     match_matrix = {}
     
-    print(f"\n\nMatch値の計算")
-    print(f"{'-'*50}")
-    
     for i in range(n):
         for j in range(i + 1, n):
             perf_i = performance_nodes[i]
@@ -76,35 +59,25 @@ def calculate_energy_for_case(
                 perf_i['id'], perf_j['id'], property_nodes, edge_weights
             )
             
-            print(f"\n{perf_i['label']} vs {perf_j['label']}:")
-            print(f"  共通特性数: {len(connected_properties)}")
-            
             # Match_ijを計算
             match_value = calculate_match(
                 perf_i['id'], perf_j['id'], connected_properties, edge_weights
             )
-            
-            print(f"  Match値: {match_value:.6f}")
             
             key = f"{perf_i['id']}_{perf_j['id']}"
             match_matrix[key] = match_value
     
     # 性能の重要度を取得（performance_weightsから）
     importance = {}
-    print(f"\n\n重要度（合計票数）")
-    print(f"{'-'*50}")
     
     if hasattr(design_case, 'performance_weights') and design_case.performance_weights:
-        print("  performance_weightsから読み込み:")
         for perf_node in performance_nodes:
             perf_id = perf_node.get('performance_id')
             if perf_id:
                 weight = design_case.performance_weights.get(perf_id, 0.0)
                 importance[perf_node['id']] = weight
-                print(f"    {perf_node['label']} (perf_id: {perf_id}): {weight:.1f}")
             else:
                 importance[perf_node['id']] = 0.0
-                print(f"    {perf_node['label']} (perf_idなし): 0.0")
     else:
         # デフォルトの重要度
         print("  performance_weightsが設定されていません。デフォルト値(0.0)を使用します。")
@@ -115,15 +88,11 @@ def calculate_energy_for_case(
     partial_energies = {}
     total_energy = 0.0
     
-    print(f"\n\nエネルギー計算")
-    print(f"{'-'*50}")
-    
     # 各性能から見た部分エネルギーを計算
     for i in range(n):
         perf_i = performance_nodes[i]
         partial_energy = 0.0
         
-        print(f"\n{perf_i['label']}の部分エネルギー計算:")
         
         for j in range(n):
             if i != j:
@@ -146,12 +115,10 @@ def calculate_energy_for_case(
                     q_j = importance[perf_j['id']]
                     energy_contribution = (q_i * q_j) / r_ij
                     partial_energy += energy_contribution
-                    print(f"  vs {perf_j['label']}: Match={match_value:.4f}, r={r_ij:.4f}, E_ij={energy_contribution:.4f}")
         
         # 部分エネルギーは他のすべての性能との相互作用の半分
         partial_energies[perf_i['id']] = partial_energy / 2.0
         total_energy += partial_energy / 2.0
-        print(f"  → 部分エネルギー: {partial_energy / 2.0:.4f}")
     
     # performance_idでの部分エネルギーも作成
     partial_energies_by_perf_id = {}
@@ -159,18 +126,25 @@ def calculate_energy_for_case(
         if 'performance_id' in perf_node:
             partial_energies_by_perf_id[perf_node['performance_id']] = partial_energies[perf_node['id']]
     
-    print(f"\n\n計算結果")
-    print(f"{'-'*50}")
-    print(f"総合エネルギー: {total_energy:.6f}")
-    print(f"\n部分エネルギー（performance_id）:")
-    for perf_id, energy in partial_energies_by_perf_id.items():
-        print(f"  {perf_id}: {energy:.6f}")
+    # performance_idベースのmatch_matrixも作成
+    match_matrix_by_perf_id = {}
+    node_id_to_perf_id = {n['id']: n.get('performance_id') for n in performance_nodes if n.get('performance_id')}
+    
+    for key, value in match_matrix.items():
+        node_ids = key.split('_')
+        if len(node_ids) == 2:
+            perf_id1 = node_id_to_perf_id.get(node_ids[0])
+            perf_id2 = node_id_to_perf_id.get(node_ids[1])
+            if perf_id1 and perf_id2:
+                new_key = f"{perf_id1}_{perf_id2}"
+                match_matrix_by_perf_id[new_key] = value
     
     return {
         "total_energy": total_energy,
         "partial_energies": partial_energies_by_perf_id,
         "partial_energies_by_node": partial_energies,
-        "match_matrix": match_matrix,
+        "match_matrix": match_matrix_by_perf_id,  # performance_idベースに変更
+        "match_matrix_by_node": match_matrix,  # node_idベースも保持
         "importance": importance
     }
 
@@ -248,13 +222,10 @@ def calculate_match(
             sqrt_abs = np.sqrt(np.abs(product))
             contribution = sign * sqrt_abs
             sum_term += contribution
-            print(f"    特性{prop_id}: W_i={w_prop_to_i:.4f}, W_j={w_prop_to_j:.4f}, contribution={contribution:.4f}")
     
     # -tanh{log(3/2) * sum}
     log_factor = np.log(3.0 / 2.0)
     match_value = -np.tanh(log_factor * sum_term)
-    
-    print(f"    Σ = {sum_term:.4f}, -tanh(log(3/2) * Σ) = {match_value:.4f}")
     
     return match_value
 

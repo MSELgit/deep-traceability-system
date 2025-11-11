@@ -190,6 +190,12 @@ class DesignCase(DesignCaseBase):
         return super().model_validate(data, **kwargs)
 
 
+class TwoAxisPlot(BaseModel):
+    id: str
+    x_axis: str  # performance_id or "__height" or "__energy"
+    y_axis: str  # performance_id or "__height" or "__energy"
+
+
 class ProjectBase(BaseModel):
     name: str
     description: Optional[str] = None
@@ -209,6 +215,7 @@ class Project(ProjectBase):
     design_cases: List[DesignCase] = []
     stakeholder_need_relations: List[StakeholderNeedRelation] = []
     need_performance_relations: List[NeedPerformanceRelation] = []
+    two_axis_plots: List[TwoAxisPlot] = []
     
     class Config:
         from_attributes = True

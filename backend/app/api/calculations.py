@@ -51,9 +51,17 @@ def calculate_project_mountain(project_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Project not found")
     
     try:
+        print(f"\n[API] Calculating mountain positions for project {project_id}")
         positions = calculate_mountain_positions(project, db)
+        
+        # 計算結果をデータベースにコミット
+        db.commit()
+        print(f"[API] Mountain positions calculated and saved for {len(positions)} cases")
+        
         return positions
     except Exception as e:
+        db.rollback()
+        print(f"[API] Error calculating mountain positions: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Calculation error: {str(e)}")
 
 

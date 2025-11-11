@@ -647,7 +647,6 @@ function getDiamondPoints(cx: number, cy: number): string {
 // 初期化
 onMounted(() => {
   if (props.modelValue) {
-    console.log('NetworkEditor initialized with:', JSON.parse(JSON.stringify(props.modelValue)));
     network.value = JSON.parse(JSON.stringify(props.modelValue));
     
     // 既存のエッジにweightがない場合はデフォルト値を設定
@@ -658,7 +657,6 @@ onMounted(() => {
     });
   }
   if (network.value.nodes.length === 0) {
-    console.log('  ノードが0個なので性能ノードを追加（emitなし）');
     ensurePerformanceNodes(false); // emitしない
   } else {
     ensurePerformanceNodes(false); // emitしない
@@ -675,12 +673,10 @@ watch(() => props.modelValue, (newVal, oldVal) => {
   
   // 自分自身の更新による変更は無視
   if (isUpdating.value) {
-    console.log('isUpdating=true なのでスキップ');
     return;
   }
   
   if (newVal) {
-    console.log('NetworkEditor modelValue changed:', JSON.parse(JSON.stringify(newVal)));
     // 新しいデータをコピー
     network.value = JSON.parse(JSON.stringify(newVal));
     
@@ -702,17 +698,14 @@ watch(() => props.performances, (newVal) => {
   );
   
   if (!hasPerfNodes) {
-    console.log('  性能ノードがないので追加します');
     ensurePerformanceNodes();
   } else {
-    console.log('  性能ノードは既に存在します');
   }
 }, { deep: true });
 
 // 性能ノードが存在することを保証
 function ensurePerformanceNodes(shouldEmit: boolean = true) {
   if (props.performances.length === 0) {
-    console.log('performances が空なのでスキップ');
     return;
   }
   
@@ -1226,7 +1219,6 @@ function clearAll() {
 // 更新を通知
 function emitUpdate() {
   isUpdating.value = true;
-  console.log('Emitting network update:', JSON.parse(JSON.stringify(network.value)));
   emit('update:modelValue', JSON.parse(JSON.stringify(network.value)));
   
   // nextTickで更新フラグを下げる（Vueの更新サイクルが完了してから）

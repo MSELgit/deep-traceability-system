@@ -31,8 +31,6 @@ def calculate_network_kernel(networks: List[Dict]) -> np.ndarray:
     n = len(networks)
     K = np.zeros((n, n))
     
-    print(f"\n=== Network Kernel Calculation ===")
-    print(f"Number of design cases: {n}")
     
     for i in range(n):
         for j in range(i, n):
@@ -48,10 +46,6 @@ def calculate_network_kernel(networks: List[Dict]) -> np.ndarray:
             K[i, j] = similarity
             K[j, i] = similarity
             
-            if i != j:
-                print(f"  Design case {i} vs {j}: similarity = {similarity:.4f}")
-    
-    print(f"Kernel matrix:\n{K}")
     return K
 
 
@@ -68,16 +62,12 @@ def circular_mds_one_iteration(K: np.ndarray, initial_theta: np.ndarray = None) 
     """
     n = K.shape[0]
     
-    print(f"\n=== Circular MDS (1 iteration) ===")
-    
     # 初期角度の設定
     if initial_theta is None:
         # 等間隔に配置
         theta = np.linspace(0, 2 * np.pi, n, endpoint=False)
-        print(f"Initial θ (equally spaced): {np.degrees(theta)}")
     else:
         theta = initial_theta.copy()
-        print(f"Initial θ (provided): {np.degrees(theta)}")
     
     # 1反復: カーネル行列から理想的な内積を計算し、角度を更新
     # 簡易的な更新: K[i,j] ≈ cos(θ_i - θ_j) を満たすようにθを調整
@@ -95,7 +85,6 @@ def circular_mds_one_iteration(K: np.ndarray, initial_theta: np.ndarray = None) 
     eigenvalues = eigenvalues[idx]
     eigenvectors = eigenvectors[:, idx]
     
-    print(f"Top 2 eigenvalues: {eigenvalues[:2]}")
     
     # 上位2つの固有ベクトルから2D座標を計算
     if n > 1:
@@ -110,8 +99,6 @@ def circular_mds_one_iteration(K: np.ndarray, initial_theta: np.ndarray = None) 
     else:
         theta_updated = np.array([0.0])
     
-    print(f"Updated θ (degrees): {np.degrees(theta_updated)}")
-    print(f"Updated θ (radians): {theta_updated}")
     
     return theta_updated
 
@@ -143,6 +130,7 @@ def distribute_votes_to_needs(project: ProjectModel) -> Dict[str, float]:
     """ステークホルダーの票をニーズに按分"""
     need_votes = {}
     
+    
     for stakeholder in project.stakeholders:
         related_needs = [r.need_id for r in project.stakeholder_need_relations 
                         if r.stakeholder_id == stakeholder.id]
@@ -163,6 +151,7 @@ def distribute_votes_to_performances(project: ProjectModel, need_votes: Dict[str
         {(performance_id, need_id): {'up': float, 'down': float}}
     """
     performance_need_votes = {}
+    
     
     for need_id, votes in need_votes.items():
         related_perfs = [r for r in project.need_performance_relations 
@@ -254,6 +243,8 @@ def calculate_utility_vector(
     performance_values = json.loads(design_case.performance_values_json)
     utility_vector = {}
     
+    relations_with_utility = 0
+    
     for rel in performance_need_relations:
         key = (rel.performance_id, rel.need_id)
         
@@ -269,6 +260,8 @@ def calculate_utility_vector(
             # 効用関数未設定 → 部分標高0
             utility_vector[key] = 0.0
             continue
+        
+        relations_with_utility += 1
         
         # 効用関数で補間
         utility_func = json.loads(rel.utility_function_json)
@@ -289,6 +282,7 @@ def calculate_utility_vector(
             points = utility_func.get('points', [])
             utility = interpolate_utility_function(points, perf_value)
             utility_vector[key] = utility
+    
     
     return utility_vector
 
@@ -363,11 +357,13 @@ def calculate_mountain_positions(
         weight = votes['up'] + votes['down']
         performance_need_weights_all[key] = weight
     
+    
     # 効用関数が設定されているペアの重み（標高計算用）
     performance_need_weights = {}
     for key, weight in performance_need_weights_all.items():
         if key in relations_with_utility:
             performance_need_weights[key] = weight
+    
     
     # 性能-ニーズ関係のリストを取得
     need_perf_relations = project.need_performance_relations
@@ -421,38 +417,28 @@ def calculate_mountain_positions(
     if networks is not None and len(networks) > 0:
         
         # WLカーネル計算（反復1回）
-        print(f"\n[1/3] Computing WL Kernel...")
+        # print(f"\n[1/3] Computing WL Kernel...")
         K = compute_wl_kernel(networks, iterations=int(1))
-        print(f"Kernel matrix shape: {K.shape}")
-        print(f"Kernel matrix:\n{K}")
+        # print(f"Kernel matrix shape: {K.shape}")
+        # print(f"Kernel matrix:\n{K}")
 
         # カーネル→距離行列変換
-        print(f"\n[2/3] Converting kernel to distance matrix...")
+        #print(f"\n[2/3] Converting kernel to distance matrix...")
         distance_matrix = kernel_to_distance(K)
-        print(f"Distance matrix shape: {distance_matrix.shape}")
-        print(f"Distance matrix:\n{distance_matrix}")
+        #print(f"Distance matrix shape: {distance_matrix.shape}")
+        #print(f"Distance matrix:\n{distance_matrix}")
         
         # 円環MDS（並列版、n_init=500）
-        print(f"\n[3/3] Computing Circular MDS (n_init=500, parallel)...")
+        #print(f"\n[3/3] Computing Circular MDS (n_init=500, parallel)...")
         circular_mds_angles, circular_stress = circular_mds_parallel(
             distance_matrix,
             n_init=500,
             n_workers=None  # 自動でCPU数に応じて設定
         )
         
-        print(f"Circular Stress: {circular_stress:.6f}")
-        print(f"\nθ values for each design case:")
-        for i, theta in enumerate(circular_mds_angles):
-            case_name = design_cases[i].name if i < len(design_cases) else f"Case {i}"
-            print(f"  {case_name:30s}: θ = {theta:.4f} rad ({np.degrees(theta):7.2f}°)")
         
         mds_angles = circular_mds_angles
     else:
-        # 既存のMDS処理（効用ベクトルベース）
-        print("\n" + "="*60)
-        print("UTILITY-BASED MDS (Fallback)")
-        print("="*60 + "\n")
-    
         # 既存のMDS処理（効用ベクトルベース）
         if len(design_cases) == 1:
             # 1案のみの場合は原点に配置
@@ -504,10 +490,6 @@ def calculate_mountain_positions(
         
         x = r * np.cos(theta)
         z = r * np.sin(theta)
-
-        print(f"\n  {case.name:30s}:")
-        print(f"    H = {H:.4f}, θ = {theta:.4f} rad ({np.degrees(theta):7.2f}°)")
-        print(f"    → (x={x:.4f}, y={y:.4f}, z={z:.4f})")
         
         # 設計案のスナップショットから末端性能を取得（部分標高計算用）
         if case.performance_snapshot:
@@ -550,12 +532,6 @@ def calculate_mountain_positions(
                     partial_heights[perf_id] = 0.0
                 partial_heights[perf_id] += partial_h
         
-        # デバッグ：性能ごとの重要度を出力
-        print(f"\n    性能ごとの重要度（合計票数）:")
-        for perf_id, weight in performance_total_weights.items():
-            perf = next((p for p in project.performances if p.id == perf_id), None)
-            perf_name = perf.name if perf else perf_id
-            print(f"      {perf_name}: {weight:.1f}")
         
         positions.append({
             'case_id': case.id,
@@ -567,6 +543,7 @@ def calculate_mountain_positions(
             'partial_heights': partial_heights,  # 性能ごとの部分標高
             'performance_weights': performance_total_weights  # 性能ごとの合計票数
         })
+        
     
     # 7. データベースに座標を保存（オプション）
     for i, case in enumerate(design_cases):

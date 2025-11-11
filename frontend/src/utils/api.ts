@@ -186,6 +186,7 @@ export const projectApi = {
   delete: (id: string) => apiClient.delete(`/projects/${id}`),
   export: (id: string) => apiClient.get(`/projects/${id}/export`),
   import: (data: any) => apiClient.post<Project>('/projects/import', data),
+  updateTwoAxisPlots: (id: string, plots: any[]) => apiClient.put(`/projects/${id}/two-axis-plots`, plots),
 };
 
 export default apiClient;

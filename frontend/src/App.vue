@@ -32,7 +32,6 @@ onMounted(() => {
 function onModeSelected(mode: 'local' | 'web') {
   localStorage.setItem('appMode', mode)
   modeSelected.value = true
-  console.log(`アプリケーションモード: ${mode}`)
 }
 </script>
 
