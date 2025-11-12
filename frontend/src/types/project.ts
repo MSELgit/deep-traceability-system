@@ -219,6 +219,8 @@ export interface NetworkNode {
   x: number; // キャンバス上の座標
   y: number;
   performance_id?: string; // layer=1の場合のみ
+  x3d?: number;
+  y3d?: number;
 }
 
 /**

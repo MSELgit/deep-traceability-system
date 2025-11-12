@@ -89,11 +89,7 @@
 
           <!-- 立体OPM -->
           <div v-show="activeTab === 'opm3d'">
-            <div class="opm3d-container">
-              <h3>立体OPM（Object Process Methodology）</h3>
-              <p>3D空間でのオブジェクト・プロセス・関係の可視化</p>
-              <!-- ここに立体OPMコンポーネントを追加 -->
-            </div>
+            <OPM3DView />
           </div>
 
           <!-- ネットワークデモ -->
@@ -124,6 +120,7 @@ import PerformanceManagement from '../components/performance/PerformanceManageme
 import NeedPerformanceMatrix from '../components/matrix/NeedPerformanceMatrix.vue'
 import NetworkDemo from '../components/demo/NetworkDemo.vue'
 import MountainView from '../components/mountain/MountainView.vue'
+import OPM3DView from '../components/opm3d/OPM3DView.vue'
 
 import TwoAxisEvaluation from '../components/twoaxis/TwoAxisEvaluation.vue'
 

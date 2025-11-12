@@ -110,6 +110,8 @@ class NetworkNode(BaseModel):
     x: float
     y: float
     performance_id: Optional[str] = None
+    x3d: Optional[float] = None
+    y3d: Optional[float] = None
 
 
 class NetworkEdge(BaseModel):
