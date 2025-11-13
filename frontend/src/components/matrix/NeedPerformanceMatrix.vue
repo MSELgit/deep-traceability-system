@@ -33,10 +33,7 @@
       <div class="toolbar-divider"></div>
       
       <button class="toolbar-button matrix-image-button" @click="downloadMatrixAsImageVertical">
-        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M10.5 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
-          <path d="M2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2zm.5 2a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm9 2.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/>
-        </svg>
+        <FontAwesomeIcon :icon="['fas', 'camera']" />
         <span>マトリクスを画像ダウンロード</span>
       </button>
       
@@ -297,22 +294,12 @@
     </div>
 
     <!-- 分解不足の性能分析（マトリクスの外） -->
-    <div v-if="(insufficientDecompositionAnalysis.rootLevel.length > 0 || insufficientDecompositionAnalysis.leafLevel.length > 0) && needs.length > 0 && (stakeholders.length > 0 || performances.length > 0)" class="decomposition-analysis">
-      <h3>分解不足の性能分析</h3>
-      <div v-if="insufficientDecompositionAnalysis.rootLevel.length > 0" class="analysis-item">
-        <strong>大項目でニーズに対して分解が足りていない性能:</strong>
-        <span class="performance-list">{{ insufficientDecompositionAnalysis.rootLevel.join('、') }}</span>
-      </div>
-      <div v-if="insufficientDecompositionAnalysis.leafLevel.length > 0" class="analysis-item">
-        <strong>小項目（末端）でニーズに対して分解が足りていない性能:</strong>
-        <span class="performance-list">{{ insufficientDecompositionAnalysis.leafLevel.join('、') }}</span>
-      </div>
-      <div class="analysis-action">
-        <button class="decompose-button" @click="navigateToPerformanceManagement">
-          分解する
-        </button>
-      </div>
-    </div>
+    <DecompositionAnalysis
+      :analysis="insufficientDecompositionAnalysis"
+      :needsCount="needs.length"
+      :hasStakeholdersOrPerformances="stakeholders.length > 0 || performances.length > 0"
+      @navigate-to-performance="navigateToPerformanceManagement"
+    />
 
     <!-- 効用関数設定モーダル -->
     <div v-if="showUtilityModal && currentUtilityEdit" class="modal-overlay" @click="closeUtilityModal">
@@ -359,10 +346,7 @@
                 @click.stop="handleDownloadGraph"
                 title="グラフを画像でダウンロード"
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M10.5 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
-                  <path d="M2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2zm.5 2a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm9 2.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/>
-                </svg>
+                <FontAwesomeIcon :icon="['fas', 'camera']" />
               </button>
               <!-- エクセルボタン: 効用関数が登録されている場合のみ表示 -->
               <button 
@@ -399,10 +383,7 @@
                 @click.stop="handleCopyUtilityFunction"
                 title="効用関数をコピー"
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
-                  <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
-                </svg>
+                <FontAwesomeIcon :icon="['fas', 'copy']" />
               </button>
               <!-- ペーストボタン: 同じ性能にコピーしたデータがある場合のみ表示 -->
               <button 
@@ -411,31 +392,21 @@
                 @click.stop="handlePasteUtilityFunction"
                 title="効用関数を貼り付け"
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
-                  <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
-                  <path d="M5 7h6v1H5V7zm0 2h6v1H5V9zm0 2h6v1H5v-1z"/>
-                </svg>
+                <FontAwesomeIcon :icon="['fas', 'paste']" />
               </button>
               <button 
                 class="graph-control-button info-button" 
                 @click.stop="toggleInfoPopup"
                 title="使い方"
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                  <text x="8" y="12" font-size="12" font-weight="bold" text-anchor="middle" fill="currentColor">i</text>
-                </svg>
+                <FontAwesomeIcon :icon="['fas', 'info-circle']" />
               </button>
               <button 
                 class="graph-control-button settings-button" 
                 @click.stop="toggleSettingsPopup"
                 title="設定"
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6.5 8a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z"/>
-                  <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/>
-                </svg>
+                <FontAwesomeIcon :icon="['fas', 'gear']" />
               </button>
               
               <!-- インフォポップアップ -->
@@ -797,6 +768,8 @@ import noUiSlider from 'nouislider'
 import 'nouislider/dist/nouislider.css'
 import type { target as noUiSliderTarget } from 'nouislider'
 import * as XLSX from 'xlsx'
+import DecompositionAnalysis from './DecompositionAnalysis.vue'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const emit = defineEmits<{
   navigateToPerformance: []
@@ -3055,6 +3028,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   width: auto;
   border-collapse: collapse;
   background: white;
+  color: #333;
 }
 
 .corner-cell {
