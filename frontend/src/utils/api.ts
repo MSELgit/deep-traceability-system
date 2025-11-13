@@ -11,7 +11,9 @@ import type {
   StakeholderNeedRelation,
   NeedPerformanceRelation,
   HHIResult,
-  MountainPosition
+  MountainPosition,
+  NetworkNode,
+  NetworkEdge
 } from '../types/project';
 
 const apiClient: AxiosInstance = axios.create({
@@ -187,6 +189,39 @@ export const projectApi = {
   export: (id: string) => apiClient.get(`/projects/${id}/export`),
   import: (data: any) => apiClient.post<Project>('/projects/import', data),
   updateTwoAxisPlots: (id: string, plots: any[]) => apiClient.put(`/projects/${id}/two-axis-plots`, plots),
+};
+
+// ネットワーク個別操作API (3D編集用)
+// ネットワーク個別操作API (3D編集用)
+export const networkApi = {
+  // ノード操作
+  getNodes: (projectId: string, caseId: string) => 
+    apiClient.get<NetworkNode[]>(`/projects/${projectId}/design-cases/${caseId}/nodes`),
+  
+  createNode: (projectId: string, caseId: string, data: Partial<NetworkNode>) => 
+    apiClient.post<NetworkNode>(`/projects/${projectId}/design-cases/${caseId}/nodes`, data),
+  
+  updateNode: (projectId: string, caseId: string, nodeId: string, data: Partial<NetworkNode>) => 
+    apiClient.put(`/projects/${projectId}/design-cases/${caseId}/nodes/${nodeId}`, data),
+  
+  updateNode3DPosition: (projectId: string, caseId: string, nodeId: string, x3d: number, y3d: number) => 
+    apiClient.put(`/projects/${projectId}/design-cases/${caseId}/nodes/${nodeId}/position3d`, { x3d, y3d }),
+
+  deleteNode: (projectId: string, caseId: string, nodeId: string) => 
+    apiClient.delete(`/projects/${projectId}/design-cases/${caseId}/nodes/${nodeId}`),
+
+  // エッジ操作
+  getEdges: (projectId: string, caseId: string) => 
+    apiClient.get<NetworkEdge[]>(`/projects/${projectId}/design-cases/${caseId}/edges`),
+  
+  createEdge: (projectId: string, caseId: string, data: Partial<NetworkEdge>) => 
+    apiClient.post<NetworkEdge>(`/projects/${projectId}/design-cases/${caseId}/edges`, data),
+  
+  updateEdge: (projectId: string, caseId: string, edgeId: string, data: Partial<NetworkEdge>) => 
+    apiClient.put(`/projects/${projectId}/design-cases/${caseId}/edges/${edgeId}`, data),
+
+  deleteEdge: (projectId: string, caseId: string, edgeId: string) => 
+    apiClient.delete(`/projects/${projectId}/design-cases/${caseId}/edges/${edgeId}`),
 };
 
 export default apiClient;

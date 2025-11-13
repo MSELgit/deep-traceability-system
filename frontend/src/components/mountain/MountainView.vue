@@ -213,62 +213,6 @@ const leafPerformances = computed(() => {
   return sorted.filter(p => p.is_leaf);
 });
 
-// 設計案の性能値行列を取得（末端性能ごと）
-const getPerformanceValues = (designCase: DesignCase): (number | string)[] => {
-  if (!designCase.performance_values) return [];
-  
-  return leafPerformances.value.map(perf => {
-    const value = designCase.performance_values![perf.id];
-    return value !== undefined ? value : '-';
-  });
-};
-
-// 性能値行列の文字列表現
-const formatPerformanceValues = (designCase: DesignCase): string => {
-  const values = getPerformanceValues(designCase);
-  if (values.length === 0) return '[]';
-  return '[' + values.map(v => typeof v === 'number' ? v.toFixed(2) : v).join(', ') + ']';
-};
-
-// 設計案の部分標高行列を取得（性能ごとに集計）
-const getPartialHeights = (designCase: DesignCase): number[] => {
-  // バックエンドから返された部分標高を使用
-  if (designCase.partial_heights) {
-    return leafPerformances.value.map(perf => 
-      designCase.partial_heights![perf.id] || 0
-    );
-  }
-  
-  // フォールバック: partial_heightsがない場合
-  if (!designCase.utility_vector || !currentProject.value) return [];
-  
-  // 性能ごとに効用値を集計（簡易版 - 重みなし）
-  const partialHeightsByPerf = new Map<string, number>();
-  
-  Object.entries(designCase.utility_vector).forEach(([key, utilityValue]) => {
-    const [perfId, needId] = key.split('_');
-    const currentHeight = partialHeightsByPerf.get(perfId) || 0;
-    partialHeightsByPerf.set(perfId, currentHeight + (utilityValue as number));
-  });
-  
-  return leafPerformances.value.map(perf => 
-    partialHeightsByPerf.get(perf.id) || 0
-  );
-};
-
-// 部分標高行列の文字列表現
-const formatPartialHeights = (designCase: DesignCase): string => {
-  const heights = getPartialHeights(designCase);
-  if (heights.length === 0) return '[]';
-  return '[' + heights.map(h => h.toFixed(2)).join(', ') + ']';
-};
-
-// 性能IDから性能名を取得
-const getPerformanceName = (perfId: string): string => {
-  const perf = leafPerformances.value.find(p => p.id === perfId);
-  return perf ? perf.name : perfId.substring(0, 8) + '...';
-};
-
 // ソート済み設計案
 const sortedDesignCases = computed(() => {
   const cases = [...designCases.value];
@@ -401,8 +345,6 @@ function initThreeJS() {
   mountainMesh = new THREE.Mesh(geometry, material);
   mountainMesh.rotation.x = 0; // 半球を上向きに
   scene.add(mountainMesh);
-
-  // 頂点にポイントを追加（y = 10の位置）
   const peakGeometry = new THREE.SphereGeometry(0.3, 16, 16);
   const peakMaterial = new THREE.MeshPhongMaterial({
     color: 0xff4444,
@@ -410,7 +352,7 @@ function initThreeJS() {
     emissiveIntensity: 0.3
   });
   const peakPoint = new THREE.Mesh(peakGeometry, peakMaterial);
-  peakPoint.position.set(0, 10, 0); // 半球の頂点（y = 半径 = 10）
+  peakPoint.position.set(0, 10, 0);
   scene.add(peakPoint);
 
   // グリッド
@@ -446,10 +388,15 @@ async function loadAndRenderCases() {
 }
 
 function updateMountainView() {
-
-  // 既存のポイントを削除
   casePoints.forEach(mesh => scene.remove(mesh));
   casePoints.clear();
+  const energies = designCases.value
+    .filter(dc => dc.mountain_position && dc.utility_vector)
+    .map(dc => Object.values(dc.utility_vector!).reduce((sum: number, val) => sum + (val as number), 0));
+  
+  const minEnergy = Math.min(...energies) || 0;
+  const maxEnergy = Math.max(...energies) || 1;
+  const energyRange = maxEnergy - minEnergy || 1;
 
   // 各設計案をポイントとして配置
   designCases.value.forEach((designCase: DesignCase) => {
@@ -457,7 +404,17 @@ function updateMountainView() {
       return;
     }
     
-    const geometry = new THREE.SphereGeometry(0.4, 16, 16);
+    // エネルギーを計算（utility_vectorの合計値）
+    let energy = 0;
+    if (designCase.utility_vector) {
+      energy = Object.values(designCase.utility_vector).reduce((sum: number, val) => sum + (val as number), 0);
+    }
+    
+    // エネルギーに基づいて球体のサイズを決定（0.2〜1.0の範囲）
+    const normalizedEnergy = (energy - minEnergy) / energyRange;
+    const sphereRadius = 0.35 + normalizedEnergy * 0.4;
+    
+    const geometry = new THREE.SphereGeometry(sphereRadius, 16, 16);
     const material = new THREE.MeshPhongMaterial({
       color: designCase.color || '#3357FF',
       emissive: designCase.color || '#3357FF',
@@ -471,7 +428,7 @@ function updateMountainView() {
       designCase.mountain_position.z
     );
     
-    mesh.userData = { caseId: designCase.id };
+    mesh.userData = { caseId: designCase.id, energy: energy };
     scene.add(mesh);
     casePoints.set(designCase.id, mesh);
   });

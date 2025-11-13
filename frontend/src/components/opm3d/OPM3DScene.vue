@@ -33,15 +33,16 @@ let mouse: THREE.Vector2;
 
 // ノードメッシュのマップ
 const nodeMeshes = new Map<string, THREE.Mesh>();
-const edgeLines = new Map<string, THREE.Mesh>();
+const edgeLines = new Map<string, THREE.Group>();
+const nodeLabels = new Map<string, THREE.Sprite>();
 
 // 3D座標のマップ
 const node3DPositions = new Map<string, { x3d: number; y3d: number }>();
 
-// グリッド配置の設定
+// グリッド配置の設定（Y軸を上方向に変更）
 const GRID_CONFIG = {
   CELL_SIZE: 2,
-  DEFAULT_LAYER_Z: {
+  DEFAULT_LAYER_Y: {
     1: 15,
     2: 10,
     3: 5,
@@ -65,9 +66,9 @@ onUnmounted(() => {
   }
 });
 
-// ネットワークが変更されたら再描画
+// ネットワークが変更されたら再描画（既存の3D座標は保持）
 watch(() => props.network, () => {
-  initializeNode3DPositions();
+  initializeNode3DPositionsPreservingExisting();
   renderNetwork();
 }, { deep: true });
 
@@ -96,18 +97,23 @@ function initThreeJS() {
   // カメラ
   const width = containerRef.value.clientWidth;
   const height = containerRef.value.clientHeight;
-  camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-  camera.position.set(20, 20, 20);
+  camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 500);
+  camera.position.set(30, 30, 30); // 山の可視化と同様の位置
 
   // レンダラー
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(width, height);
   containerRef.value.appendChild(renderer.domElement);
 
-  // コントロール
+  // コントロール（山の可視化と同様のシンプル設定）
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
+  controls.minDistance = 5;
+  controls.maxDistance = 200;
+  
+  // ターゲットをレイヤー2と3の中間（Y=7.5）に設定
+  controls.target.set(0, 7.5, 0);
 
   // ライト
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -151,10 +157,8 @@ function animate() {
 function initializeNode3DPositions() {
   const { nodes } = props.network;
   
-  // 既存の座標をクリア（再配置のため）
   node3DPositions.clear();
   
-  // レイヤーごとにグループ化
   const layerGroups = new Map<number, NetworkNode[]>();
   for (const node of nodes) {
     if (!layerGroups.has(node.layer)) {
@@ -163,9 +167,39 @@ function initializeNode3DPositions() {
     layerGroups.get(node.layer)!.push(node);
   }
   
-  // 各レイヤーごとに配置
   for (const [layer, layerNodes] of layerGroups) {
     layoutNodesInLayer(layerNodes);
+  }
+}
+
+/**
+ * 既存の3D座標を保持しながらノードの3D座標を初期化
+ */
+function initializeNode3DPositionsPreservingExisting() {
+  const { nodes } = props.network;
+  const existingPositions = new Map(node3DPositions);
+  node3DPositions.clear();
+  
+  const layerGroups = new Map<number, NetworkNode[]>();
+  for (const node of nodes) {
+    if (!layerGroups.has(node.layer)) {
+      layerGroups.set(node.layer, []);
+    }
+    layerGroups.get(node.layer)!.push(node);
+  }
+  
+  for (const [layer, layerNodes] of layerGroups) {
+    for (const node of layerNodes) {
+      const existingPosition = existingPositions.get(node.id);
+      if (existingPosition) {
+        node3DPositions.set(node.id, existingPosition);
+      } else if ((node as any).x3d !== undefined && (node as any).y3d !== undefined && 
+                 (node as any).x3d !== null && (node as any).y3d !== null) {
+        node3DPositions.set(node.id, { x3d: (node as any).x3d, y3d: (node as any).y3d });
+      } else {
+        layoutNodesInLayer([node]);
+      }
+    }
   }
 }
 
@@ -175,13 +209,14 @@ function initializeNode3DPositions() {
 function layoutNodesInLayer(nodes: NetworkNode[]) {
   const nodeCount = nodes.length;
   
-  if (nodeCount === 0) return;
+  if (nodeCount === 0) {
+    return;
+  }
   
   // 平面サイズに基づいて配置エリアを決定
   const planeSize = props.planeSize || 30;
   const usableArea = planeSize * 0.7; // 平面の70%を使用
   const maxRadius = usableArea / 2;
-  
   nodes.forEach((node, index) => {
     // 既に3D座標が設定されている場合はスキップ
     if (node3DPositions.has(node.id)) {
@@ -190,14 +225,14 @@ function layoutNodesInLayer(nodes: NetworkNode[]) {
     
     let x3d, y3d;
     let attempts = 0;
-    const maxAttempts = 50;
+    const maxAttempts = 100; // 試行回数を増加
     
     // 重複を避けるポアソンディスク配置的なアプローチ
     do {
       if (nodeCount <= 4) {
-        // 少数の場合：円周上に配置
+        // 少数の場合：円周上に配置（半径を調整）
         const angle = (index / nodeCount) * 2 * Math.PI;
-        const radius = Math.min(maxRadius * 0.6, 8);
+        const radius = Math.min(maxRadius * 0.7, 10); // 半径を増加
         x3d = Math.cos(angle) * radius;
         y3d = Math.sin(angle) * radius;
       } else if (nodeCount <= 12) {
@@ -226,9 +261,9 @@ function layoutNodesInLayer(nodes: NetworkNode[]) {
         x3d = Math.cos(angle) * radius;
         y3d = Math.sin(angle) * radius;
         
-        // 中心付近を避ける
-        if (radius < maxRadius * 0.2) {
-          const minRadius = maxRadius * 0.2;
+        // 中心付近を避ける（最小半径を増加）
+        if (radius < maxRadius * 0.3) {
+          const minRadius = maxRadius * 0.3;
           x3d = Math.cos(angle) * minRadius;
           y3d = Math.sin(angle) * minRadius;
         }
@@ -236,14 +271,13 @@ function layoutNodesInLayer(nodes: NetworkNode[]) {
       
       attempts++;
     } while (isTooClose(x3d, y3d, node.id) && attempts < maxAttempts);
-    
     node3DPositions.set(node.id, { x3d, y3d });
   });
 }
 
 // 他のノードと近すぎるかチェック
 function isTooClose(x: number, y: number, currentNodeId: string): boolean {
-  const minDistance = 3;
+  const minDistance = 4; // 最小距離を増加
   
   for (const [nodeId, position] of node3DPositions) {
     if (nodeId === currentNodeId) continue;
@@ -278,11 +312,21 @@ function renderNetwork() {
 }
 
 function clearScene() {
-  // 既存のノード・エッジを削除
+  // 既存のノード・エッジ・ラベルを削除
   nodeMeshes.forEach(mesh => scene.remove(mesh));
-  edgeLines.forEach(edgeMesh => scene.remove(edgeMesh));
+  edgeLines.forEach(edgeGroup => scene.remove(edgeGroup));
+  nodeLabels.forEach(label => {
+    scene.remove(label);
+    // テクスチャとマテリアルを破棄
+    if (label.material.map) {
+      label.material.map.dispose();
+    }
+    label.material.dispose();
+  });
+  
   nodeMeshes.clear();
   edgeLines.clear();
+  nodeLabels.clear();
   
   // レイヤー平面も削除
   const objectsToRemove = scene.children.filter(
@@ -303,7 +347,7 @@ function renderLayerPlanes() {
       continue;
     }
     
-    const z = getLayerZ(layer);
+    const y = getLayerY(layer);
     
     // 平面
     const planeGeometry = new THREE.PlaneGeometry(size, size);
@@ -314,14 +358,15 @@ function renderLayerPlanes() {
       side: THREE.DoubleSide
     });
     const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-    plane.position.z = z;
+    plane.position.y = y;
+    plane.rotation.x = -Math.PI / 2; // X軸周りに-90度回転してXZ平面（水平）にする
     plane.userData.isLayerPlane = true;
     scene.add(plane);
     
     // グリッド
     const gridHelper = new THREE.GridHelper(size, size, 0xcccccc, 0xeeeeee);
-    gridHelper.rotation.x = Math.PI / 2;
-    gridHelper.position.z = z;
+    // Y軸が上方向の場合、GridHelperはデフォルトでXZ平面に配置されるので回転不要
+    gridHelper.position.y = y;
     gridHelper.userData.isGridHelper = true;
     scene.add(gridHelper);
   }
@@ -340,7 +385,7 @@ function renderNodes() {
     const position = node3DPositions.get(node.id);
     if (!position) continue;
     
-    const z = getLayerZ(node.layer);
+    const y = getLayerY(node.layer);
     
     // 球体ジオメトリ
     const geometry = new THREE.SphereGeometry(0.4, 16, 16);
@@ -348,11 +393,19 @@ function renderNodes() {
       color: props.layerColors[node.layer]
     });
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(position.x3d, position.y3d, z);
+    mesh.position.set(position.x3d, y, -position.y3d); // 2D座標のy3dを反転してZ軸にマッピング
     mesh.userData.node = node;
     
     scene.add(mesh);
     nodeMeshes.set(node.id, mesh);
+    
+    // ノードラベルを作成
+    const label = createNodeLabel(node.label, '#000');
+    label.position.set(position.x3d, y + 0.75, -position.y3d); // 2D座標のy3dを反転してZ軸にマッピング
+    label.userData.nodeId = node.id;
+    
+    scene.add(label);
+    nodeLabels.set(node.id, label);
   }
 }
 
@@ -380,49 +433,163 @@ function renderEdges() {
     
     if (!sourcePosition || !targetPosition) continue;
     
-    const sourceZ = getLayerZ(sourceNode.layer);
-    const targetZ = getLayerZ(targetNode.layer);
+    const sourceY = getLayerY(sourceNode.layer);
+    const targetY = getLayerY(targetNode.layer);
     
     const points = [
-      new THREE.Vector3(sourcePosition.x3d, sourcePosition.y3d, sourceZ),
-      new THREE.Vector3(targetPosition.x3d, targetPosition.y3d, targetZ)
+      new THREE.Vector3(sourcePosition.x3d, sourceY, -sourcePosition.y3d),
+      new THREE.Vector3(targetPosition.x3d, targetY, -targetPosition.y3d)
     ];
     
     // エッジを太い円柱として作成（クリック可能にするため）
     const direction = new THREE.Vector3().subVectors(points[1], points[0]);
     const distance = direction.length();
-    const geometry = new THREE.CylinderGeometry(0.05, 0.05, distance, 8);
     
+    // ノードの半径を考慮して矢印の終点を調整
+    const nodeRadius = 1.5; // SphereGeometryの半径と一致
+    const adjustedDistance = distance - nodeRadius; // ターゲットノードの表面で停止
+    
+    // エッジグループを作成（円柱+矢印先端）
+    const edgeGroup = new THREE.Group();
+    
+    // 1. 円柱（エッジ本体）
+    const arrowLength = Math.min(adjustedDistance * 0.15, 1.0); // 矢印の長さ（最大1.0）
+    const cylinderLength = adjustedDistance; // 円柱の長さ
+    const cylinderGeometry = new THREE.CylinderGeometry(0.05, 0.05, cylinderLength, 8);
     const material = new THREE.MeshBasicMaterial({
       color: getEdgeColor(edge.weight)
     });
+    const cylinder = new THREE.Mesh(cylinderGeometry, material);
     
-    const cylinder = new THREE.Mesh(geometry, material);
+    // 2. 円錐（矢印先端）
+    const arrowRadius = 0.15; // 矢印の太さ
+    const arrowGeometry = new THREE.ConeGeometry(arrowRadius, arrowLength, 8);
+    const arrowMaterial = new THREE.MeshBasicMaterial({
+      color: getEdgeColor(edge.weight)
+    });
+    const arrowHead = new THREE.Mesh(arrowGeometry, arrowMaterial);
     
-    // 円柱を正しい位置と向きに配置
-    const midpoint = new THREE.Vector3().addVectors(points[0], points[1]).multiplyScalar(0.5);
-    cylinder.position.copy(midpoint);
+    // 円柱の位置設定（始点から中央へ）
+    cylinder.position.set(0, -(arrowLength * 0.5), 0);
     
-    // 円柱の向きを設定
+    // 矢印の位置設定（ターゲットノードの表面で停止）
+    const arrowOffset = cylinderLength * 0.5;
+    arrowHead.position.set(0, arrowOffset, 0);
+    
+    // グループに追加
+    edgeGroup.add(cylinder);
+    edgeGroup.add(arrowHead);
+    
+    // グループ全体の位置と向きを設定（ソースノードの表面から開始）
     const normalizedDirection = direction.clone().normalize();
-    cylinder.lookAt(points[1]);
-    cylinder.rotateX(Math.PI / 2);
+    const sourceOffset = normalizedDirection.clone().multiplyScalar(nodeRadius);
+    const adjustedStart = points[0].clone().add(sourceOffset);
+    const adjustedEnd = points[1].clone().sub(normalizedDirection.clone().multiplyScalar(nodeRadius));
     
-    cylinder.userData.edge = edge;
+    const adjustedMidpoint = new THREE.Vector3().addVectors(adjustedStart, adjustedEnd).multiplyScalar(0.5);
+    edgeGroup.position.copy(adjustedMidpoint);
     
-    scene.add(cylinder);
-    edgeLines.set(edge.id, cylinder);
+    // グループ全体の向きを設定
+    edgeGroup.lookAt(adjustedEnd);
+    edgeGroup.rotateX(Math.PI / 2);
+    
+    // クリック検出用のメタデータ
+    edgeGroup.userData.edge = edge;
+    cylinder.userData.edge = edge; // 円柱部分もクリック可能
+    arrowHead.userData.edge = edge; // 矢印部分もクリック可能
+    
+    scene.add(edgeGroup);
+    edgeLines.set(edge.id, edgeGroup);
   }
 }
 
 /**
- * レイヤーのZ座標を取得
+ * レイヤーのY座標を取得（Y軸が上方向）
  */
-function getLayerZ(layer: number): number {
-  const baseZ = GRID_CONFIG.DEFAULT_LAYER_Z[layer as keyof typeof GRID_CONFIG.DEFAULT_LAYER_Z];
-  // レイヤー間隔を適用
-  const normalizedZ = (layer - 1) * props.layerSpacing;
-  return 15 - normalizedZ; // 上から下に
+function getLayerY(layer: number): number {
+  const baseY = GRID_CONFIG.DEFAULT_LAYER_Y[layer as keyof typeof GRID_CONFIG.DEFAULT_LAYER_Y];
+  
+  // デフォルト位置を使用（レイヤー間隔プロパティは無視）
+  if (baseY !== undefined) {
+    return baseY;
+  }
+  
+  // fallback: レイヤー番号から計算
+  return 15 - (layer - 1) * 5; // 固定間隔5
+}
+
+/**
+ * ノードラベル用のスプライトを作成
+ */
+function createNodeLabel(text: string, color: string = '#000'): THREE.Sprite {
+  // 高解像度対応の係数
+  const dpr = window.devicePixelRatio || 1;
+  const resolution = Math.min(dpr * 2, 4); // 最大4倍まで
+  
+  // キャンバスでテキストを描画
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d')!;
+  
+  // フォント設定（高解像度対応）
+  const fontSize = 24 * resolution;
+  const fontFamily = 'Arial, sans-serif';
+  context.font = `bold ${fontSize}px ${fontFamily}`;
+  
+  // テキストサイズを測定
+  const metrics = context.measureText(text);
+  const textWidth = metrics.width;
+  const textHeight = fontSize;
+  
+  // キャンバスサイズを設定（パディング込み、高解像度対応）
+  const padding = 8 * resolution;
+  canvas.width = textWidth + padding * 2;
+  canvas.height = textHeight + padding * 2;
+  
+  // 高解像度設定
+  canvas.style.width = `${canvas.width / resolution}px`;
+  canvas.style.height = `${canvas.height / resolution}px`;
+  
+  // 背景を透明に設定
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // テキスト描画の設定（高解像度対応）
+  context.scale(resolution, resolution);
+  context.font = `bold ${24}px ${fontFamily}`; // 元のサイズで指定
+  context.fillStyle = color;
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  
+  // アンチエイリアス設定
+  context.imageSmoothingEnabled = true;
+  if (context.imageSmoothingQuality) {
+    context.imageSmoothingQuality = 'high';
+  }
+  
+  // テキストを描画
+  context.fillText(text, (canvas.width / resolution) / 2, (canvas.height / resolution) / 2);
+  
+  // テクスチャとマテリアルを作成
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  texture.generateMipmaps = true;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  
+  const material = new THREE.SpriteMaterial({ 
+    map: texture,
+    transparent: true,
+    alphaTest: 0.1,
+    depthTest: false  // 常に手前に表示
+  });
+  
+  const sprite = new THREE.Sprite(material);
+  
+  // スプライトのサイズを調整（3D空間でのサイズ）
+  const scale = 0.8;
+  const aspectRatio = textWidth / textHeight;
+  sprite.scale.set(scale * aspectRatio, scale, 1);
+  
+  return sprite;
 }
 
 /**
@@ -452,14 +619,14 @@ function updateVisibility() {
     mesh.visible = props.visibleLayers.includes(node.layer);
   });
   
-  edgeLines.forEach((line, edgeId) => {
-    const edge = line.userData.edge as NetworkEdge;
+  edgeLines.forEach((edgeGroup) => {
+    const edge = edgeGroup.userData.edge as NetworkEdge;
     const sourceNode = props.network.nodes.find(n => n.id === edge.source_id);
     const targetNode = props.network.nodes.find(n => n.id === edge.target_id);
     
     if (sourceNode && targetNode) {
-      line.visible = props.visibleLayers.includes(sourceNode.layer) && 
-                     props.visibleLayers.includes(targetNode.layer);
+      edgeGroup.visible = props.visibleLayers.includes(sourceNode.layer) && 
+                         props.visibleLayers.includes(targetNode.layer);
     }
   });
 }
@@ -491,19 +658,25 @@ function onCanvasClick(event: MouseEvent) {
     return;
   }
   
-  // エッジとの交差判定
-  const lineArray = Array.from(edgeLines.values());
-  const edgeIntersects = raycaster.intersectObjects(lineArray);
+  // エッジとの交差判定（グループ内のオブジェクトも含む）
+  const edgeObjects: THREE.Object3D[] = [];
+  edgeLines.forEach(edgeGroup => {
+    edgeObjects.push(edgeGroup);
+    edgeGroup.children.forEach(child => edgeObjects.push(child));
+  });
+  const edgeIntersects = raycaster.intersectObjects(edgeObjects);
   
   if (edgeIntersects.length > 0) {
-    const selectedEdge = edgeIntersects[0].object as THREE.Mesh;
-    const edge = selectedEdge.userData.edge as NetworkEdge;
-    emit('edgeSelected', edge);
-    
-    // ハイライト表示
-    highlightEdge(selectedEdge);
-    clearNodeHighlight();
-    return;
+    const selectedObject = edgeIntersects[0].object;
+    const edge = selectedObject.userData.edge as NetworkEdge;
+    if (edge) {
+      emit('edgeSelected', edge);
+      
+      // ハイライト表示
+      highlightEdge(selectedObject);
+      clearNodeHighlight();
+      return;
+    }
   }
   
   // 何も選択されていない場合
@@ -527,13 +700,25 @@ function highlightNode(mesh: THREE.Mesh) {
 /**
  * エッジをハイライト
  */
-function highlightEdge(edgeMesh: THREE.Mesh) {
+function highlightEdge(selectedObject: THREE.Object3D) {
   // 全エッジを通常色に戻す
   clearEdgeHighlight();
   
-  // 選択エッジを赤にする
-  const material = edgeMesh.material as THREE.MeshBasicMaterial;
-  material.color.set(0xff0000);
+  // 選択されたオブジェクトがエッジグループの子要素の場合、そのグループ全体をハイライト
+  const edge = selectedObject.userData.edge as NetworkEdge;
+  if (edge) {
+    edgeLines.forEach(edgeGroup => {
+      if (edgeGroup.userData.edge?.id === edge.id) {
+        // グループ内の全ての子要素を赤にする
+        edgeGroup.children.forEach(child => {
+          if (child instanceof THREE.Mesh) {
+            const material = child.material as THREE.MeshBasicMaterial;
+            material.color.set(0xff0000);
+          }
+        });
+      }
+    });
+  }
 }
 
 /**
@@ -551,11 +736,39 @@ function clearNodeHighlight() {
  * エッジハイライトをクリア
  */
 function clearEdgeHighlight() {
-  edgeLines.forEach((edgeMesh) => {
-    const edge = edgeMesh.userData.edge as NetworkEdge;
-    const material = edgeMesh.material as THREE.MeshBasicMaterial;
-    material.color.set(getEdgeColor(edge.weight));
+  edgeLines.forEach((edgeGroup) => {
+    const edge = edgeGroup.userData.edge as NetworkEdge;
+    const color = getEdgeColor(edge.weight);
+    
+    // グループ内の全ての子要素を元の色に戻す
+    edgeGroup.children.forEach(child => {
+      if (child instanceof THREE.Mesh) {
+        const material = child.material as THREE.MeshBasicMaterial;
+        material.color.set(color);
+      }
+    });
   });
+}
+
+/**
+ * 全てのエッジをシーンから削除
+ */
+function clearEdges() {
+  edgeLines.forEach((edgeGroup) => {
+    scene.remove(edgeGroup);
+    // グループ内の全ての子要素のジオメトリとマテリアルを破棄
+    edgeGroup.children.forEach(child => {
+      if (child instanceof THREE.Mesh) {
+        child.geometry.dispose();
+        if (Array.isArray(child.material)) {
+          child.material.forEach(mat => mat.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
+    });
+  });
+  edgeLines.clear();
 }
 
 /**
@@ -573,9 +786,119 @@ function getNodePosition(nodeId: string) {
   return node3DPositions.get(nodeId) || { x3d: null, y3d: null };
 }
 
+/**
+ * ノードの3D座標を更新（親コンポーネント用）
+ */
+function updateNodePosition(nodeId: string, x3d: number, y3d: number) {
+  // マップを更新
+  node3DPositions.set(nodeId, { x3d, y3d });
+  
+  // nodeMeshesマップからノードオブジェクトを取得
+  const nodeObject = nodeMeshes.get(nodeId);
+  const labelObject = nodeLabels.get(nodeId);
+  
+  if (nodeObject) {
+    // ノードのレイヤーを取得してY座標も正しく設定
+    const node = nodeObject.userData.node as NetworkNode;
+    const layerY = getLayerY(node.layer);
+    
+    nodeObject.position.x = x3d;
+    nodeObject.position.y = layerY; // レイヤーのY座標
+    nodeObject.position.z = -y3d; // 2D座標のy3dを反転してZ軸にマッピング
+    
+    // ラベルの位置も更新
+    if (labelObject) {
+      labelObject.position.x = x3d;
+      labelObject.position.y = layerY + 0.75; // ノードの上に配置
+      labelObject.position.z = -y3d; // 2D座標のy3dを反転してZ軸にマッピング
+    }
+  }
+  
+  // エッジを再描画（古いエッジを削除してから新しいエッジを描画）
+  clearEdges();
+  renderEdges();
+}
+
+/**
+ * ノードラベルを更新（親コンポーネント用）
+ */
+function updateNodeLabel(nodeId: string, newLabel: string) {
+  const labelObject = nodeLabels.get(nodeId);
+  
+  if (labelObject) {
+    // 古いラベルを削除
+    scene.remove(labelObject);
+    if (labelObject.material.map) {
+      labelObject.material.map.dispose();
+    }
+    labelObject.material.dispose();
+    
+    // 新しいラベルを作成
+    const newLabelSprite = createNodeLabel(newLabel, '#000');
+    
+    // 位置を復元
+    newLabelSprite.position.copy(labelObject.position);
+    newLabelSprite.userData.nodeId = nodeId;
+    
+    // シーンに追加してマップを更新
+    scene.add(newLabelSprite);
+    nodeLabels.set(nodeId, newLabelSprite);
+  } else {
+    console.warn(`⚠️ ラベルオブジェクトが見つかりません: ${nodeId}`);
+  }
+}
+
+/**
+ * 保存済み座標を設定（リロード時の復元用）
+ */
+function setNodePosition(nodeId: string, x3d: number, y3d: number) {
+  node3DPositions.set(nodeId, { x3d, y3d });
+  
+  const nodeObject = nodeMeshes.get(nodeId);
+  const labelObject = nodeLabels.get(nodeId);
+  
+  if (nodeObject) {
+    // ノードのレイヤーを取得してY座標も正しく設定
+    const node = nodeObject.userData.node as NetworkNode;
+    const layerY = getLayerY(node.layer);
+    
+    nodeObject.position.x = x3d;
+    nodeObject.position.y = layerY; // レイヤーのY座標
+    nodeObject.position.z = -y3d; // 2D座標のy3dを反転してZ軸にマッピング
+    
+    if (labelObject) {
+      labelObject.position.x = x3d;
+      labelObject.position.y = layerY + 0.75; // ノードの上に配置
+      labelObject.position.z = -y3d; // 2D座標のy3dを反転してZ軸にマッピング
+    }
+  }
+}
+
+/**
+ * 一括でノード座標を設定し、最後にエッジを再描画（復元処理用）
+ */
+function setMultipleNodePositions(nodePositions: Array<{id: string, x3d: number, y3d: number}>) {
+  nodePositions.forEach(nodeData => {
+    setNodePosition(nodeData.id, nodeData.x3d, nodeData.y3d);
+  });
+  
+  clearEdges();
+  renderEdges();
+}
+
+
 // 親コンポーネントからアクセス可能にする
 defineExpose({
-  getNodePosition
+  getNodePosition,
+  updateNodePosition,
+  updateNodeLabel,
+  setNodePosition, // 新しく追加
+  setMultipleNodePositions, // 一括設定用
+  clearHighlight,
+  highlightNode,
+  highlightEdge,
+  nodeMeshes,
+  edgeLines,
 });
 </script>
 

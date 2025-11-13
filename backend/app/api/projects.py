@@ -17,6 +17,41 @@ from app.schemas.project import (
     DesignCase, DesignCaseCreate, DesignCaseUpdate, StakeholderNeedRelation, NeedPerformanceRelation,
     UtilityFunctionData, MountainPosition, NetworkStructure, NetworkNode, NetworkEdge
 )
+from pydantic import BaseModel
+from typing import Optional, Literal
+
+# 個別操作用のスキーマ
+class NetworkNodeUpdate(BaseModel):
+    label: Optional[str] = None
+    x: Optional[float] = None
+    y: Optional[float] = None
+    x3d: Optional[float] = None
+    y3d: Optional[float] = None
+
+class NetworkEdgeUpdate(BaseModel):
+    weight: Optional[float] = None
+    type: Optional[str] = None
+
+class NodePositionUpdate(BaseModel):
+    x3d: float
+    y3d: float
+
+# 作成用のスキーマ
+class NetworkNodeCreate(BaseModel):
+    label: str
+    layer: Literal[1, 2, 3, 4]
+    type: Literal['performance', 'property', 'variable', 'object', 'environment']
+    x: Optional[float] = None
+    y: Optional[float] = None
+    performance_id: Optional[str] = None
+    x3d: Optional[float] = None
+    y3d: Optional[float] = None
+
+class NetworkEdgeCreate(BaseModel):
+    source_id: str
+    target_id: str
+    weight: Optional[float] = None
+    type: str = 'type1'
 
 router = APIRouter()
 
@@ -1782,3 +1817,651 @@ def update_two_axis_plots(
     db.commit()
     
     return {"message": "Two-axis plots updated successfully", "plots": plots}
+
+
+# ========== ネットワーク個別操作 (3D編集用) ==========
+
+@router.get("/{project_id}/design-cases/{case_id}/nodes", response_model=List[NetworkNode])
+def get_network_nodes(
+    project_id: str,
+    case_id: str,
+    db: Session = Depends(get_db)
+):
+    """設計案のノード一覧を取得"""
+    design_case = db.query(DesignCaseModel).filter(
+        DesignCaseModel.id == case_id,
+        DesignCaseModel.project_id == project_id
+    ).first()
+    
+    if not design_case:
+        raise HTTPException(status_code=404, detail="Design case not found")
+    
+    if not design_case.network_json:
+        return []
+    
+    network_data = json.loads(design_case.network_json)
+    return [NetworkNode(**node) for node in network_data.get('nodes', [])]
+
+
+@router.post("/{project_id}/design-cases/{case_id}/nodes", response_model=NetworkNode)
+def create_network_node(
+    project_id: str,
+    case_id: str,
+    node_create: NetworkNodeCreate,
+    db: Session = Depends(get_db)
+):
+    """新しいノードを作成"""
+    print(f"📥 Received node_create: {node_create}")
+    print(f"📥 node_create.dict(): {node_create.dict()}")
+    
+    design_case = db.query(DesignCaseModel).filter(
+        DesignCaseModel.id == case_id,
+        DesignCaseModel.project_id == project_id
+    ).first()
+    
+    if not design_case:
+        raise HTTPException(status_code=404, detail="Design case not found")
+    
+    # ネットワークデータを取得（存在しない場合は初期化）
+    if design_case.network_json:
+        network_data = json.loads(design_case.network_json)
+    else:
+        network_data = {'nodes': [], 'edges': []}
+    
+    # 新しいノードIDを生成
+    node_id = str(uuid.uuid4())
+    
+    # ★ レイヤーに応じた2D座標のデフォルト値を設定
+    if node_create.x is None or node_create.y is None:
+        # レイヤーごとの中央Y座標（2Dキャンバス800を4分割）
+        layer_center_y = {
+            1: 100,   # 0-200の中央
+            2: 300,   # 200-400の中央
+            3: 500,   # 400-600の中央
+            4: 700    # 600-800の中央
+        }
+        
+        # 同じレイヤーの既存ノード数をカウント
+        existing_nodes_in_layer = [n for n in network_data.get('nodes', []) if n.get('layer') == node_create.layer]
+        node_count_in_layer = len(existing_nodes_in_layer)
+        
+        # X座標: レイヤー内で均等に分散（キャンバス幅1200）
+        canvas_width = 1200
+        spacing = canvas_width / (node_count_in_layer + 2)  # 両端に余白
+        default_x = spacing * (node_count_in_layer + 1)
+        
+        # Y座標: レイヤーの中央に配置（少しランダムに分散）
+        import random
+        default_y = layer_center_y[node_create.layer] + random.randint(-30, 30)
+        
+        print(f"📍 自動配置: レイヤー{node_create.layer}, X={default_x:.1f}, Y={default_y:.1f}")
+    else:
+        default_x = node_create.x
+        default_y = node_create.y
+    
+    # 新しいノードを作成
+    new_node = {
+        'id': node_id,
+        'label': node_create.label,
+        'layer': node_create.layer,
+        'type': node_create.type,
+        'x': default_x,  # ← デフォルト値を使用
+        'y': default_y,  # ← デフォルト値を使用
+        'performance_id': node_create.performance_id,
+        'x3d': node_create.x3d,
+        'y3d': node_create.y3d
+    }
+    
+    # ノードをネットワークに追加
+    if 'nodes' not in network_data:
+        network_data['nodes'] = []
+    network_data['nodes'].append(new_node)
+    
+    # ネットワークデータを保存
+    design_case.network_json = json.dumps(network_data)
+    db.commit()
+    
+    # 山の座標を再計算（既存のコード）
+    try:
+        project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
+        all_design_cases = db.query(DesignCaseModel).filter(
+            DesignCaseModel.project_id == project_id
+        ).all()
+        
+        networks = []
+        for case in all_design_cases:
+            if case.network_json:
+                network = json.loads(case.network_json)
+                networks.append(network)
+            else:
+                networks.append({'nodes': [], 'edges': []})
+        
+        from app.services.mountain_calculator import calculate_mountain_positions
+        result = calculate_mountain_positions(project, db, networks=networks)
+        positions = result['positions']
+        
+        for pos in positions:
+            case = db.query(DesignCaseModel).filter(
+                DesignCaseModel.id == pos['case_id']
+            ).first()
+            if case:
+                case.mountain_position_json = json.dumps({
+                    'x': pos['x'],
+                    'y': pos['y'],
+                    'z': pos['z'],
+                    'H': pos['H']
+                })
+                utility_vec_str_keys = {
+                    f"{k[0]}_{k[1]}": v for k, v in pos['utility_vector'].items()
+                }
+                case.utility_vector_json = json.dumps(utility_vec_str_keys)
+                case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
+                case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+        
+        db.commit()
+    except Exception as e:
+        print(f"Mountain calculation error: {e}")
+    
+    return NetworkNode(**new_node)
+
+@router.put("/{project_id}/design-cases/{case_id}/nodes/{node_id}")
+def update_network_node(
+    project_id: str,
+    case_id: str,
+    node_id: str,
+    node_update: NetworkNodeUpdate,
+    db: Session = Depends(get_db)
+):
+    """ノードの情報を更新"""
+    design_case = db.query(DesignCaseModel).filter(
+        DesignCaseModel.id == case_id,
+        DesignCaseModel.project_id == project_id
+    ).first()
+    
+    if not design_case:
+        raise HTTPException(status_code=404, detail="Design case not found")
+    
+    if not design_case.network_json:
+        raise HTTPException(status_code=404, detail="Network not found")
+    
+    network_data = json.loads(design_case.network_json)
+    node_found = False
+    
+    # ノードを更新
+    for node in network_data.get('nodes', []):
+        if node['id'] == node_id:
+            # 提供された値のみ更新
+            if node_update.label is not None:
+                node['label'] = node_update.label
+            if node_update.x is not None:
+                node['x'] = node_update.x
+            if node_update.y is not None:
+                node['y'] = node_update.y
+            if node_update.x3d is not None:
+                node['x3d'] = node_update.x3d
+            if node_update.y3d is not None:
+                node['y3d'] = node_update.y3d
+            node_found = True
+            break
+    
+    if not node_found:
+        raise HTTPException(status_code=404, detail="Node not found")
+    
+    # ネットワークデータを保存
+    design_case.network_json = json.dumps(network_data)
+    db.commit()
+    
+    # 山の座標を再計算（ネットワーク変更時）
+    try:
+        project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
+        all_design_cases = db.query(DesignCaseModel).filter(
+            DesignCaseModel.project_id == project_id
+        ).all()
+        
+        networks = []
+        for case in all_design_cases:
+            if case.network_json:
+                network = json.loads(case.network_json)
+                networks.append(network)
+            else:
+                networks.append({'nodes': [], 'edges': []})
+        
+        from app.services.mountain_calculator import calculate_mountain_positions
+        result = calculate_mountain_positions(project, db, networks=networks)
+        positions = result['positions']
+        
+        # 各設計案の座標を更新
+        for pos in positions:
+            case = db.query(DesignCaseModel).filter(
+                DesignCaseModel.id == pos['case_id']
+            ).first()
+            if case:
+                case.mountain_position_json = json.dumps({
+                    'x': pos['x'],
+                    'y': pos['y'],
+                    'z': pos['z'],
+                    'H': pos['H']
+                })
+                utility_vec_str_keys = {
+                    f"{k[0]}_{k[1]}": v for k, v in pos['utility_vector'].items()
+                }
+                case.utility_vector_json = json.dumps(utility_vec_str_keys)
+                case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
+                case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+        
+        db.commit()
+    except Exception as e:
+        print(f"Mountain calculation error: {e}")
+    
+    return {"message": "Node updated successfully"}
+
+@router.delete("/{project_id}/design-cases/{case_id}/nodes/{node_id}")
+def delete_network_node(
+    project_id: str,
+    case_id: str,
+    node_id: str,
+    db: Session = Depends(get_db)
+):
+    """ノードを削除（関連するエッジも削除）"""
+    design_case = db.query(DesignCaseModel).filter(
+        DesignCaseModel.id == case_id,
+        DesignCaseModel.project_id == project_id
+    ).first()
+    
+    if not design_case:
+        raise HTTPException(status_code=404, detail="Design case not found")
+    
+    if not design_case.network_json:
+        raise HTTPException(status_code=404, detail="Network not found")
+    
+    network_data = json.loads(design_case.network_json)
+    
+    # ノードを探す
+    node_to_delete = None
+    for node in network_data.get('nodes', []):
+        if node['id'] == node_id:
+            node_to_delete = node
+            break
+    
+    if not node_to_delete:
+        raise HTTPException(status_code=404, detail="Node not found")
+    
+    # 性能ノードは削除不可
+    if node_to_delete.get('type') == 'performance' and node_to_delete.get('performance_id'):
+        raise HTTPException(status_code=400, detail="Performance nodes cannot be deleted")
+    
+    # ノードを削除
+    network_data['nodes'] = [n for n in network_data.get('nodes', []) if n['id'] != node_id]
+    
+    # 関連するエッジも削除
+    network_data['edges'] = [
+        e for e in network_data.get('edges', [])
+        if e['source_id'] != node_id and e['target_id'] != node_id
+    ]
+    
+    # ネットワークデータを保存
+    design_case.network_json = json.dumps(network_data)
+    db.commit()
+    
+    # 山の座標を再計算
+    try:
+        project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
+        all_design_cases = db.query(DesignCaseModel).filter(
+            DesignCaseModel.project_id == project_id
+        ).all()
+        
+        networks = []
+        for case in all_design_cases:
+            if case.network_json:
+                network = json.loads(case.network_json)
+                networks.append(network)
+            else:
+                networks.append({'nodes': [], 'edges': []})
+        
+        from app.services.mountain_calculator import calculate_mountain_positions
+        result = calculate_mountain_positions(project, db, networks=networks)
+        positions = result['positions']
+        
+        for pos in positions:
+            case = db.query(DesignCaseModel).filter(
+                DesignCaseModel.id == pos['case_id']
+            ).first()
+            if case:
+                case.mountain_position_json = json.dumps({
+                    'x': pos['x'],
+                    'y': pos['y'],
+                    'z': pos['z'],
+                    'H': pos['H']
+                })
+                utility_vec_str_keys = {
+                    f"{k[0]}_{k[1]}": v for k, v in pos['utility_vector'].items()
+                }
+                case.utility_vector_json = json.dumps(utility_vec_str_keys)
+                case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
+                case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+        
+        db.commit()
+    except Exception as e:
+        print(f"Mountain calculation error: {e}")
+    
+    return {"message": "Node deleted successfully"}
+
+
+@router.delete("/{project_id}/design-cases/{case_id}/edges/{edge_id}")
+def delete_network_edge(
+    project_id: str,
+    case_id: str,
+    edge_id: str,
+    db: Session = Depends(get_db)
+):
+    """エッジを削除"""
+    design_case = db.query(DesignCaseModel).filter(
+        DesignCaseModel.id == case_id,
+        DesignCaseModel.project_id == project_id
+    ).first()
+    
+    if not design_case:
+        raise HTTPException(status_code=404, detail="Design case not found")
+    
+    if not design_case.network_json:
+        raise HTTPException(status_code=404, detail="Network not found")
+    
+    network_data = json.loads(design_case.network_json)
+    
+    # エッジを探す
+    edge_found = any(e['id'] == edge_id for e in network_data.get('edges', []))
+    
+    if not edge_found:
+        raise HTTPException(status_code=404, detail="Edge not found")
+    
+    # エッジを削除
+    network_data['edges'] = [e for e in network_data.get('edges', []) if e['id'] != edge_id]
+    
+    # ネットワークデータを保存
+    design_case.network_json = json.dumps(network_data)
+    db.commit()
+    
+    # 山の座標を再計算
+    try:
+        project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
+        all_design_cases = db.query(DesignCaseModel).filter(
+            DesignCaseModel.project_id == project_id
+        ).all()
+        
+        networks = []
+        for case in all_design_cases:
+            if case.network_json:
+                network = json.loads(case.network_json)
+                networks.append(network)
+            else:
+                networks.append({'nodes': [], 'edges': []})
+        
+        from app.services.mountain_calculator import calculate_mountain_positions
+        result = calculate_mountain_positions(project, db, networks=networks)
+        positions = result['positions']
+        
+        for pos in positions:
+            case = db.query(DesignCaseModel).filter(
+                DesignCaseModel.id == pos['case_id']
+            ).first()
+            if case:
+                case.mountain_position_json = json.dumps({
+                    'x': pos['x'],
+                    'y': pos['y'],
+                    'z': pos['z'],
+                    'H': pos['H']
+                })
+                utility_vec_str_keys = {
+                    f"{k[0]}_{k[1]}": v for k, v in pos['utility_vector'].items()
+                }
+                case.utility_vector_json = json.dumps(utility_vec_str_keys)
+                case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
+                case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+        
+        db.commit()
+    except Exception as e:
+        print(f"Mountain calculation error: {e}")
+    
+    return {"message": "Edge deleted successfully"}
+
+@router.put("/{project_id}/design-cases/{case_id}/nodes/{node_id}/position3d")
+def update_node_3d_position(
+    project_id: str,
+    case_id: str,
+    node_id: str,
+    position_update: NodePositionUpdate,
+    db: Session = Depends(get_db)
+):
+    """ノードの3D座標のみを更新（頻繁な位置更新用）"""
+    design_case = db.query(DesignCaseModel).filter(
+        DesignCaseModel.id == case_id,
+        DesignCaseModel.project_id == project_id
+    ).first()
+    
+    if not design_case:
+        raise HTTPException(status_code=404, detail="Design case not found")
+    
+    if not design_case.network_json:
+        raise HTTPException(status_code=404, detail="Network not found")
+    
+    network_data = json.loads(design_case.network_json)
+    node_found = False
+    
+    # ノードの3D座標を更新
+    for node in network_data.get('nodes', []):
+        if node['id'] == node_id:
+            node['x3d'] = position_update.x3d
+            node['y3d'] = position_update.y3d
+            node_found = True
+            break
+    
+    if not node_found:
+        raise HTTPException(status_code=404, detail="Node not found")
+    
+    # ネットワークデータを保存
+    design_case.network_json = json.dumps(network_data)
+    db.commit()
+    
+    return {"message": "Node 3D position updated successfully"}
+
+
+@router.get("/{project_id}/design-cases/{case_id}/edges", response_model=List[NetworkEdge])
+def get_network_edges(
+    project_id: str,
+    case_id: str,
+    db: Session = Depends(get_db)
+):
+    """設計案のエッジ一覧を取得"""
+    design_case = db.query(DesignCaseModel).filter(
+        DesignCaseModel.id == case_id,
+        DesignCaseModel.project_id == project_id
+    ).first()
+    
+    if not design_case:
+        raise HTTPException(status_code=404, detail="Design case not found")
+    
+    if not design_case.network_json:
+        return []
+    
+    network_data = json.loads(design_case.network_json)
+    return [NetworkEdge(**edge) for edge in network_data.get('edges', [])]
+
+
+@router.post("/{project_id}/design-cases/{case_id}/edges", response_model=NetworkEdge)
+def create_network_edge(
+    project_id: str,
+    case_id: str,
+    edge_create: NetworkEdgeCreate,
+    db: Session = Depends(get_db)
+):
+    """新しいエッジを作成"""
+    design_case = db.query(DesignCaseModel).filter(
+        DesignCaseModel.id == case_id,
+        DesignCaseModel.project_id == project_id
+    ).first()
+    
+    if not design_case:
+        raise HTTPException(status_code=404, detail="Design case not found")
+    
+    # ネットワークデータを取得（存在しない場合は初期化）
+    if design_case.network_json:
+        network_data = json.loads(design_case.network_json)
+    else:
+        network_data = {'nodes': [], 'edges': []}
+    
+    # 指定されたノードが存在するか確認
+    node_ids = {node['id'] for node in network_data.get('nodes', [])}
+    if edge_create.source_id not in node_ids:
+        raise HTTPException(status_code=400, detail="Source node not found")
+    if edge_create.target_id not in node_ids:
+        raise HTTPException(status_code=400, detail="Target node not found")
+    
+    # 新しいエッジIDを生成
+    edge_id = str(uuid.uuid4())
+    
+    # 新しいエッジを作成
+    new_edge = {
+        'id': edge_id,
+        'source_id': edge_create.source_id,
+        'target_id': edge_create.target_id,
+        'type': edge_create.type,
+        'weight': edge_create.weight
+    }
+    
+    # エッジをネットワークに追加
+    if 'edges' not in network_data:
+        network_data['edges'] = []
+    network_data['edges'].append(new_edge)
+    
+    # ネットワークデータを保存
+    design_case.network_json = json.dumps(network_data)
+    db.commit()
+    
+    # 山の座標を再計算（ネットワーク変更時）
+    try:
+        project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
+        all_design_cases = db.query(DesignCaseModel).filter(
+            DesignCaseModel.project_id == project_id
+        ).all()
+        
+        networks = []
+        for case in all_design_cases:
+            if case.network_json:
+                network = json.loads(case.network_json)
+                networks.append(network)
+            else:
+                networks.append({'nodes': [], 'edges': []})
+        
+        from app.services.mountain_calculator import calculate_mountain_positions
+        result = calculate_mountain_positions(project, db, networks=networks)
+        positions = result['positions']
+        
+        # 各設計案の座標を更新
+        for pos in positions:
+            case = db.query(DesignCaseModel).filter(
+                DesignCaseModel.id == pos['case_id']
+            ).first()
+            if case:
+                case.mountain_position_json = json.dumps({
+                    'x': pos['x'],
+                    'y': pos['y'],
+                    'z': pos['z'],
+                    'H': pos['H']
+                })
+                utility_vec_str_keys = {
+                    f"{k[0]}_{k[1]}": v for k, v in pos['utility_vector'].items()
+                }
+                case.utility_vector_json = json.dumps(utility_vec_str_keys)
+                case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
+                case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+        
+        db.commit()
+    except Exception as e:
+        print(f"Mountain calculation error: {e}")
+    
+    return NetworkEdge(**new_edge)
+
+
+@router.put("/{project_id}/design-cases/{case_id}/edges/{edge_id}")
+def update_network_edge(
+    project_id: str,
+    case_id: str,
+    edge_id: str,
+    edge_update: NetworkEdgeUpdate,
+    db: Session = Depends(get_db)
+):
+    """エッジの情報を更新"""
+    design_case = db.query(DesignCaseModel).filter(
+        DesignCaseModel.id == case_id,
+        DesignCaseModel.project_id == project_id
+    ).first()
+    
+    if not design_case:
+        raise HTTPException(status_code=404, detail="Design case not found")
+    
+    if not design_case.network_json:
+        raise HTTPException(status_code=404, detail="Network not found")
+    
+    network_data = json.loads(design_case.network_json)
+    edge_found = False
+    
+    # エッジを更新
+    for edge in network_data.get('edges', []):
+        if edge['id'] == edge_id:
+            if edge_update.weight is not None:
+                edge['weight'] = edge_update.weight
+            if edge_update.type is not None:
+                edge['type'] = edge_update.type
+            edge_found = True
+            break
+    
+    if not edge_found:
+        raise HTTPException(status_code=404, detail="Edge not found")
+    
+    # ネットワークデータを保存
+    design_case.network_json = json.dumps(network_data)
+    db.commit()
+    
+    # 山の座標を再計算（エッジの重み変更時）
+    try:
+        project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
+        all_design_cases = db.query(DesignCaseModel).filter(
+            DesignCaseModel.project_id == project_id
+        ).all()
+        
+        networks = []
+        for case in all_design_cases:
+            if case.network_json:
+                network = json.loads(case.network_json)
+                networks.append(network)
+            else:
+                networks.append({'nodes': [], 'edges': []})
+        
+        from app.services.mountain_calculator import calculate_mountain_positions
+        result = calculate_mountain_positions(project, db, networks=networks)
+        positions = result['positions']
+        
+        # 各設計案の座標を更新
+        for pos in positions:
+            case = db.query(DesignCaseModel).filter(
+                DesignCaseModel.id == pos['case_id']
+            ).first()
+            if case:
+                case.mountain_position_json = json.dumps({
+                    'x': pos['x'],
+                    'y': pos['y'],
+                    'z': pos['z'],
+                    'H': pos['H']
+                })
+                utility_vec_str_keys = {
+                    f"{k[0]}_{k[1]}": v for k, v in pos['utility_vector'].items()
+                }
+                case.utility_vector_json = json.dumps(utility_vec_str_keys)
+                case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
+                case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+        
+        db.commit()
+    except Exception as e:
+        print(f"Mountain calculation error: {e}")
+    
+    return {"message": "Edge updated successfully"}

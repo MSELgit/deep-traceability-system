@@ -18,11 +18,6 @@ const routes: RouteRecordRaw[] = [
     path: '/project/:id',
     name: 'ProjectDetail',
     component: () => import('../views/ProjectDetail.vue')
-  },
-  {
-    path: '/project/:id/mountain',
-    name: 'Mountain',
-    component: () => import('../views/MountainView.vue')
   }
 ]
 

@@ -1,0 +1,591 @@
+{
+  "project": {
+    "id": "02a68944-c860-4fc4-8b19-ca112808df50",
+    "name": "a",
+    "description": "",
+    "created_at": "2025-10-21T03:39:57.892471",
+    "updated_at": "2025-11-11T01:06:55.180427",
+    "two_axis_plots": [
+      {
+        "id": "view-1762794452691-zeozg3i",
+        "x_axis": "__energy",
+        "y_axis": "__height"
+      },
+      {
+        "id": "view-1762794465094-ju0076u",
+        "x_axis": "__height",
+        "y_axis": "8ec0bee0-b103-4349-ab10-63e5834862d0"
+      },
+      {
+        "id": "view-1762813869009-a7pynz5",
+        "x_axis": "89527211-bab6-406f-85e9-f9c88bb1b56c",
+        "y_axis": "__energy"
+      },
+      {
+        "id": "view-1762820882878-hdij04n",
+        "x_axis": "89527211-bab6-406f-85e9-f9c88bb1b56c",
+        "y_axis": "28b5a038-e868-4ab8-9d3b-c9123857c292"
+      }
+    ]
+  },
+  "stakeholders": [
+    {
+      "id": "bd2372d2-3435-4012-8ade-a3eb139d1162",
+      "name": "S1",
+      "category": null,
+      "votes": 100,
+      "description": null
+    },
+    {
+      "id": "16a8dde6-193b-4dcc-8e4d-17e097cb169c",
+      "name": "S2",
+      "category": null,
+      "votes": 100,
+      "description": null
+    },
+    {
+      "id": "a37953f6-2433-4f56-b31e-03caa3c94b8e",
+      "name": "S3",
+      "category": null,
+      "votes": 150,
+      "description": null
+    },
+    {
+      "id": "c7dbdfa8-7f2f-43be-a211-320d3615c2d9",
+      "name": "S4",
+      "category": null,
+      "votes": 100,
+      "description": null
+    }
+  ],
+  "needs": [
+    {
+      "id": "761e8ac5-4de4-44d6-ab3e-14a656317dbe",
+      "name": "N1",
+      "category": "",
+      "description": ""
+    },
+    {
+      "id": "584da218-7875-47a7-b4ac-c165f44fa632",
+      "name": "N2",
+      "category": "",
+      "description": ""
+    },
+    {
+      "id": "ecfae634-6870-4c31-9bac-3f35131a1d7e",
+      "name": "N3",
+      "category": "",
+      "description": ""
+    },
+    {
+      "id": "992ddf1e-a05a-41a0-b5aa-166c9161b6a1",
+      "name": "N4",
+      "category": "",
+      "description": ""
+    },
+    {
+      "id": "7609230c-2f16-4f84-b54d-7294531fa08f",
+      "name": "N5",
+      "category": "",
+      "description": ""
+    },
+    {
+      "id": "87f3f40f-434f-47f9-85e0-05ea29594b40",
+      "name": "N6",
+      "category": "",
+      "description": ""
+    },
+    {
+      "id": "571a6ff9-32d4-4eae-b129-a9408bd5804c",
+      "name": "N7",
+      "category": "",
+      "description": ""
+    },
+    {
+      "id": "8caeff07-65a7-4b28-be39-1b010a6d38f7",
+      "name": "N8",
+      "category": "",
+      "description": ""
+    }
+  ],
+  "stakeholder_need_relations": [
+    {
+      "stakeholder_id": "16a8dde6-193b-4dcc-8e4d-17e097cb169c",
+      "need_id": "761e8ac5-4de4-44d6-ab3e-14a656317dbe"
+    },
+    {
+      "stakeholder_id": "16a8dde6-193b-4dcc-8e4d-17e097cb169c",
+      "need_id": "87f3f40f-434f-47f9-85e0-05ea29594b40"
+    },
+    {
+      "stakeholder_id": "16a8dde6-193b-4dcc-8e4d-17e097cb169c",
+      "need_id": "992ddf1e-a05a-41a0-b5aa-166c9161b6a1"
+    },
+    {
+      "stakeholder_id": "a37953f6-2433-4f56-b31e-03caa3c94b8e",
+      "need_id": "571a6ff9-32d4-4eae-b129-a9408bd5804c"
+    },
+    {
+      "stakeholder_id": "a37953f6-2433-4f56-b31e-03caa3c94b8e",
+      "need_id": "584da218-7875-47a7-b4ac-c165f44fa632"
+    },
+    {
+      "stakeholder_id": "a37953f6-2433-4f56-b31e-03caa3c94b8e",
+      "need_id": "7609230c-2f16-4f84-b54d-7294531fa08f"
+    },
+    {
+      "stakeholder_id": "a37953f6-2433-4f56-b31e-03caa3c94b8e",
+      "need_id": "8caeff07-65a7-4b28-be39-1b010a6d38f7"
+    },
+    {
+      "stakeholder_id": "a37953f6-2433-4f56-b31e-03caa3c94b8e",
+      "need_id": "ecfae634-6870-4c31-9bac-3f35131a1d7e"
+    },
+    {
+      "stakeholder_id": "bd2372d2-3435-4012-8ade-a3eb139d1162",
+      "need_id": "571a6ff9-32d4-4eae-b129-a9408bd5804c"
+    },
+    {
+      "stakeholder_id": "bd2372d2-3435-4012-8ade-a3eb139d1162",
+      "need_id": "584da218-7875-47a7-b4ac-c165f44fa632"
+    },
+    {
+      "stakeholder_id": "bd2372d2-3435-4012-8ade-a3eb139d1162",
+      "need_id": "7609230c-2f16-4f84-b54d-7294531fa08f"
+    },
+    {
+      "stakeholder_id": "bd2372d2-3435-4012-8ade-a3eb139d1162",
+      "need_id": "ecfae634-6870-4c31-9bac-3f35131a1d7e"
+    },
+    {
+      "stakeholder_id": "c7dbdfa8-7f2f-43be-a211-320d3615c2d9",
+      "need_id": "7609230c-2f16-4f84-b54d-7294531fa08f"
+    },
+    {
+      "stakeholder_id": "c7dbdfa8-7f2f-43be-a211-320d3615c2d9",
+      "need_id": "761e8ac5-4de4-44d6-ab3e-14a656317dbe"
+    },
+    {
+      "stakeholder_id": "c7dbdfa8-7f2f-43be-a211-320d3615c2d9",
+      "need_id": "8caeff07-65a7-4b28-be39-1b010a6d38f7"
+    },
+    {
+      "stakeholder_id": "c7dbdfa8-7f2f-43be-a211-320d3615c2d9",
+      "need_id": "992ddf1e-a05a-41a0-b5aa-166c9161b6a1"
+    },
+    {
+      "stakeholder_id": "c7dbdfa8-7f2f-43be-a211-320d3615c2d9",
+      "need_id": "ecfae634-6870-4c31-9bac-3f35131a1d7e"
+    }
+  ],
+  "performances": [
+    {
+      "id": "89527211-bab6-406f-85e9-f9c88bb1b56c",
+      "name": "P1",
+      "parent_id": null,
+      "level": 0,
+      "is_leaf": false,
+      "unit": "km",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "76c8cd76-66e4-43aa-b29e-4e12d107717e",
+      "name": "P2",
+      "parent_id": null,
+      "level": 0,
+      "is_leaf": false,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "2ea82e8d-9596-4eef-bff1-b6aad389a3a7",
+      "name": "P2_1",
+      "parent_id": "76c8cd76-66e4-43aa-b29e-4e12d107717e",
+      "level": 1,
+      "is_leaf": false,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "e64adac4-51f3-488d-8d90-947439ecf4ce",
+      "name": "P2_2",
+      "parent_id": "76c8cd76-66e4-43aa-b29e-4e12d107717e",
+      "level": 1,
+      "is_leaf": false,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "8ec0bee0-b103-4349-ab10-63e5834862d0",
+      "name": "P2_2_1",
+      "parent_id": "e64adac4-51f3-488d-8d90-947439ecf4ce",
+      "level": 2,
+      "is_leaf": true,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "8c6505b5-81ca-4871-91cf-b310ca3397a7",
+      "name": "P3",
+      "parent_id": null,
+      "level": 0,
+      "is_leaf": false,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "79b5f286-0794-4e7b-b310-18d4624d00e9",
+      "name": "P2_1_1",
+      "parent_id": "2ea82e8d-9596-4eef-bff1-b6aad389a3a7",
+      "level": 2,
+      "is_leaf": true,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "376bd8bc-8a5f-4390-a408-c84140ba1831",
+      "name": "P2_1_2",
+      "parent_id": "2ea82e8d-9596-4eef-bff1-b6aad389a3a7",
+      "level": 2,
+      "is_leaf": false,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "afd064bd-4d59-405c-8f1a-dae0ab3b50a8",
+      "name": "P2_1_2_1",
+      "parent_id": "376bd8bc-8a5f-4390-a408-c84140ba1831",
+      "level": 3,
+      "is_leaf": true,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "28b5a038-e868-4ab8-9d3b-c9123857c292",
+      "name": "P2_1_2_2",
+      "parent_id": "376bd8bc-8a5f-4390-a408-c84140ba1831",
+      "level": 3,
+      "is_leaf": true,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "411d6d11-b606-416b-bcc7-525d10bd4237",
+      "name": "P3_1",
+      "parent_id": "8c6505b5-81ca-4871-91cf-b310ca3397a7",
+      "level": 1,
+      "is_leaf": true,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "317ca9c9-e389-4e96-9bd2-06c3a4f7f601",
+      "name": "P3_2",
+      "parent_id": "8c6505b5-81ca-4871-91cf-b310ca3397a7",
+      "level": 1,
+      "is_leaf": true,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "25815eaf-44bf-4ade-aa4f-55345a6e6ddc",
+      "name": "P3_3",
+      "parent_id": "8c6505b5-81ca-4871-91cf-b310ca3397a7",
+      "level": 1,
+      "is_leaf": true,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "62e24c8e-7c6e-4388-8c50-0024f5dcb266",
+      "name": "P4",
+      "parent_id": null,
+      "level": 0,
+      "is_leaf": false,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "cc758e32-1f20-41e8-854f-edf97fb28f89",
+      "name": "P4_1",
+      "parent_id": "62e24c8e-7c6e-4388-8c50-0024f5dcb266",
+      "level": 1,
+      "is_leaf": false,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "c7be7c7a-b1a6-4691-a029-bc365ee53689",
+      "name": "P5",
+      "parent_id": null,
+      "level": 0,
+      "is_leaf": false,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "f5a7ad0d-967d-4107-8a41-b86cd890ee91",
+      "name": "P5_1",
+      "parent_id": "c7be7c7a-b1a6-4691-a029-bc365ee53689",
+      "level": 1,
+      "is_leaf": true,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "06295416-fc7c-47bd-a717-fd49ea5c0b72",
+      "name": "P5_2",
+      "parent_id": "c7be7c7a-b1a6-4691-a029-bc365ee53689",
+      "level": 1,
+      "is_leaf": true,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "8c0eea97-843e-480e-a626-1fc02d8e46fa",
+      "name": "P1_1",
+      "parent_id": "89527211-bab6-406f-85e9-f9c88bb1b56c",
+      "level": 1,
+      "is_leaf": true,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    },
+    {
+      "id": "4e9d4f50-9262-42d0-8586-d907bb284813",
+      "name": "P1_2",
+      "parent_id": "89527211-bab6-406f-85e9-f9c88bb1b56c",
+      "level": 1,
+      "is_leaf": true,
+      "unit": "",
+      "description": "",
+      "utility_function_json": null
+    }
+  ],
+  "need_performance_relations": [
+    {
+      "need_id": "571a6ff9-32d4-4eae-b129-a9408bd5804c",
+      "performance_id": "28b5a038-e868-4ab8-9d3b-c9123857c292",
+      "direction": "up",
+      "utility_function_json": "{\"need_id\":\"571a6ff9-32d4-4eae-b129-a9408bd5804c\",\"performance_id\":\"28b5a038-e868-4ab8-9d3b-c9123857c292\",\"direction\":\"up\",\"type\":\"continuous\",\"axisMin\":0.0,\"axisMax\":102.0,\"points\":[{\"x\":134.37299035369776,\"y\":146.29094396930702,\"valueX\":26.078924291142943,\"valueY\":0.5142656001180499},{\"x\":328.8424437299035,\"y\":74.03964511230117,\"valueX\":86.18766442560653,\"valueY\":0.792155211106534},{\"x\":329.51768488745984,\"y\":225.96994644712652,\"valueX\":86.39637532885122,\"valueY\":0.20780789828028268}],\"discreteRows\":null,\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "571a6ff9-32d4-4eae-b129-a9408bd5804c",
+      "performance_id": "317ca9c9-e389-4e96-9bd2-06c3a4f7f601",
+      "direction": "up",
+      "utility_function_json": "{\"need_id\":\"571a6ff9-32d4-4eae-b129-a9408bd5804c\",\"performance_id\":\"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\",\"direction\":\"up\",\"type\":\"continuous\",\"axisMin\":0.0,\"axisMax\":772.0,\"points\":[{\"x\":59.72027389500691,\"y\":93.6217728399009,\"valueX\":22.739549839228292,\"valueY\":0.7168393352311504},{\"x\":77.7418656181797,\"y\":213.14027655663017,\"valueX\":64.8991522946507,\"valueY\":0.25715278247449935}],\"discreteRows\":null,\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "571a6ff9-32d4-4eae-b129-a9408bd5804c",
+      "performance_id": "89527211-bab6-406f-85e9-f9c88bb1b56c",
+      "direction": "up",
+      "utility_function_json": "{\"need_id\":\"571a6ff9-32d4-4eae-b129-a9408bd5804c\",\"performance_id\":\"89527211-bab6-406f-85e9-f9c88bb1b56c\",\"direction\":\"up\",\"type\":\"continuous\",\"axisMin\":0.0,\"axisMax\":322.0,\"points\":[{\"x\":81.86035829122648,\"y\":149.66717288785867,\"valueX\":31.087985969014916,\"valueY\":0.5012801042774666},{\"x\":129.77312216652354,\"y\":190.85716569418912,\"valueX\":77.83922829581994,\"valueY\":0.34285705502234953},{\"x\":147.95430488706037,\"y\":111.17816321636958,\"valueX\":95.57965507161649,\"valueY\":0.649314756860117},{\"x\":211.51984182460905,\"y\":195.24626328830627,\"valueX\":157.60420929552762,\"valueY\":0.3259759104295913},{\"x\":253.8838848834655,\"y\":51.756534249860124,\"valueX\":198.94124524992694,\"valueY\":0.8778594836543842},{\"x\":267.384513990134,\"y\":125.02070178243147,\"valueX\":212.11458637825194,\"valueY\":0.5960742239137251},{\"x\":354.5016077170418,\"y\":149.32954999600352,\"valueX\":297.119750560265,\"valueY\":0.5025786538615249}],\"discreteRows\":null,\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "571a6ff9-32d4-4eae-b129-a9408bd5804c",
+      "performance_id": "f5a7ad0d-967d-4107-8a41-b86cd890ee91",
+      "direction": "up",
+      "utility_function_json": null
+    },
+    {
+      "need_id": "584da218-7875-47a7-b4ac-c165f44fa632",
+      "performance_id": "25815eaf-44bf-4ade-aa4f-55345a6e6ddc",
+      "direction": "up",
+      "utility_function_json": "{\"need_id\":\"584da218-7875-47a7-b4ac-c165f44fa632\",\"performance_id\":\"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\",\"direction\":\"up\",\"type\":\"discrete\",\"axisMin\":null,\"axisMax\":null,\"points\":[],\"discreteRows\":[{\"label\":\"楽しい\",\"value\":1.0},{\"label\":\"楽しくない\",\"value\":0.1}],\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "584da218-7875-47a7-b4ac-c165f44fa632",
+      "performance_id": "afd064bd-4d59-405c-8f1a-dae0ab3b50a8",
+      "direction": "up",
+      "utility_function_json": "{\"need_id\":\"584da218-7875-47a7-b4ac-c165f44fa632\",\"performance_id\":\"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\",\"direction\":\"up\",\"type\":\"continuous\",\"axisMin\":-122.0,\"axisMax\":122.0,\"points\":[{\"x\":70.22508038585208,\"y\":113.87914635121093,\"valueX\":-108.97125596804054,\"valueY\":0.6389263601876503},{\"x\":164.08360128617363,\"y\":191.53241147789947,\"valueX\":-71.71226736821592,\"valueY\":0.34025995585423274},{\"x\":289.6784565916399,\"y\":134.13651986252097,\"valueX\":-21.854915716652044,\"valueY\":0.5610133851441501},{\"x\":365.3054662379421,\"y\":59.18423787067382,\"valueX\":8.166715385364895,\"valueY\":0.8492913928051007}],\"discreteRows\":null,\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "584da218-7875-47a7-b4ac-c165f44fa632",
+      "performance_id": "f5a7ad0d-967d-4107-8a41-b86cd890ee91",
+      "direction": "up",
+      "utility_function_json": "{\"need_id\":\"584da218-7875-47a7-b4ac-c165f44fa632\",\"performance_id\":\"f5a7ad0d-967d-4107-8a41-b86cd890ee91\",\"direction\":\"up\",\"type\":\"continuous\",\"axisMin\":0.0,\"axisMax\":102.0,\"points\":[{\"x\":51.31832797427653,\"y\":203.68683558468547,\"valueX\":0.4074831920491086,\"valueY\":0.29351217082813286},{\"x\":114.11575562700965,\"y\":111.1781632163696,\"valueX\":19.817597193802982,\"valueY\":0.649314756860117},{\"x\":336.94533762057875,\"y\":232.7224042842299,\"valueX\":88.69219526454252,\"valueY\":0.18183690659911578}],\"discreteRows\":null,\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "7609230c-2f16-4f84-b54d-7294531fa08f",
+      "performance_id": "411d6d11-b606-416b-bcc7-525d10bd4237",
+      "direction": "up",
+      "utility_function_json": "{\"need_id\":\"7609230c-2f16-4f84-b54d-7294531fa08f\",\"performance_id\":\"411d6d11-b606-416b-bcc7-525d10bd4237\",\"direction\":\"up\",\"type\":\"continuous\",\"axisMin\":-122.0,\"axisMax\":372.0,\"points\":[{\"x\":78.32797427652733,\"y\":61.20997522180481,\"valueX\":-79.5938809315015,\"valueY\":0.8415000953007508},{\"x\":134.55862634573077,\"y\":48.380305331308435,\"valueX\":4.5817012569424165,\"valueY\":0.8908449794949675},{\"x\":160.63058958303503,\"y\":141.56422348333467,\"valueX\":43.61064016369483,\"valueY\":0.5324452942948666},{\"x\":187.95735319004908,\"y\":236.7738789864919,\"valueX\":84.51797719964922,\"valueY\":0.16625431159041582},{\"x\":355.8520900321543,\"y\":105.77619694668692,\"valueX\":335.85131053298255,\"valueY\":0.6700915502050503},{\"x\":363.95498392282957,\"y\":53.78227160099113,\"valueX\":347.9810971450843,\"valueY\":0.8700681861500341}],\"discreteRows\":null,\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "761e8ac5-4de4-44d6-ab3e-14a656317dbe",
+      "performance_id": "317ca9c9-e389-4e96-9bd2-06c3a4f7f601",
+      "direction": "down",
+      "utility_function_json": "{\"need_id\":\"761e8ac5-4de4-44d6-ab3e-14a656317dbe\",\"performance_id\":\"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\",\"direction\":\"down\",\"type\":\"continuous\",\"axisMin\":0.0,\"axisMax\":772.0,\"points\":[{\"x\":59.72027389500691,\"y\":93.6217728399009,\"valueX\":22.739549839228292,\"valueY\":0.7168393352311504},{\"x\":77.7418656181797,\"y\":213.14027655663017,\"valueX\":64.8991522946507,\"valueY\":0.25715278247449935}],\"discreteRows\":null,\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "761e8ac5-4de4-44d6-ab3e-14a656317dbe",
+      "performance_id": "8ec0bee0-b103-4349-ab10-63e5834862d0",
+      "direction": "up",
+      "utility_function_json": "{\"need_id\":\"761e8ac5-4de4-44d6-ab3e-14a656317dbe\",\"performance_id\":\"8ec0bee0-b103-4349-ab10-63e5834862d0\",\"direction\":\"up\",\"type\":\"discrete\",\"axisMin\":null,\"axisMax\":null,\"points\":[],\"discreteRows\":[{\"label\":\"小さい\",\"value\":0.1},{\"label\":\"大きい\",\"value\":0.5},{\"label\":\"中くらい\",\"value\":0.6}],\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "87f3f40f-434f-47f9-85e0-05ea29594b40",
+      "performance_id": "afd064bd-4d59-405c-8f1a-dae0ab3b50a8",
+      "direction": "down",
+      "utility_function_json": "{\"need_id\":\"87f3f40f-434f-47f9-85e0-05ea29594b40\",\"performance_id\":\"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\",\"direction\":\"down\",\"type\":\"continuous\",\"axisMin\":-122.0,\"axisMax\":122.0,\"points\":[{\"x\":215.0,\"y\":280.0,\"valueX\":0.0,\"valueY\":0.0},{\"x\":248.81147540983605,\"y\":202.0,\"valueX\":25.0,\"valueY\":0.3},{\"x\":282.62295081967216,\"y\":124.0,\"valueX\":50.0,\"valueY\":0.6},{\"x\":316.4344262295082,\"y\":59.00000000000001,\"valueX\":75.0,\"valueY\":0.85},{\"x\":350.24590163934425,\"y\":20.0,\"valueX\":100.0,\"valueY\":1.0}],\"discreteRows\":null,\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "8caeff07-65a7-4b28-be39-1b010a6d38f7",
+      "performance_id": "25815eaf-44bf-4ade-aa4f-55345a6e6ddc",
+      "direction": "up",
+      "utility_function_json": "{\"need_id\":\"8caeff07-65a7-4b28-be39-1b010a6d38f7\",\"performance_id\":\"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\",\"direction\":\"up\",\"type\":\"discrete\",\"axisMin\":null,\"axisMax\":null,\"points\":[],\"discreteRows\":[{\"label\":\"楽しい\",\"value\":1.0},{\"label\":\"楽しくない\",\"value\":0.1}],\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "8caeff07-65a7-4b28-be39-1b010a6d38f7",
+      "performance_id": "afd064bd-4d59-405c-8f1a-dae0ab3b50a8",
+      "direction": "down",
+      "utility_function_json": "{\"need_id\":\"8caeff07-65a7-4b28-be39-1b010a6d38f7\",\"performance_id\":\"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\",\"direction\":\"down\",\"type\":\"continuous\",\"axisMin\":-122.0,\"axisMax\":122.0,\"points\":[{\"x\":75.44074278429954,\"y\":113.87914635121093,\"valueX\":-108.97125596804054,\"valueY\":0.6389263601876503},{\"x\":148.19498087863164,\"y\":191.53241147789947,\"valueX\":-71.71226736821592,\"valueY\":0.34025995585423274},{\"x\":245.5495728609753,\"y\":134.13651986252097,\"valueX\":-21.854915716652044,\"valueY\":0.5610133851441501},{\"x\":304.171692764322,\"y\":59.18423787067382,\"valueX\":8.166715385364895,\"valueY\":0.8492913928051007}],\"discreteRows\":null,\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "992ddf1e-a05a-41a0-b5aa-166c9161b6a1",
+      "performance_id": "06295416-fc7c-47bd-a717-fd49ea5c0b72",
+      "direction": "up",
+      "utility_function_json": null
+    },
+    {
+      "need_id": "992ddf1e-a05a-41a0-b5aa-166c9161b6a1",
+      "performance_id": "79b5f286-0794-4e7b-b310-18d4624d00e9",
+      "direction": "down",
+      "utility_function_json": "{\"need_id\":\"992ddf1e-a05a-41a0-b5aa-166c9161b6a1\",\"performance_id\":\"79b5f286-0794-4e7b-b310-18d4624d00e9\",\"direction\":\"down\",\"type\":\"continuous\",\"axisMin\":-97.0,\"axisMax\":572.0,\"points\":[{\"x\":56.720257234726695,\"y\":21.370473982895053,\"valueX\":-83.37620578778134,\"valueY\":0.9947289462196344},{\"x\":192.44372990353696,\"y\":20.01998241547438,\"valueX\":191.77228880444312,\"valueY\":0.9999231445558677},{\"x\":275.4983922829582,\"y\":207.06306450323714,\"valueX\":360.146740719088,\"valueY\":0.28052667498754946},{\"x\":378.8102893890675,\"y\":259.056989848933,\"valueX\":569.5881321251096,\"valueY\":0.08055003904256552}],\"discreteRows\":null,\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "992ddf1e-a05a-41a0-b5aa-166c9161b6a1",
+      "performance_id": "cc758e32-1f20-41e8-854f-edf97fb28f89",
+      "direction": "up",
+      "utility_function_json": "{\"need_id\":\"992ddf1e-a05a-41a0-b5aa-166c9161b6a1\",\"performance_id\":\"cc758e32-1f20-41e8-854f-edf97fb28f89\",\"direction\":\"up\",\"type\":\"continuous\",\"axisMin\":0.0,\"axisMax\":102.0,\"points\":[{\"x\":98.58520900321544,\"y\":107.12668851410758,\"valueX\":15.017246419175683,\"valueY\":0.664897351868817},{\"x\":174.2122186495177,\"y\":177.35225001998242,\"valueX\":38.3928675825782,\"valueY\":0.394799038384683},{\"x\":334.2443729903537,\"y\":176.67700423627207,\"valueX\":87.85735165156389,\"valueY\":0.3973961375527998},{\"x\":354.5016077170418,\"y\":47.02981376388777,\"valueX\":94.11867874890382,\"valueY\":0.8960391778312009}],\"discreteRows\":null,\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "ecfae634-6870-4c31-9bac-3f35131a1d7e",
+      "performance_id": "28b5a038-e868-4ab8-9d3b-c9123857c292",
+      "direction": "up",
+      "utility_function_json": "{\"need_id\":\"ecfae634-6870-4c31-9bac-3f35131a1d7e\",\"performance_id\":\"28b5a038-e868-4ab8-9d3b-c9123857c292\",\"direction\":\"up\",\"type\":\"continuous\",\"axisMin\":0.0,\"axisMax\":102.0,\"points\":[{\"x\":134.37299035369776,\"y\":146.29094396930702,\"valueX\":26.078924291142943,\"valueY\":0.5142656001180499},{\"x\":328.8424437299035,\"y\":74.03964511230117,\"valueX\":86.18766442560653,\"valueY\":0.792155211106534},{\"x\":329.51768488745984,\"y\":225.96994644712652,\"valueX\":86.39637532885122,\"valueY\":0.20780789828028268}],\"discreteRows\":null,\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "ecfae634-6870-4c31-9bac-3f35131a1d7e",
+      "performance_id": "89527211-bab6-406f-85e9-f9c88bb1b56c",
+      "direction": "up",
+      "utility_function_json": "{\"need_id\":\"ecfae634-6870-4c31-9bac-3f35131a1d7e\",\"performance_id\":\"89527211-bab6-406f-85e9-f9c88bb1b56c\",\"direction\":\"up\",\"type\":\"continuous\",\"axisMin\":0.0,\"axisMax\":322.0,\"points\":[{\"x\":81.86035829122648,\"y\":149.66717288785867,\"valueX\":31.087985969014916,\"valueY\":0.5012801042774666},{\"x\":129.77312216652354,\"y\":190.85716569418912,\"valueX\":77.83922829581994,\"valueY\":0.34285705502234953},{\"x\":147.95430488706037,\"y\":111.17816321636958,\"valueX\":95.57965507161649,\"valueY\":0.649314756860117},{\"x\":211.51984182460905,\"y\":195.24626328830627,\"valueX\":157.60420929552762,\"valueY\":0.3259759104295913},{\"x\":253.8838848834655,\"y\":51.756534249860124,\"valueX\":198.94124524992694,\"valueY\":0.8778594836543842},{\"x\":267.384513990134,\"y\":125.02070178243147,\"valueX\":212.11458637825194,\"valueY\":0.5960742239137251},{\"x\":354.5016077170418,\"y\":149.32954999600352,\"valueX\":297.119750560265,\"valueY\":0.5025786538615249}],\"discreteRows\":null,\"saved\":true,\"warning\":false,\"archived\":false}"
+    },
+    {
+      "need_id": "ecfae634-6870-4c31-9bac-3f35131a1d7e",
+      "performance_id": "8ec0bee0-b103-4349-ab10-63e5834862d0",
+      "direction": "up",
+      "utility_function_json": "{\"need_id\":\"ecfae634-6870-4c31-9bac-3f35131a1d7e\",\"performance_id\":\"8ec0bee0-b103-4349-ab10-63e5834862d0\",\"direction\":\"up\",\"type\":\"discrete\",\"axisMin\":null,\"axisMax\":null,\"points\":[],\"discreteRows\":[{\"label\":\"小さい\",\"value\":0.1},{\"label\":\"大きい\",\"value\":0.5},{\"label\":\"中くらい\",\"value\":0.0}],\"saved\":true,\"warning\":false,\"archived\":false}"
+    }
+  ],
+  "design_cases": [
+    {
+      "id": "ee7bf2f6-932e-481d-88c2-8d47a30b1688",
+      "name": "設計案1",
+      "description": null,
+      "color": "#FF8C33",
+      "performance_values_json": "{\"89527211-bab6-406f-85e9-f9c88bb1b56c\": 100.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": \"\\u5927\\u304d\\u3044\", \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 1.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": -3.0, \"28b5a038-e868-4ab8-9d3b-c9123857c292\": 66.0, \"411d6d11-b606-416b-bcc7-525d10bd4237\": -2.0, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": -10.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": \"\\u697d\\u3057\\u304f\\u306a\\u3044\", \"d04d65d1-0532-4d52-98e6-f351e3569d07\": 1.0, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 1.0, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 60.0, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 0.0}",
+      "network_json": "{\"nodes\": [{\"id\": \"perf-89527211-bab6-406f-85e9-f9c88bb1b56c\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P1\", \"x\": 92.3076923076923, \"y\": 100.0, \"performance_id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\"}, {\"id\": \"perf-79b5f286-0794-4e7b-b310-18d4624d00e9\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_1\", \"x\": 184.6153846153846, \"y\": 100.0, \"performance_id\": \"79b5f286-0794-4e7b-b310-18d4624d00e9\"}, {\"id\": \"perf-afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_2_1\", \"x\": 276.9230769230769, \"y\": 100.0, \"performance_id\": \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\"}, {\"id\": \"perf-28b5a038-e868-4ab8-9d3b-c9123857c292\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_2_2\", \"x\": 369.2307692307692, \"y\": 100.0, \"performance_id\": \"28b5a038-e868-4ab8-9d3b-c9123857c292\"}, {\"id\": \"perf-8ec0bee0-b103-4349-ab10-63e5834862d0\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_2_1\", \"x\": 461.53846153846155, \"y\": 100.0, \"performance_id\": \"8ec0bee0-b103-4349-ab10-63e5834862d0\"}, {\"id\": \"perf-411d6d11-b606-416b-bcc7-525d10bd4237\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_1\", \"x\": 553.8461538461538, \"y\": 100.0, \"performance_id\": \"411d6d11-b606-416b-bcc7-525d10bd4237\"}, {\"id\": \"perf-317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_2\", \"x\": 646.1538461538462, \"y\": 100.0, \"performance_id\": \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\"}, {\"id\": \"perf-25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_3\", \"x\": 738.4615384615385, \"y\": 100.0, \"performance_id\": \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\"}, {\"id\": \"perf-d04d65d1-0532-4d52-98e6-f351e3569d07\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_4\", \"x\": 830.7692307692307, \"y\": 100.0, \"performance_id\": \"d04d65d1-0532-4d52-98e6-f351e3569d07\"}, {\"id\": \"perf-cc758e32-1f20-41e8-854f-edf97fb28f89\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P4_1\", \"x\": 923.0769230769231, \"y\": 100.0, \"performance_id\": \"cc758e32-1f20-41e8-854f-edf97fb28f89\"}, {\"id\": \"perf-f5a7ad0d-967d-4107-8a41-b86cd890ee91\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P5_1\", \"x\": 1015.3846153846154, \"y\": 100.0, \"performance_id\": \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\"}, {\"id\": \"perf-06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P5_2\", \"x\": 1107.6923076923076, \"y\": 100.0, \"performance_id\": \"06295416-fc7c-47bd-a717-fd49ea5c0b72\"}, {\"id\": \"node-1761461985438-0.46270910484243755\", \"layer\": 4, \"type\": \"object\", \"label\": \"\\u30e2\\u30ce1\", \"x\": 300.0, \"y\": 700.0, \"performance_id\": null}, {\"id\": \"node-1761492150088-0.06735819217409111\", \"layer\": 2, \"type\": \"property\", \"label\": \"\\u7279\\u6027 1\", \"x\": 207.79469781899144, \"y\": 316.63061352004263, \"performance_id\": null}, {\"id\": \"node-1761492152725-0.2098764083755298\", \"layer\": 3, \"type\": \"variable\", \"label\": \"\\u5909\\u6570 1\", \"x\": 355.651697279886, \"y\": 515.2447290600392, \"performance_id\": null}, {\"id\": \"node-1761529746526-0.5513362833315459\", \"layer\": 4, \"type\": \"environment\", \"label\": \"\\u74b0\\u5883 1\", \"x\": 595.8423466199894, \"y\": 636.2493148398361, \"performance_id\": null}, {\"id\": \"node-1761529920050-0.5492565234448861\", \"layer\": 4, \"type\": \"environment\", \"label\": \"\\u74b0\\u5883 2\", \"x\": 900.0, \"y\": 700.0, \"performance_id\": null}, {\"id\": \"node-1761529923556-0.21958750088148993\", \"layer\": 3, \"type\": \"variable\", \"label\": \"\\u5909\\u6570 2\", \"x\": 827.7176892000713, \"y\": 509.70119122002495, \"performance_id\": null}], \"edges\": [{\"id\": \"edge-1761461989360\", \"source_id\": \"node-1761461985438-0.46270910484243755\", \"target_id\": \"perf-06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761529752340\", \"source_id\": \"perf-afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"target_id\": \"node-1761492150088-0.06735819217409111\", \"type\": \"type1\", \"weight\": 3.0}, {\"id\": \"edge-1761623696288\", \"source_id\": \"node-1761492152725-0.2098764083755298\", \"target_id\": \"perf-317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761623827118\", \"source_id\": \"node-1761461985438-0.46270910484243755\", \"target_id\": \"node-1761529746526-0.5513362833315459\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761624158423\", \"source_id\": \"node-1761492150088-0.06735819217409111\", \"target_id\": \"perf-25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"type\": \"type1\", \"weight\": -3.0}, {\"id\": \"edge-1761624301145\", \"source_id\": \"perf-d04d65d1-0532-4d52-98e6-f351e3569d07\", \"target_id\": \"node-1761529923556-0.21958750088148993\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761624304640\", \"source_id\": \"node-1761492152725-0.2098764083755298\", \"target_id\": \"node-1761529923556-0.21958750088148993\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761624307012\", \"source_id\": \"node-1761529746526-0.5513362833315459\", \"target_id\": \"node-1761529920050-0.5492565234448861\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761624309515\", \"source_id\": \"perf-cc758e32-1f20-41e8-854f-edf97fb28f89\", \"target_id\": \"node-1761529920050-0.5492565234448861\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761625600731\", \"source_id\": \"node-1761529923556-0.21958750088148993\", \"target_id\": \"perf-06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761815127650\", \"source_id\": \"node-1761529746526-0.5513362833315459\", \"target_id\": \"perf-411d6d11-b606-416b-bcc7-525d10bd4237\", \"type\": \"type1\", \"weight\": 1.0}, {\"id\": \"edge-1762301794687\", \"source_id\": \"node-1761529920050-0.5492565234448861\", \"target_id\": \"perf-06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"type\": \"type1\", \"weight\": -3.0}]}",
+      "performance_snapshot_json": "[{\"name\": \"P1\", \"parent_id\": null, \"level\": 0, \"is_leaf\": true, \"unit\": \"km\", \"description\": \"\", \"id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\", \"utility_function\": null}, {\"name\": \"P2\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"utility_function\": null}, {\"name\": \"P2_1\", \"parent_id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"level\": 1, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"utility_function\": null}, {\"name\": \"P2_2\", \"parent_id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"level\": 1, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"e64adac4-51f3-488d-8d90-947439ecf4ce\", \"utility_function\": null}, {\"name\": \"P2_2_1\", \"parent_id\": \"e64adac4-51f3-488d-8d90-947439ecf4ce\", \"level\": 2, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"8ec0bee0-b103-4349-ab10-63e5834862d0\", \"utility_function\": null}, {\"name\": \"P3\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"utility_function\": null}, {\"name\": \"P2_1_1\", \"parent_id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"level\": 2, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"79b5f286-0794-4e7b-b310-18d4624d00e9\", \"utility_function\": null}, {\"name\": \"P2_1_2\", \"parent_id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"level\": 2, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"utility_function\": null}, {\"name\": \"P2_1_2_1\", \"parent_id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"level\": 3, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"utility_function\": null}, {\"name\": \"P2_1_2_2\", \"parent_id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"level\": 3, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"28b5a038-e868-4ab8-9d3b-c9123857c292\", \"utility_function\": null}, {\"name\": \"P3_1\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"411d6d11-b606-416b-bcc7-525d10bd4237\", \"utility_function\": null}, {\"name\": \"P3_2\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"utility_function\": null}, {\"name\": \"P3_3\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"utility_function\": null}, {\"name\": \"P3_4\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"d04d65d1-0532-4d52-98e6-f351e3569d07\", \"utility_function\": null}, {\"name\": \"P4\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"62e24c8e-7c6e-4388-8c50-0024f5dcb266\", \"utility_function\": null}, {\"name\": \"P4_1\", \"parent_id\": \"62e24c8e-7c6e-4388-8c50-0024f5dcb266\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"cc758e32-1f20-41e8-854f-edf97fb28f89\", \"utility_function\": null}, {\"name\": \"P5\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"utility_function\": null}, {\"name\": \"P5_1\", \"parent_id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\", \"utility_function\": null}, {\"name\": \"P5_2\", \"parent_id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"utility_function\": null}]",
+      "mountain_position_json": "{\"x\": 8.420690414955734, \"y\": 5.393697519834852, \"z\": 0.0, \"H\": 204.81068082261785}",
+      "utility_vector_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.6988253192896636, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"89527211-bab6-406f-85e9-f9c88bb1b56c_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.6262711534380137, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc_584da218-7875-47a7-b4ac-c165f44fa632\": 0.1, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_584da218-7875-47a7-b4ac-c165f44fa632\": 0.7420647583670535, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91_584da218-7875-47a7-b4ac-c165f44fa632\": 0.37658164758128543, \"411d6d11-b606-416b-bcc7-525d10bd4237_7609230c-2f16-4f84-b54d-7294531fa08f\": 0.8869866956805749, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601_761e8ac5-4de4-44d6-ab3e-14a656317dbe\": 0.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0_761e8ac5-4de4-44d6-ab3e-14a656317dbe\": 0.5, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_87f3f40f-434f-47f9-85e0-05ea29594b40\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc_8caeff07-65a7-4b28-be39-1b010a6d38f7\": 0.1, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_8caeff07-65a7-4b28-be39-1b010a6d38f7\": 0.7420647583670535, \"06295416-fc7c-47bd-a717-fd49ea5c0b72_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.0, \"79b5f286-0794-4e7b-b310-18d4624d00e9_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.996321783383327, \"cc758e32-1f20-41e8-854f-edf97fb28f89_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.0, \"28b5a038-e868-4ab8-9d3b-c9123857c292_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.6988253192896636, \"89527211-bab6-406f-85e9-f9c88bb1b56c_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.6262711534380137, \"8ec0bee0-b103-4349-ab10-63e5834862d0_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.5}",
+      "partial_heights_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292\": 27.079481122474462, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 0.0, \"89527211-bab6-406f-85e9-f9c88bb1b56c\": 24.26800719572303, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 6.903996872323566, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": 4.333333333333333, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": 32.156139529238985, \"411d6d11-b606-416b-bcc7-525d10bd4237\": 66.52400217604311, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": 25.833333333333336, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 0.0, \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 17.712387260148038, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 0.0}",
+      "performance_weights_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292\": 38.75, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 40.41666666666667, \"89527211-bab6-406f-85e9-f9c88bb1b56c\": 38.75, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 32.08333333333333, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": 43.33333333333333, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": 76.66666666666667, \"411d6d11-b606-416b-bcc7-525d10bd4237\": 75.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": 51.66666666666667, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 17.77777777777778, \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 17.77777777777778, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 17.77777777777778}",
+      "created_at": "2025-10-22T16:55:06.574319",
+      "updated_at": "2025-11-10T15:02:11.492251"
+    },
+    {
+      "id": "c3f6a861-3c1e-43c2-b708-cb3e724ed401",
+      "name": "設計案3",
+      "description": null,
+      "color": "#FF5733",
+      "performance_values_json": "{\"89527211-bab6-406f-85e9-f9c88bb1b56c\": 200.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": \"\\u5927\\u304d\\u3044\", \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 2.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": -3.0, \"28b5a038-e868-4ab8-9d3b-c9123857c292\": -1.0, \"411d6d11-b606-416b-bcc7-525d10bd4237\": 37.0, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": \"\\u697d\\u3057\\u3044\", \"d04d65d1-0532-4d52-98e6-f351e3569d07\": 1.0, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 1.0, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 0.0, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 0.0}",
+      "network_json": "{\"nodes\": [{\"id\": \"perf-89527211-bab6-406f-85e9-f9c88bb1b56c\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P1\", \"x\": 100.0, \"y\": 100.0, \"performance_id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\"}, {\"id\": \"perf-79b5f286-0794-4e7b-b310-18d4624d00e9\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_1\", \"x\": 280.0, \"y\": 100.0, \"performance_id\": \"79b5f286-0794-4e7b-b310-18d4624d00e9\"}, {\"id\": \"perf-afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_2_1\", \"x\": 460.0, \"y\": 100.0, \"performance_id\": \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\"}, {\"id\": \"perf-28b5a038-e868-4ab8-9d3b-c9123857c292\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_2_2\", \"x\": 640.0, \"y\": 100.0, \"performance_id\": \"28b5a038-e868-4ab8-9d3b-c9123857c292\"}, {\"id\": \"perf-8ec0bee0-b103-4349-ab10-63e5834862d0\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_2_1\", \"x\": 820.0, \"y\": 100.0, \"performance_id\": \"8ec0bee0-b103-4349-ab10-63e5834862d0\"}, {\"id\": \"perf-411d6d11-b606-416b-bcc7-525d10bd4237\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_1\", \"x\": 1000.0, \"y\": 100.0, \"performance_id\": \"411d6d11-b606-416b-bcc7-525d10bd4237\"}, {\"id\": \"perf-317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_2\", \"x\": 100.0, \"y\": 180.0, \"performance_id\": \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\"}, {\"id\": \"perf-25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_3\", \"x\": 280.0, \"y\": 180.0, \"performance_id\": \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\"}, {\"id\": \"perf-d04d65d1-0532-4d52-98e6-f351e3569d07\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_4\", \"x\": 460.0, \"y\": 180.0, \"performance_id\": \"d04d65d1-0532-4d52-98e6-f351e3569d07\"}, {\"id\": \"perf-cc758e32-1f20-41e8-854f-edf97fb28f89\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P4_1\", \"x\": 640.0, \"y\": 180.0, \"performance_id\": \"cc758e32-1f20-41e8-854f-edf97fb28f89\"}, {\"id\": \"perf-f5a7ad0d-967d-4107-8a41-b86cd890ee91\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P5_1\", \"x\": 820.0, \"y\": 180.0, \"performance_id\": \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\"}, {\"id\": \"perf-06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P5_2\", \"x\": 1000.0, \"y\": 180.0, \"performance_id\": \"06295416-fc7c-47bd-a717-fd49ea5c0b72\"}, {\"id\": \"c6dd300e-fcf4-43b6-93ea-6cf274bdb168\", \"label\": \"ddd\", \"layer\": 3, \"type\": \"variable\", \"x\": 0.0, \"y\": 0.0, \"performance_id\": null, \"x3d\": null, \"y3d\": null}], \"edges\": []}",
+      "performance_snapshot_json": "[{\"name\": \"P1\", \"parent_id\": null, \"level\": 0, \"is_leaf\": true, \"unit\": \"km\", \"description\": \"\", \"id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\", \"utility_function\": null}, {\"name\": \"P2\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"utility_function\": null}, {\"name\": \"P2_1\", \"parent_id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"level\": 1, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"utility_function\": null}, {\"name\": \"P2_2\", \"parent_id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"level\": 1, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"e64adac4-51f3-488d-8d90-947439ecf4ce\", \"utility_function\": null}, {\"name\": \"P2_2_1\", \"parent_id\": \"e64adac4-51f3-488d-8d90-947439ecf4ce\", \"level\": 2, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"8ec0bee0-b103-4349-ab10-63e5834862d0\", \"utility_function\": null}, {\"name\": \"P3\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"utility_function\": null}, {\"name\": \"P2_1_1\", \"parent_id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"level\": 2, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"79b5f286-0794-4e7b-b310-18d4624d00e9\", \"utility_function\": null}, {\"name\": \"P2_1_2\", \"parent_id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"level\": 2, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"utility_function\": null}, {\"name\": \"P2_1_2_1\", \"parent_id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"level\": 3, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"utility_function\": null}, {\"name\": \"P2_1_2_2\", \"parent_id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"level\": 3, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"28b5a038-e868-4ab8-9d3b-c9123857c292\", \"utility_function\": null}, {\"name\": \"P3_1\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"411d6d11-b606-416b-bcc7-525d10bd4237\", \"utility_function\": null}, {\"name\": \"P3_2\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"utility_function\": null}, {\"name\": \"P3_3\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"utility_function\": null}, {\"name\": \"P3_4\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"d04d65d1-0532-4d52-98e6-f351e3569d07\", \"utility_function\": null}, {\"name\": \"P4\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"62e24c8e-7c6e-4388-8c50-0024f5dcb266\", \"utility_function\": null}, {\"name\": \"P4_1\", \"parent_id\": \"62e24c8e-7c6e-4388-8c50-0024f5dcb266\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"cc758e32-1f20-41e8-854f-edf97fb28f89\", \"utility_function\": null}, {\"name\": \"P5\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"utility_function\": null}, {\"name\": \"P5_1\", \"parent_id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\", \"utility_function\": null}, {\"name\": \"P5_2\", \"parent_id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"utility_function\": null}]",
+      "mountain_position_json": "{\"x\": -3.020150328624148, \"y\": 5.179082456479012, \"z\": 8.003486546593477, \"H\": 196.66126994463357}",
+      "utility_vector_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"89527211-bab6-406f-85e9-f9c88bb1b56c_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.8552121173298678, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc_584da218-7875-47a7-b4ac-c165f44fa632\": 1.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_584da218-7875-47a7-b4ac-c165f44fa632\": 0.7420647583670535, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91_584da218-7875-47a7-b4ac-c165f44fa632\": 0.0, \"411d6d11-b606-416b-bcc7-525d10bd4237_7609230c-2f16-4f84-b54d-7294531fa08f\": 0.5931502844894494, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601_761e8ac5-4de4-44d6-ab3e-14a656317dbe\": 0.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0_761e8ac5-4de4-44d6-ab3e-14a656317dbe\": 0.5, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_87f3f40f-434f-47f9-85e0-05ea29594b40\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc_8caeff07-65a7-4b28-be39-1b010a6d38f7\": 1.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_8caeff07-65a7-4b28-be39-1b010a6d38f7\": 0.7420647583670535, \"06295416-fc7c-47bd-a717-fd49ea5c0b72_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.0, \"79b5f286-0794-4e7b-b310-18d4624d00e9_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.996340661183636, \"cc758e32-1f20-41e8-854f-edf97fb28f89_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.0, \"28b5a038-e868-4ab8-9d3b-c9123857c292_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.0, \"89527211-bab6-406f-85e9-f9c88bb1b56c_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.8552121173298678, \"8ec0bee0-b103-4349-ab10-63e5834862d0_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.5}",
+      "partial_heights_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292\": 0.0, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 0.0, \"89527211-bab6-406f-85e9-f9c88bb1b56c\": 33.13946954653238, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": 43.33333333333333, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": 32.156139529238985, \"411d6d11-b606-416b-bcc7-525d10bd4237\": 44.486271336708704, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": 25.833333333333336, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 0.0, \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 17.712722865486864, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 0.0}",
+      "performance_weights_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292\": 38.75, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 40.41666666666667, \"89527211-bab6-406f-85e9-f9c88bb1b56c\": 38.75, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 32.08333333333333, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": 43.33333333333333, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": 76.66666666666667, \"411d6d11-b606-416b-bcc7-525d10bd4237\": 75.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": 51.66666666666667, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 17.77777777777778, \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 17.77777777777778, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 17.77777777777778}",
+      "created_at": "2025-10-22T18:14:59.757247",
+      "updated_at": "2025-11-13T02:59:14.985915"
+    },
+    {
+      "id": "5d206d5d-7e0e-4581-8c44-f7214d33ddc5",
+      "name": "設計案2",
+      "description": null,
+      "color": "#33FF57",
+      "performance_values_json": "{\"89527211-bab6-406f-85e9-f9c88bb1b56c\": 2.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": \"\\u5c0f\\u3055\\u3044\", \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 100.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": -3.0, \"28b5a038-e868-4ab8-9d3b-c9123857c292\": -1.0, \"411d6d11-b606-416b-bcc7-525d10bd4237\": -2.0, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": -1.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": 1.0, \"d04d65d1-0532-4d52-98e6-f351e3569d07\": 1.0, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 1.0, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 1.0, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 1.0}",
+      "network_json": "{\"nodes\": [{\"id\": \"perf-89527211-bab6-406f-85e9-f9c88bb1b56c\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P1\", \"x\": 100.0, \"y\": 100.0, \"performance_id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\"}, {\"id\": \"perf-79b5f286-0794-4e7b-b310-18d4624d00e9\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_1\", \"x\": 280.0, \"y\": 100.0, \"performance_id\": \"79b5f286-0794-4e7b-b310-18d4624d00e9\"}, {\"id\": \"perf-afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_2_1\", \"x\": 460.0, \"y\": 100.0, \"performance_id\": \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\"}, {\"id\": \"perf-28b5a038-e868-4ab8-9d3b-c9123857c292\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_2_2\", \"x\": 640.0, \"y\": 100.0, \"performance_id\": \"28b5a038-e868-4ab8-9d3b-c9123857c292\"}, {\"id\": \"perf-8ec0bee0-b103-4349-ab10-63e5834862d0\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_2_1\", \"x\": 820.0, \"y\": 100.0, \"performance_id\": \"8ec0bee0-b103-4349-ab10-63e5834862d0\"}, {\"id\": \"perf-411d6d11-b606-416b-bcc7-525d10bd4237\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_1\", \"x\": 1000.0, \"y\": 100.0, \"performance_id\": \"411d6d11-b606-416b-bcc7-525d10bd4237\"}, {\"id\": \"perf-317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_2\", \"x\": 100.0, \"y\": 180.0, \"performance_id\": \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\"}, {\"id\": \"perf-25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_3\", \"x\": 280.0, \"y\": 180.0, \"performance_id\": \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\"}, {\"id\": \"perf-d04d65d1-0532-4d52-98e6-f351e3569d07\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_4\", \"x\": 460.0, \"y\": 180.0, \"performance_id\": \"d04d65d1-0532-4d52-98e6-f351e3569d07\"}, {\"id\": \"perf-cc758e32-1f20-41e8-854f-edf97fb28f89\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P4_1\", \"x\": 640.0, \"y\": 180.0, \"performance_id\": \"cc758e32-1f20-41e8-854f-edf97fb28f89\"}, {\"id\": \"perf-f5a7ad0d-967d-4107-8a41-b86cd890ee91\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P5_1\", \"x\": 820.0, \"y\": 180.0, \"performance_id\": \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\"}, {\"id\": \"perf-06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P5_2\", \"x\": 1000.0, \"y\": 180.0, \"performance_id\": \"06295416-fc7c-47bd-a717-fd49ea5c0b72\"}, {\"id\": \"node-1761531240593-0.576660009265554\", \"layer\": 4, \"type\": \"environment\", \"label\": \"\\u74b0\\u5883 1\", \"x\": 392.96149360308107, \"y\": 678.983123670793, \"performance_id\": null}, {\"id\": \"e943a2af-ed11-46ee-85d4-b4a749b4429a\", \"label\": \"\\u7279\\u6027\", \"layer\": 2, \"type\": \"property\", \"x\": 0.0, \"y\": 0.0, \"performance_id\": null, \"x3d\": null, \"y3d\": null}, {\"id\": \"79d98042-b673-414d-b28c-9fdf84632f4c\", \"label\": \"\\u7279\\u60271\", \"layer\": 2, \"type\": \"property\", \"x\": 0.0, \"y\": 0.0, \"performance_id\": null, \"x3d\": null, \"y3d\": null}, {\"id\": \"30076fe5-faa7-4d44-a4ee-a8c7ee316a74\", \"label\": \"\\u5909\\u65701\", \"layer\": 3, \"type\": \"variable\", \"x\": 0.0, \"y\": 0.0, \"performance_id\": null, \"x3d\": null, \"y3d\": null}], \"edges\": [{\"id\": \"edge-1761531244450\", \"source_id\": \"node-1761531240593-0.576660009265554\", \"target_id\": \"perf-d04d65d1-0532-4d52-98e6-f351e3569d07\", \"type\": \"type1\"}]}",
+      "performance_snapshot_json": "[{\"name\": \"P1\", \"parent_id\": null, \"level\": 0, \"is_leaf\": true, \"unit\": \"km\", \"description\": \"\", \"id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\", \"utility_function\": null}, {\"name\": \"P2\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"utility_function\": null}, {\"name\": \"P2_1\", \"parent_id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"level\": 1, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"utility_function\": null}, {\"name\": \"P2_2\", \"parent_id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"level\": 1, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"e64adac4-51f3-488d-8d90-947439ecf4ce\", \"utility_function\": null}, {\"name\": \"P2_2_1\", \"parent_id\": \"e64adac4-51f3-488d-8d90-947439ecf4ce\", \"level\": 2, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"8ec0bee0-b103-4349-ab10-63e5834862d0\", \"utility_function\": null}, {\"name\": \"P3\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"utility_function\": null}, {\"name\": \"P2_1_1\", \"parent_id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"level\": 2, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"79b5f286-0794-4e7b-b310-18d4624d00e9\", \"utility_function\": null}, {\"name\": \"P2_1_2\", \"parent_id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"level\": 2, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"utility_function\": null}, {\"name\": \"P2_1_2_1\", \"parent_id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"level\": 3, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"utility_function\": null}, {\"name\": \"P2_1_2_2\", \"parent_id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"level\": 3, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"28b5a038-e868-4ab8-9d3b-c9123857c292\", \"utility_function\": null}, {\"name\": \"P3_1\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"411d6d11-b606-416b-bcc7-525d10bd4237\", \"utility_function\": null}, {\"name\": \"P3_2\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"utility_function\": null}, {\"name\": \"P3_3\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"utility_function\": null}, {\"name\": \"P3_4\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"d04d65d1-0532-4d52-98e6-f351e3569d07\", \"utility_function\": null}, {\"name\": \"P4\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"62e24c8e-7c6e-4388-8c50-0024f5dcb266\", \"utility_function\": null}, {\"name\": \"P4_1\", \"parent_id\": \"62e24c8e-7c6e-4388-8c50-0024f5dcb266\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"cc758e32-1f20-41e8-854f-edf97fb28f89\", \"utility_function\": null}, {\"name\": \"P5\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"utility_function\": null}, {\"name\": \"P5_1\", \"parent_id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\", \"utility_function\": null}, {\"name\": \"P5_2\", \"parent_id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"utility_function\": null}]",
+      "mountain_position_json": "{\"x\": -5.700423616924439, \"y\": 3.3490955588402715, \"z\": 7.502581524073327, \"H\": 127.1726008037403}",
+      "utility_vector_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"89527211-bab6-406f-85e9-f9c88bb1b56c_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc_584da218-7875-47a7-b4ac-c165f44fa632\": 0.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_584da218-7875-47a7-b4ac-c165f44fa632\": 0.7420647583670535, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91_584da218-7875-47a7-b4ac-c165f44fa632\": 0.3043734678054352, \"411d6d11-b606-416b-bcc7-525d10bd4237_7609230c-2f16-4f84-b54d-7294531fa08f\": 0.8869866956805749, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601_761e8ac5-4de4-44d6-ab3e-14a656317dbe\": 0.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0_761e8ac5-4de4-44d6-ab3e-14a656317dbe\": 0.1, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_87f3f40f-434f-47f9-85e0-05ea29594b40\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc_8caeff07-65a7-4b28-be39-1b010a6d38f7\": 0.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_8caeff07-65a7-4b28-be39-1b010a6d38f7\": 0.7420647583670535, \"06295416-fc7c-47bd-a717-fd49ea5c0b72_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.0, \"79b5f286-0794-4e7b-b310-18d4624d00e9_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.9981906856139178, \"cc758e32-1f20-41e8-854f-edf97fb28f89_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.0, \"28b5a038-e868-4ab8-9d3b-c9123857c292_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.0, \"89527211-bab6-406f-85e9-f9c88bb1b56c_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.1}",
+      "partial_heights_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292\": 0.0, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 0.0, \"89527211-bab6-406f-85e9-f9c88bb1b56c\": 0.0, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 5.580180243099646, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": 0.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": 32.156139529238985, \"411d6d11-b606-416b-bcc7-525d10bd4237\": 66.52400217604311, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": 5.166666666666667, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 0.0, \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 17.745612188691872, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 0.0}",
+      "performance_weights_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292\": 38.75, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 40.41666666666667, \"89527211-bab6-406f-85e9-f9c88bb1b56c\": 38.75, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 32.08333333333333, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": 43.33333333333333, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": 76.66666666666667, \"411d6d11-b606-416b-bcc7-525d10bd4237\": 75.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": 51.66666666666667, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 17.77777777777778, \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 17.77777777777778, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 17.77777777777778}",
+      "created_at": "2025-10-22T18:18:21.056856",
+      "updated_at": "2025-11-13T02:59:14.985909"
+    },
+    {
+      "id": "dbbaac3f-818e-44cf-8e42-94fe6ef01426",
+      "name": "設計案4",
+      "description": null,
+      "color": "#33FF8C",
+      "performance_values_json": "{\"89527211-bab6-406f-85e9-f9c88bb1b56c\": -1.0, \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 1.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": 0.0, \"28b5a038-e868-4ab8-9d3b-c9123857c292\": 0.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": \"\\u4e2d\\u304f\\u3089\\u3044\", \"411d6d11-b606-416b-bcc7-525d10bd4237\": 0.0, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": \"\\u697d\\u3057\\u3044\", \"d04d65d1-0532-4d52-98e6-f351e3569d07\": 0.0, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 1.0, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 1.0, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 0.0}",
+      "network_json": "{\"nodes\": [{\"id\": \"perf-89527211-bab6-406f-85e9-f9c88bb1b56c\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P1\", \"x\": 92.3076923076923, \"y\": 100.0, \"performance_id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\"}, {\"id\": \"perf-79b5f286-0794-4e7b-b310-18d4624d00e9\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_1\", \"x\": 184.6153846153846, \"y\": 100.0, \"performance_id\": \"79b5f286-0794-4e7b-b310-18d4624d00e9\"}, {\"id\": \"perf-afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_2_1\", \"x\": 276.9230769230769, \"y\": 100.0, \"performance_id\": \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\"}, {\"id\": \"perf-28b5a038-e868-4ab8-9d3b-c9123857c292\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_2_2\", \"x\": 369.2307692307692, \"y\": 100.0, \"performance_id\": \"28b5a038-e868-4ab8-9d3b-c9123857c292\"}, {\"id\": \"perf-8ec0bee0-b103-4349-ab10-63e5834862d0\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_2_1\", \"x\": 461.53846153846155, \"y\": 100.0, \"performance_id\": \"8ec0bee0-b103-4349-ab10-63e5834862d0\"}, {\"id\": \"perf-411d6d11-b606-416b-bcc7-525d10bd4237\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_1\", \"x\": 553.8461538461538, \"y\": 100.0, \"performance_id\": \"411d6d11-b606-416b-bcc7-525d10bd4237\"}, {\"id\": \"perf-317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_2\", \"x\": 646.1538461538462, \"y\": 100.0, \"performance_id\": \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\"}, {\"id\": \"perf-25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_3\", \"x\": 738.4615384615385, \"y\": 100.0, \"performance_id\": \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\"}, {\"id\": \"perf-d04d65d1-0532-4d52-98e6-f351e3569d07\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_4\", \"x\": 830.7692307692307, \"y\": 100.0, \"performance_id\": \"d04d65d1-0532-4d52-98e6-f351e3569d07\"}, {\"id\": \"perf-cc758e32-1f20-41e8-854f-edf97fb28f89\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P4_1\", \"x\": 923.0769230769231, \"y\": 100.0, \"performance_id\": \"cc758e32-1f20-41e8-854f-edf97fb28f89\"}, {\"id\": \"perf-f5a7ad0d-967d-4107-8a41-b86cd890ee91\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P5_1\", \"x\": 1015.3846153846154, \"y\": 100.0, \"performance_id\": \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\"}, {\"id\": \"perf-06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P5_2\", \"x\": 1107.6923076923076, \"y\": 100.0, \"performance_id\": \"06295416-fc7c-47bd-a717-fd49ea5c0b72\"}, {\"id\": \"node-1761532207018-0.9885147426680134\", \"layer\": 4, \"type\": \"object\", \"label\": \"\\u30e2\\u30ce 1\", \"x\": 600.0, \"y\": 700.0, \"performance_id\": null}], \"edges\": [{\"id\": \"edge-1761532210503\", \"source_id\": \"node-1761532207018-0.9885147426680134\", \"target_id\": \"perf-cc758e32-1f20-41e8-854f-edf97fb28f89\", \"type\": \"type1\", \"weight\": -1.0}]}",
+      "performance_snapshot_json": "[{\"name\": \"P1\", \"parent_id\": null, \"level\": 0, \"is_leaf\": true, \"unit\": \"km\", \"description\": \"\", \"id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\", \"utility_function\": null}, {\"name\": \"P2\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"utility_function\": null}, {\"name\": \"P2_1\", \"parent_id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"level\": 1, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"utility_function\": null}, {\"name\": \"P2_2\", \"parent_id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"level\": 1, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"e64adac4-51f3-488d-8d90-947439ecf4ce\", \"utility_function\": null}, {\"name\": \"P2_2_1\", \"parent_id\": \"e64adac4-51f3-488d-8d90-947439ecf4ce\", \"level\": 2, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"8ec0bee0-b103-4349-ab10-63e5834862d0\", \"utility_function\": null}, {\"name\": \"P3\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"utility_function\": null}, {\"name\": \"P2_1_1\", \"parent_id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"level\": 2, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"79b5f286-0794-4e7b-b310-18d4624d00e9\", \"utility_function\": null}, {\"name\": \"P2_1_2\", \"parent_id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"level\": 2, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"utility_function\": null}, {\"name\": \"P2_1_2_1\", \"parent_id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"level\": 3, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"utility_function\": null}, {\"name\": \"P2_1_2_2\", \"parent_id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"level\": 3, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"28b5a038-e868-4ab8-9d3b-c9123857c292\", \"utility_function\": null}, {\"name\": \"P3_1\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"411d6d11-b606-416b-bcc7-525d10bd4237\", \"utility_function\": null}, {\"name\": \"P3_2\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"utility_function\": null}, {\"name\": \"P3_3\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"utility_function\": null}, {\"name\": \"P3_4\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"d04d65d1-0532-4d52-98e6-f351e3569d07\", \"utility_function\": null}, {\"name\": \"P4\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"62e24c8e-7c6e-4388-8c50-0024f5dcb266\", \"utility_function\": null}, {\"name\": \"P4_1\", \"parent_id\": \"62e24c8e-7c6e-4388-8c50-0024f5dcb266\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"cc758e32-1f20-41e8-854f-edf97fb28f89\", \"utility_function\": null}, {\"name\": \"P5\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"utility_function\": null}, {\"name\": \"P5_1\", \"parent_id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\", \"utility_function\": null}, {\"name\": \"P5_2\", \"parent_id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"id\": \"06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"utility_function\": null}]",
+      "mountain_position_json": "{\"x\": -0.4761094275365506, \"y\": 4.809891772010726, \"z\": 8.754328126964074, \"H\": 182.6422792316295}",
+      "utility_vector_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"89527211-bab6-406f-85e9-f9c88bb1b56c_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc_584da218-7875-47a7-b4ac-c165f44fa632\": 1.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_584da218-7875-47a7-b4ac-c165f44fa632\": 0.77087178820644, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91_584da218-7875-47a7-b4ac-c165f44fa632\": 0.3043734678054352, \"411d6d11-b606-416b-bcc7-525d10bd4237_7609230c-2f16-4f84-b54d-7294531fa08f\": 0.8881591231924808, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601_761e8ac5-4de4-44d6-ab3e-14a656317dbe\": 0.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0_761e8ac5-4de4-44d6-ab3e-14a656317dbe\": 0.6, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_87f3f40f-434f-47f9-85e0-05ea29594b40\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc_8caeff07-65a7-4b28-be39-1b010a6d38f7\": 1.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_8caeff07-65a7-4b28-be39-1b010a6d38f7\": 0.77087178820644, \"06295416-fc7c-47bd-a717-fd49ea5c0b72_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.0, \"79b5f286-0794-4e7b-b310-18d4624d00e9_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.996321783383327, \"cc758e32-1f20-41e8-854f-edf97fb28f89_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.0, \"28b5a038-e868-4ab8-9d3b-c9123857c292_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.0, \"89527211-bab6-406f-85e9-f9c88bb1b56c_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.0}",
+      "partial_heights_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292\": 0.0, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 0.0, \"89527211-bab6-406f-85e9-f9c88bb1b56c\": 0.0, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 5.580180243099646, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": 43.33333333333333, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": 33.404444155612396, \"411d6d11-b606-416b-bcc7-525d10bd4237\": 66.61193423943607, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": 16.0, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 0.0, \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 17.712387260148038, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 0.0}",
+      "performance_weights_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292\": 38.75, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 40.41666666666667, \"89527211-bab6-406f-85e9-f9c88bb1b56c\": 38.75, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 32.08333333333333, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": 43.33333333333333, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": 76.66666666666667, \"411d6d11-b606-416b-bcc7-525d10bd4237\": 75.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": 51.66666666666667, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 17.77777777777778, \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 17.77777777777778, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 17.77777777777778}",
+      "created_at": "2025-10-27T02:30:11.284384",
+      "updated_at": "2025-11-13T02:59:14.985915"
+    },
+    {
+      "id": "c1910a46-c2de-457d-b4b5-45f109743d0d",
+      "name": "設計案4のコピーのコピー",
+      "description": null,
+      "color": "#FF33F5",
+      "performance_values_json": "{\"8ec0bee0-b103-4349-ab10-63e5834862d0\": \"\\u4e2d\\u304f\\u3089\\u3044\", \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 1.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": 0.0, \"28b5a038-e868-4ab8-9d3b-c9123857c292\": 0.0, \"411d6d11-b606-416b-bcc7-525d10bd4237\": 0.0, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": \"\\u697d\\u3057\\u3044\", \"d04d65d1-0532-4d52-98e6-f351e3569d07\": 0.0, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 1.0, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 1.0, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 0.0, \"2d9b9838-0b5f-4392-b03e-aed2b4ef3d89\": 1000.0, \"a1a7216b-8320-4e37-9558-4f56593b9640\": 100.0}",
+      "network_json": "{\"nodes\": [{\"id\": \"perf-89527211-bab6-406f-85e9-f9c88bb1b56c\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P1\", \"x\": 92.3076923076923, \"y\": 100.0, \"performance_id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\"}, {\"id\": \"perf-79b5f286-0794-4e7b-b310-18d4624d00e9\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_1\", \"x\": 184.6153846153846, \"y\": 100.0, \"performance_id\": \"79b5f286-0794-4e7b-b310-18d4624d00e9\"}, {\"id\": \"perf-afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_2_1\", \"x\": 276.9230769230769, \"y\": 100.0, \"performance_id\": \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\"}, {\"id\": \"perf-28b5a038-e868-4ab8-9d3b-c9123857c292\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_2_2\", \"x\": 369.2307692307692, \"y\": 100.0, \"performance_id\": \"28b5a038-e868-4ab8-9d3b-c9123857c292\"}, {\"id\": \"perf-8ec0bee0-b103-4349-ab10-63e5834862d0\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_2_1\", \"x\": 461.53846153846155, \"y\": 100.0, \"performance_id\": \"8ec0bee0-b103-4349-ab10-63e5834862d0\"}, {\"id\": \"perf-411d6d11-b606-416b-bcc7-525d10bd4237\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_1\", \"x\": 553.8461538461538, \"y\": 100.0, \"performance_id\": \"411d6d11-b606-416b-bcc7-525d10bd4237\"}, {\"id\": \"perf-317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_2\", \"x\": 646.1538461538462, \"y\": 100.0, \"performance_id\": \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\"}, {\"id\": \"perf-25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_3\", \"x\": 738.4615384615385, \"y\": 100.0, \"performance_id\": \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\"}, {\"id\": \"perf-d04d65d1-0532-4d52-98e6-f351e3569d07\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_4\", \"x\": 830.7692307692307, \"y\": 100.0, \"performance_id\": \"d04d65d1-0532-4d52-98e6-f351e3569d07\"}, {\"id\": \"perf-cc758e32-1f20-41e8-854f-edf97fb28f89\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P4_1\", \"x\": 923.0769230769231, \"y\": 100.0, \"performance_id\": \"cc758e32-1f20-41e8-854f-edf97fb28f89\"}, {\"id\": \"perf-f5a7ad0d-967d-4107-8a41-b86cd890ee91\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P5_1\", \"x\": 1015.3846153846154, \"y\": 100.0, \"performance_id\": \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\"}, {\"id\": \"perf-06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P5_2\", \"x\": 1107.6923076923076, \"y\": 100.0, \"performance_id\": \"06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"x3d\": -0.5995641795288433, \"y3d\": -7.44551445018034}, {\"id\": \"node-1761532207018-0.9885147426680134\", \"layer\": 4, \"type\": \"object\", \"label\": \"\\u30e2\\u30ce 1\", \"x\": 600.0, \"y\": 700.0, \"performance_id\": null}], \"edges\": [{\"id\": \"edge-1761532210503\", \"source_id\": \"node-1761532207018-0.9885147426680134\", \"target_id\": \"perf-cc758e32-1f20-41e8-854f-edf97fb28f89\", \"type\": \"type1\", \"weight\": -0.33}]}",
+      "performance_snapshot_json": "[{\"id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\", \"name\": \"P1\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"km\", \"description\": \"\", \"order\": 0}, {\"id\": \"2d9b9838-0b5f-4392-b03e-aed2b4ef3d89\", \"name\": \"P1_1\", \"parent_id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"a1a7216b-8320-4e37-9558-4f56593b9640\", \"name\": \"P1_2\", \"parent_id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"name\": \"P2\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"name\": \"P2_1\", \"parent_id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"level\": 1, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"79b5f286-0794-4e7b-b310-18d4624d00e9\", \"name\": \"P2_1_1\", \"parent_id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"level\": 2, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"name\": \"P2_1_2\", \"parent_id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"level\": 2, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"name\": \"P2_1_2_1\", \"parent_id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"level\": 3, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"28b5a038-e868-4ab8-9d3b-c9123857c292\", \"name\": \"P2_1_2_2\", \"parent_id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"level\": 3, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"e64adac4-51f3-488d-8d90-947439ecf4ce\", \"name\": \"P2_2\", \"parent_id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"level\": 1, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"8ec0bee0-b103-4349-ab10-63e5834862d0\", \"name\": \"P2_2_1\", \"parent_id\": \"e64adac4-51f3-488d-8d90-947439ecf4ce\", \"level\": 2, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"name\": \"P3\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"411d6d11-b606-416b-bcc7-525d10bd4237\", \"name\": \"P3_1\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"name\": \"P3_2\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"name\": \"P3_3\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"d04d65d1-0532-4d52-98e6-f351e3569d07\", \"name\": \"P3_4\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"62e24c8e-7c6e-4388-8c50-0024f5dcb266\", \"name\": \"P4\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"cc758e32-1f20-41e8-854f-edf97fb28f89\", \"name\": \"P4_1\", \"parent_id\": \"62e24c8e-7c6e-4388-8c50-0024f5dcb266\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"name\": \"P5\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\", \"name\": \"P5_1\", \"parent_id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"name\": \"P5_2\", \"parent_id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}]",
+      "mountain_position_json": "{\"x\": -1.7350117939903944, \"y\": 4.809891772010726, \"z\": 8.593874284410829, \"H\": 182.6422792316295}",
+      "utility_vector_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"89527211-bab6-406f-85e9-f9c88bb1b56c_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc_584da218-7875-47a7-b4ac-c165f44fa632\": 1.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_584da218-7875-47a7-b4ac-c165f44fa632\": 0.77087178820644, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91_584da218-7875-47a7-b4ac-c165f44fa632\": 0.3043734678054352, \"411d6d11-b606-416b-bcc7-525d10bd4237_7609230c-2f16-4f84-b54d-7294531fa08f\": 0.8881591231924808, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601_761e8ac5-4de4-44d6-ab3e-14a656317dbe\": 0.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0_761e8ac5-4de4-44d6-ab3e-14a656317dbe\": 0.6, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_87f3f40f-434f-47f9-85e0-05ea29594b40\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc_8caeff07-65a7-4b28-be39-1b010a6d38f7\": 1.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_8caeff07-65a7-4b28-be39-1b010a6d38f7\": 0.77087178820644, \"06295416-fc7c-47bd-a717-fd49ea5c0b72_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.0, \"79b5f286-0794-4e7b-b310-18d4624d00e9_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.996321783383327, \"cc758e32-1f20-41e8-854f-edf97fb28f89_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.0, \"28b5a038-e868-4ab8-9d3b-c9123857c292_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.0, \"89527211-bab6-406f-85e9-f9c88bb1b56c_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.0}",
+      "partial_heights_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292\": 0.0, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 0.0, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 5.580180243099646, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": 43.33333333333333, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": 33.404444155612396, \"411d6d11-b606-416b-bcc7-525d10bd4237\": 66.61193423943607, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": 16.0, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 0.0, \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 17.712387260148038, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 0.0}",
+      "performance_weights_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292\": 38.75, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 40.41666666666667, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 32.08333333333333, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": 43.33333333333333, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": 76.66666666666667, \"411d6d11-b606-416b-bcc7-525d10bd4237\": 75.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": 51.66666666666667, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 17.77777777777778, \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 17.77777777777778, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 17.77777777777778}",
+      "created_at": "2025-11-10T13:40:27.445406",
+      "updated_at": "2025-11-13T02:59:14.985914"
+    },
+    {
+      "id": "8e7ab46e-8c11-49be-a17b-271fc38e15e8",
+      "name": "設計案1のコピー",
+      "description": null,
+      "color": "#3357FF",
+      "performance_values_json": "{\"8ec0bee0-b103-4349-ab10-63e5834862d0\": \"\\u5927\\u304d\\u3044\", \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 1.0, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": -3.0, \"28b5a038-e868-4ab8-9d3b-c9123857c292\": 66.0, \"411d6d11-b606-416b-bcc7-525d10bd4237\": -2.0, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": -10.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": \"\\u697d\\u3057\\u304f\\u306a\\u3044\", \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 1.0, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 60.0, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 0.0, \"8c0eea97-843e-480e-a626-1fc02d8e46fa\": 22.0, \"4e9d4f50-9262-42d0-8586-d907bb284813\": 11.0}",
+      "network_json": "{\"nodes\": [{\"id\": \"perf-79b5f286-0794-4e7b-b310-18d4624d00e9\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_1\", \"x\": 276.9230769230769, \"y\": 100.0, \"performance_id\": \"79b5f286-0794-4e7b-b310-18d4624d00e9\", \"x3d\": null, \"y3d\": null}, {\"id\": \"perf-afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_2_1\", \"x\": 369.2307692307692, \"y\": 100.0, \"performance_id\": \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"x3d\": null, \"y3d\": null}, {\"id\": \"perf-28b5a038-e868-4ab8-9d3b-c9123857c292\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_1_2_2\", \"x\": 461.53846153846155, \"y\": 100.0, \"performance_id\": \"28b5a038-e868-4ab8-9d3b-c9123857c292\", \"x3d\": null, \"y3d\": null}, {\"id\": \"perf-8ec0bee0-b103-4349-ab10-63e5834862d0\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P2_2_1\", \"x\": 553.8461538461538, \"y\": 100.0, \"performance_id\": \"8ec0bee0-b103-4349-ab10-63e5834862d0\", \"x3d\": null, \"y3d\": null}, {\"id\": \"perf-411d6d11-b606-416b-bcc7-525d10bd4237\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_1\", \"x\": 646.1538461538462, \"y\": 100.0, \"performance_id\": \"411d6d11-b606-416b-bcc7-525d10bd4237\", \"x3d\": null, \"y3d\": null}, {\"id\": \"perf-317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_2\", \"x\": 738.4615384615385, \"y\": 100.0, \"performance_id\": \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"x3d\": null, \"y3d\": null}, {\"id\": \"perf-25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P3_3\", \"x\": 830.7692307692307, \"y\": 100.0, \"performance_id\": \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"x3d\": null, \"y3d\": null}, {\"id\": \"perf-cc758e32-1f20-41e8-854f-edf97fb28f89\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P4_1\", \"x\": 923.0769230769231, \"y\": 100.0, \"performance_id\": \"cc758e32-1f20-41e8-854f-edf97fb28f89\", \"x3d\": 1.9951866801411202, \"y3d\": -3.772139092352856}, {\"id\": \"perf-f5a7ad0d-967d-4107-8a41-b86cd890ee91\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P5_1\", \"x\": 1015.3846153846154, \"y\": 100.0, \"performance_id\": \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\", \"x3d\": null, \"y3d\": null}, {\"id\": \"perf-06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P5_2\", \"x\": 1107.6923076923076, \"y\": 100.0, \"performance_id\": \"06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"x3d\": 2.021033078938899, \"y3d\": 9.060090739773994}, {\"id\": \"node-1761461985438-0.46270910484243755\", \"layer\": 4, \"type\": \"object\", \"label\": \"\\u30e2\\u30ce1\", \"x\": 300.0, \"y\": 700.0, \"performance_id\": null, \"x3d\": null, \"y3d\": null}, {\"id\": \"node-1761492150088-0.06735819217409111\", \"layer\": 2, \"type\": \"property\", \"label\": \"\\u7279\\u6027 1\", \"x\": 207.79469781899144, \"y\": 316.63061352004263, \"performance_id\": null, \"x3d\": null, \"y3d\": null}, {\"id\": \"node-1761492152725-0.2098764083755298\", \"layer\": 3, \"type\": \"variable\", \"label\": \"\\u5909\\u6570 1\", \"x\": 355.651697279886, \"y\": 515.2447290600392, \"performance_id\": null, \"x3d\": null, \"y3d\": null}, {\"id\": \"node-1761529746526-0.5513362833315459\", \"layer\": 4, \"type\": \"environment\", \"label\": \"\\u74b0\\u5883 1\", \"x\": 595.8423466199894, \"y\": 636.2493148398361, \"performance_id\": null, \"x3d\": null, \"y3d\": null}, {\"id\": \"node-1761529920050-0.5492565234448861\", \"layer\": 4, \"type\": \"environment\", \"label\": \"\\u74b0\\u5883 2\", \"x\": 900.0, \"y\": 700.0, \"performance_id\": null, \"x3d\": null, \"y3d\": null}, {\"id\": \"node-1761529923556-0.21958750088148993\", \"layer\": 3, \"type\": \"variable\", \"label\": \"\\u5909\\u6570 2\", \"x\": 827.7176892000713, \"y\": 509.70119122002495, \"performance_id\": null, \"x3d\": null, \"y3d\": null}, {\"id\": \"56ae8686-ba2f-423a-b35e-271feaa4b866\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P1_1\", \"x\": 92.3076923076923, \"y\": 100.0, \"performance_id\": \"8c0eea97-843e-480e-a626-1fc02d8e46fa\", \"x3d\": null, \"y3d\": null}, {\"id\": \"b52963dc-4a5b-4751-b471-ccca674e3810\", \"layer\": 1, \"type\": \"performance\", \"label\": \"P1_2\", \"x\": 184.6153846153846, \"y\": 100.0, \"performance_id\": \"4e9d4f50-9262-42d0-8586-d907bb284813\", \"x3d\": 9.746505238032366, \"y3d\": -14.424587187821862}, {\"id\": \"node-1762786971862-0.3909321716752159\", \"layer\": 4, \"type\": \"object\", \"label\": \"\\u30e2\\u30ce 2\", \"x\": 65.86795918892975, \"y\": 667.6899366616756, \"performance_id\": null, \"x3d\": null, \"y3d\": null}, {\"id\": \"node-1762786979784-0.3217196483453125\", \"layer\": 2, \"type\": \"property\", \"label\": \"\\u7279\\u6027 2\", \"x\": 758.7178078911519, \"y\": 295.6039068030748, \"performance_id\": null, \"x3d\": null, \"y3d\": null}, {\"id\": \"node-1762786982003-0.7330940430475675\", \"layer\": 2, \"type\": \"property\", \"label\": \"\\u7279\\u6027 3\", \"x\": 455.0613927191903, \"y\": 304.1576086389047, \"performance_id\": null, \"x3d\": null, \"y3d\": null}, {\"id\": \"1dfb0dbf-6200-4c65-9def-2d72fbd06439\", \"layer\": 2, \"type\": \"property\", \"label\": \"ddd\", \"x\": 979.1171372167673, \"y\": 329.70270947095224, \"performance_id\": null, \"x3d\": null, \"y3d\": null}, {\"id\": \"840bafbe-ee36-4925-8f6b-33528c9fa466\", \"layer\": 4, \"type\": \"object\", \"label\": \"\\u30e2\\u30ce\", \"x\": 461.5837932593332, \"y\": 735.3369520321845, \"performance_id\": null, \"x3d\": null, \"y3d\": null}, {\"id\": \"324cfdff-ad35-41aa-b627-1426d2d1221f\", \"layer\": 4, \"type\": \"object\", \"label\": \"\\u30e2\\u30ce5\", \"x\": 181.83603976882821, \"y\": 661.4036171811225, \"performance_id\": null, \"x3d\": null, \"y3d\": null}], \"edges\": [{\"id\": \"edge-1761461989360\", \"source_id\": \"node-1761461985438-0.46270910484243755\", \"target_id\": \"perf-06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761529752340\", \"source_id\": \"perf-afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"target_id\": \"node-1761492150088-0.06735819217409111\", \"type\": \"type1\", \"weight\": 3.0}, {\"id\": \"edge-1761623696288\", \"source_id\": \"node-1761492152725-0.2098764083755298\", \"target_id\": \"perf-317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761623827118\", \"source_id\": \"node-1761461985438-0.46270910484243755\", \"target_id\": \"node-1761529746526-0.5513362833315459\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761624158423\", \"source_id\": \"node-1761492150088-0.06735819217409111\", \"target_id\": \"perf-25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"type\": \"type1\", \"weight\": 0.0}, {\"id\": \"edge-1761624304640\", \"source_id\": \"node-1761492152725-0.2098764083755298\", \"target_id\": \"node-1761529923556-0.21958750088148993\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761624307012\", \"source_id\": \"node-1761529746526-0.5513362833315459\", \"target_id\": \"node-1761529920050-0.5492565234448861\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761624309515\", \"source_id\": \"perf-cc758e32-1f20-41e8-854f-edf97fb28f89\", \"target_id\": \"node-1761529920050-0.5492565234448861\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761625600731\", \"source_id\": \"node-1761529923556-0.21958750088148993\", \"target_id\": \"perf-06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"type\": \"type1\", \"weight\": null}, {\"id\": \"edge-1761815127650\", \"source_id\": \"node-1761529746526-0.5513362833315459\", \"target_id\": \"perf-411d6d11-b606-416b-bcc7-525d10bd4237\", \"type\": \"type1\", \"weight\": 3.0}, {\"id\": \"edge-1762301794687\", \"source_id\": \"node-1761529920050-0.5492565234448861\", \"target_id\": \"perf-06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"type\": \"type1\", \"weight\": -3.0}, {\"id\": \"edge-1762786965849\", \"source_id\": \"node-1761492150088-0.06735819217409111\", \"target_id\": \"b52963dc-4a5b-4751-b471-ccca674e3810\", \"type\": \"type1\", \"weight\": 3.0}, {\"id\": \"edge-1762786975478\", \"source_id\": \"node-1762786971862-0.3909321716752159\", \"target_id\": \"node-1761492152725-0.2098764083755298\", \"type\": \"type1\", \"weight\": 0.0}, {\"id\": \"edge-1762786986060\", \"source_id\": \"node-1762786982003-0.7330940430475675\", \"target_id\": \"perf-28b5a038-e868-4ab8-9d3b-c9123857c292\", \"type\": \"type1\", \"weight\": 1.0}, {\"id\": \"edge-1762786993456\", \"source_id\": \"node-1762786982003-0.7330940430475675\", \"target_id\": \"perf-8ec0bee0-b103-4349-ab10-63e5834862d0\", \"type\": \"type1\", \"weight\": -3.0}, {\"id\": \"edge-1762786999194\", \"source_id\": \"node-1762786979784-0.3217196483453125\", \"target_id\": \"b52963dc-4a5b-4751-b471-ccca674e3810\", \"type\": \"type1\", \"weight\": 0.0}, {\"id\": \"edge-1762787003990\", \"source_id\": \"node-1762786979784-0.3217196483453125\", \"target_id\": \"perf-25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"type\": \"type1\", \"weight\": 1.0}, {\"id\": \"698b356b-4f59-414a-a0e0-c9731d61d715\", \"source_id\": \"perf-79b5f286-0794-4e7b-b310-18d4624d00e9\", \"target_id\": \"perf-411d6d11-b606-416b-bcc7-525d10bd4237\", \"type\": \"type1\", \"weight\": 1.0}]}",
+      "performance_snapshot_json": "[{\"id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\", \"name\": \"P1\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"km\", \"description\": \"\", \"order\": 0}, {\"id\": \"8c0eea97-843e-480e-a626-1fc02d8e46fa\", \"name\": \"P1_1\", \"parent_id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"4e9d4f50-9262-42d0-8586-d907bb284813\", \"name\": \"P1_2\", \"parent_id\": \"89527211-bab6-406f-85e9-f9c88bb1b56c\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"name\": \"P2\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"name\": \"P2_1\", \"parent_id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"level\": 1, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"79b5f286-0794-4e7b-b310-18d4624d00e9\", \"name\": \"P2_1_1\", \"parent_id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"level\": 2, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"name\": \"P2_1_2\", \"parent_id\": \"2ea82e8d-9596-4eef-bff1-b6aad389a3a7\", \"level\": 2, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\", \"name\": \"P2_1_2_1\", \"parent_id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"level\": 3, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"28b5a038-e868-4ab8-9d3b-c9123857c292\", \"name\": \"P2_1_2_2\", \"parent_id\": \"376bd8bc-8a5f-4390-a408-c84140ba1831\", \"level\": 3, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"e64adac4-51f3-488d-8d90-947439ecf4ce\", \"name\": \"P2_2\", \"parent_id\": \"76c8cd76-66e4-43aa-b29e-4e12d107717e\", \"level\": 1, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"8ec0bee0-b103-4349-ab10-63e5834862d0\", \"name\": \"P2_2_1\", \"parent_id\": \"e64adac4-51f3-488d-8d90-947439ecf4ce\", \"level\": 2, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"name\": \"P3\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"411d6d11-b606-416b-bcc7-525d10bd4237\", \"name\": \"P3_1\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\", \"name\": \"P3_2\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\", \"name\": \"P3_3\", \"parent_id\": \"8c6505b5-81ca-4871-91cf-b310ca3397a7\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"62e24c8e-7c6e-4388-8c50-0024f5dcb266\", \"name\": \"P4\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"cc758e32-1f20-41e8-854f-edf97fb28f89\", \"name\": \"P4_1\", \"parent_id\": \"62e24c8e-7c6e-4388-8c50-0024f5dcb266\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"name\": \"P5\", \"parent_id\": null, \"level\": 0, \"is_leaf\": false, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\", \"name\": \"P5_1\", \"parent_id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}, {\"id\": \"06295416-fc7c-47bd-a717-fd49ea5c0b72\", \"name\": \"P5_2\", \"parent_id\": \"c7be7c7a-b1a6-4691-a029-bc365ee53689\", \"level\": 1, \"is_leaf\": true, \"unit\": \"\", \"description\": \"\", \"order\": 0}]",
+      "mountain_position_json": "{\"x\": 1.1563305815735963, \"y\": 4.75459857393432, \"z\": -8.721048789386481, \"H\": 180.54267362689484}",
+      "utility_vector_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.6988253192896636, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"89527211-bab6-406f-85e9-f9c88bb1b56c_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91_571a6ff9-32d4-4eae-b129-a9408bd5804c\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc_584da218-7875-47a7-b4ac-c165f44fa632\": 0.1, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_584da218-7875-47a7-b4ac-c165f44fa632\": 0.7420647583670535, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91_584da218-7875-47a7-b4ac-c165f44fa632\": 0.37658164758128543, \"411d6d11-b606-416b-bcc7-525d10bd4237_7609230c-2f16-4f84-b54d-7294531fa08f\": 0.8869866956805749, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601_761e8ac5-4de4-44d6-ab3e-14a656317dbe\": 0.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0_761e8ac5-4de4-44d6-ab3e-14a656317dbe\": 0.5, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_87f3f40f-434f-47f9-85e0-05ea29594b40\": 0.0, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc_8caeff07-65a7-4b28-be39-1b010a6d38f7\": 0.1, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8_8caeff07-65a7-4b28-be39-1b010a6d38f7\": 0.7420647583670535, \"06295416-fc7c-47bd-a717-fd49ea5c0b72_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.0, \"79b5f286-0794-4e7b-b310-18d4624d00e9_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.996321783383327, \"cc758e32-1f20-41e8-854f-edf97fb28f89_992ddf1e-a05a-41a0-b5aa-166c9161b6a1\": 0.0, \"28b5a038-e868-4ab8-9d3b-c9123857c292_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.6988253192896636, \"89527211-bab6-406f-85e9-f9c88bb1b56c_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0_ecfae634-6870-4c31-9bac-3f35131a1d7e\": 0.5}",
+      "partial_heights_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292\": 27.079481122474462, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 0.0, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 6.903996872323566, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": 4.333333333333333, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": 32.156139529238985, \"411d6d11-b606-416b-bcc7-525d10bd4237\": 66.52400217604311, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": 25.833333333333336, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 0.0, \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 17.712387260148038, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 0.0}",
+      "performance_weights_json": "{\"28b5a038-e868-4ab8-9d3b-c9123857c292\": 38.75, \"317ca9c9-e389-4e96-9bd2-06c3a4f7f601\": 40.41666666666667, \"f5a7ad0d-967d-4107-8a41-b86cd890ee91\": 32.08333333333333, \"25815eaf-44bf-4ade-aa4f-55345a6e6ddc\": 43.33333333333333, \"afd064bd-4d59-405c-8f1a-dae0ab3b50a8\": 76.66666666666667, \"411d6d11-b606-416b-bcc7-525d10bd4237\": 75.0, \"8ec0bee0-b103-4349-ab10-63e5834862d0\": 51.66666666666667, \"06295416-fc7c-47bd-a717-fd49ea5c0b72\": 17.77777777777778, \"79b5f286-0794-4e7b-b310-18d4624d00e9\": 17.77777777777778, \"cc758e32-1f20-41e8-854f-edf97fb28f89\": 17.77777777777778}",
+      "created_at": "2025-11-10T15:02:15.660339",
+      "updated_at": "2025-11-13T02:59:14.985914"
+    }
+  ]
+}
