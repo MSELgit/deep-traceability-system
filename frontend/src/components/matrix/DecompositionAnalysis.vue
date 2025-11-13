@@ -45,59 +45,118 @@ const showAnalysis = computed(() => {
 
 .decomposition-analysis {
   margin-top: 3vh;
-  padding: 2vh 2vw;
-  background: lighten($gray, 8%);
-  border-radius: 1vw;
-  border: 1px solid transparentize($white, 0.9);
-  border-left: 4px solid $main_1;
+  padding: 2.5vh 2.5vw;
+  background: $gray;
+  border-radius: 0.8vw;
+  border: 1px solid transparentize($white, 0.85);
+  box-shadow: 0 0.3vh 1vh transparentize($black, 0.7);
+  position: relative;
+  overflow: hidden;
+}
+
+.decomposition-analysis::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0.5vh;
+  background: linear-gradient(90deg, $sub_1, $sub_2, $sub_3);
 }
 
 .decomposition-analysis h3 {
-  font-size: clamp(1.1rem, 1.5vw, 1.3rem);
-  margin-bottom: 2vh;
+  font-size: clamp(1.2rem, 1.6vw, 1.4rem);
+  margin-bottom: 2.5vh;
+  margin-top: 0.5vh;
   color: $white;
   font-weight: 600;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 1vw;
 }
 
 .analysis-item {
-  margin-bottom: 1.5vh;
+  margin-bottom: 2vh;
+  padding: 1.5vh 1.5vw;
+  background: transparentize($black, 0.5);
+  border-radius: 0.5vw;
+  border: 1px solid transparentize($white, 0.95);
   line-height: 1.8;
 }
 
 .analysis-item strong {
-  color: transparentize($white, 0.2);
-  font-weight: 600;
+  color: transparentize($white, 0.1);
+  font-weight: 500;
   display: block;
-  margin-bottom: 0.5vh;
+  margin-bottom: 1vh;
+  font-size: clamp(0.8rem, 0.95vw, 0.9rem);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
 }
 
 .performance-list {
-  color: $sub_1;
-  font-weight: 600;
-  font-size: clamp(0.9rem, 1.1vw, 1rem);
+  color: $white;
+  font-weight: 500;
+  font-size: clamp(0.95rem, 1.1vw, 1.05rem);
+  display: block;
+  padding-left: 1.5vw;
+  position: relative;
+}
+
+.performance-list::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: $main_2;
+  font-weight: 700;
 }
 
 .analysis-action {
-  margin-top: 2vh;
-  text-align: center;
+  margin-top: 2.5vh;
+  display: flex;
+  justify-content: center;
 }
 
 .decompose-button {
-  padding: 1.5vh 3vw;
-  font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+  padding: 1.2vh 2.5vw;
+  font-size: clamp(0.9rem, 1.1vw, 1rem);
   font-weight: 600;
   color: $white;
   background: linear-gradient(135deg, $main_1, $main_2);
   border: none;
-  border-radius: 0.8vw;
+  border-radius: 0.5vw;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 0.5vh 1vh transparentize($main_1, 0.6);
+  box-shadow: 0 0.3vh 0.8vh transparentize($black, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  position: relative;
+  overflow: hidden;
+}
+
+.decompose-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: transparentize($white, 0.8);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
 }
 
 .decompose-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0.8vh 2vh transparentize($main_1, 0.4);
+  box-shadow: 0 0.5vh 1.2vh transparentize($black, 0.4);
+}
+
+.decompose-button:hover::before {
+  width: 300%;
+  height: 300%;
 }
 
 .decompose-button:active {

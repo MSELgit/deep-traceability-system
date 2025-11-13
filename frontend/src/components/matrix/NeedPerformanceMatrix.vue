@@ -3658,65 +3658,6 @@ const insufficientDecompositionAnalysis = computed(() => {
   font-weight: 700;
 }
 
-.decomposition-analysis {
-  margin-top: 30px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid #667eea;
-}
-
-.decomposition-analysis h3 {
-  font-size: 18px;
-  margin-bottom: 16px;
-  color: #333;
-}
-
-.analysis-item {
-  margin-bottom: 12px;
-  line-height: 1.8;
-}
-
-.analysis-item strong {
-  color: #495057;
-  font-weight: 600;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.performance-list {
-  color: #e74c3c;
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.analysis-action {
-  margin-top: 16px;
-  text-align: center;
-}
-
-.decompose-button {
-  padding: 12px 32px;
-  font-size: 16px;
-  font-weight: 600;
-  color: white;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
-}
-
-.decompose-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
-}
-
-.decompose-button:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
-}
 
 .empty-matrix {
   text-align: center;
