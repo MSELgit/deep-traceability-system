@@ -285,7 +285,6 @@ const props = defineProps<{
 
 const canvasWidth = ref(1200);
 const canvasHeight = ref(800);
-const nodeRadius = 18;
 
 // ズーム・パン状態
 const zoom = ref(1);

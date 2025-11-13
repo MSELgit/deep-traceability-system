@@ -1,30 +1,28 @@
 <template>
   <div class="stakeholder-matrix">
     <div class="section-header">
-      <h2>ステークホルダー分析</h2>
-      <p class="section-description">
-        関係者とニーズを登録し、それぞれの関心事をマトリクスで管理します<br>
-        ただしステークホルダーとニーズの両方が登録されている場合にマトリクスが表示されます
-      </p>
+      <h2>Stakeholder Analysis</h2>
     </div>
 
     <div class="actions">
-      <button class="primary" @click="showStakeholderDialog = true">
-        + ステークホルダー追加
+      <button class="action-btn stakeholder-btn" @click="showStakeholderDialog = true">
+        <FontAwesomeIcon :icon="['fas', 'plus']" />
+        Add Stakeholder
       </button>
-      <button class="secondary" @click="showNeedDialog = true">
-        + ニーズ追加
+      <button class="action-btn need-btn" @click="showNeedDialog = true">
+        <FontAwesomeIcon :icon="['fas', 'plus']" />
+        Add Need
       </button>
       
       <div class="download-buttons">
-        <button class="download-btn image" @click="downloadMatrixAsImage" title="画像としてダウンロード">
+        <button class="download-btn image" @click="downloadMatrixAsImage" title="Download as Image">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <path d="M10.5 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
             <path d="M2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2zm.5 2a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm9 2.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/>
           </svg>
-          画像
+          Image
         </button>
-        <button class="download-btn excel" @click="downloadMatrixAsExcel" title="Excelファイルとしてダウンロード">
+        <button class="download-btn excel" @click="downloadMatrixAsExcel" title="Download as Excel">
           <svg width="16" height="16" viewBox="0 0 48 48">
             <defs>
               <linearGradient id="excel-gradient" x1="5.822" y1="11.568" x2="20.178" y2="36.432" gradientUnits="userSpaceOnUse">
@@ -44,15 +42,14 @@
       </div>
     </div>
 
-    <!-- マトリクステーブル（列=ステークホルダー、行=ニーズ） -->
     <div v-if="stakeholders.length > 0 && needs.length > 0" class="matrix-container">
       <table class="matrix-table">
         <thead>
           <tr>
             <th class="corner-cell">
-              <div>ステークホルダー</div>
+              <div>Stakeholders</div>
               <div class="separator">\</div>
-              <div>ニーズ</div>
+              <div>Needs</div>
             </th>
             <th v-for="stakeholder in stakeholders" :key="stakeholder.id" class="stakeholder-header">
               <div class="header-content">
@@ -61,7 +58,7 @@
                   {{ stakeholder.category }}
                 </span>
                 <div class="votes-control">
-                  <label>票数:</label>
+                  <label>Votes:</label>
                   <input
                     type="number"
                     v-model.number="stakeholder.votes"
@@ -74,14 +71,14 @@
                   <button 
                     class="icon-btn edit" 
                     @click="editStakeholder(stakeholder)"
-                    title="編集"
+                    title="Edit"
                   >
                     <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
                   </button>
                   <button 
                     class="icon-btn danger" 
                     @click="deleteStakeholder(stakeholder.id)"
-                    title="削除"
+                    title="Delete"
                   >
                     <FontAwesomeIcon :icon="['fas', 'trash']" />
                   </button>
@@ -102,14 +99,14 @@
                   <button 
                     class="icon-btn edit" 
                     @click="editNeed(need)"
-                    title="編集"
+                    title="Edit"
                   >
                     <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
                   </button>
                   <button 
                     class="icon-btn danger" 
                     @click="deleteNeed(need.id)"
-                    title="削除"
+                    title="Delete"
                   >
                     <FontAwesomeIcon :icon="['fas', 'trash']" />
                   </button>
@@ -132,63 +129,63 @@
       </table>
     </div>
 
-    <!-- 空状態 -->
+    <!-- Empty state -->
     <div v-else class="empty-matrix">
-      <p>ステークホルダーとニーズを追加してマトリクスを作成してください</p>
+      <p>Add stakeholders and needs to create a matrix</p>
     </div>
 
-    <!-- ステークホルダー追加/編集ダイアログ -->
+    <!-- Add/Edit Stakeholder Dialog -->
     <div v-if="showStakeholderDialog" class="modal-overlay" @click="showStakeholderDialog = false">
       <div class="modal-content" @click.stop>
-        <h3>{{ editingStakeholder ? 'ステークホルダー編集' : 'ステークホルダー追加' }}</h3>
+        <h3>{{ editingStakeholder ? 'Edit Stakeholder' : 'Add Stakeholder' }}</h3>
         <form @submit.prevent="saveStakeholder">
           <div class="form-group">
-            <label>名前 *</label>
+            <label>Name *</label>
             <input v-model="newStakeholder.name" type="text" required />
           </div>
           <div class="form-group">
-            <label>カテゴリ</label>
-            <input v-model="newStakeholder.category" type="text" placeholder="例: エネルギー業界" />
+            <label>Category</label>
+            <input v-model="newStakeholder.category" type="text" placeholder="e.g., Energy Industry" />
           </div>
           <div class="form-group">
-            <label>{{ editingStakeholder ? '票数' : '初期票数' }}</label>
+            <label>{{ editingStakeholder ? 'Votes' : 'Initial Votes' }}</label>
             <input v-model.number="newStakeholder.votes" type="number" min="0" value="100" />
           </div>
           <div class="form-actions">
             <button type="button" @click="closeStakeholderDialog">
-              キャンセル
+              Cancel
             </button>
             <button type="submit" class="primary">
-              {{ editingStakeholder ? '更新' : '追加' }}
+              {{ editingStakeholder ? 'Update' : 'Add' }}
             </button>
           </div>
         </form>
       </div>
     </div>
 
-    <!-- ニーズ追加/編集ダイアログ -->
+    <!-- Add/Edit Need Dialog -->
     <div v-if="showNeedDialog" class="modal-overlay" @click="showNeedDialog = false">
       <div class="modal-content" @click.stop>
-        <h3>{{ editingNeed ? 'ニーズ編集' : 'ニーズ追加' }}</h3>
+        <h3>{{ editingNeed ? 'Edit Need' : 'Add Need' }}</h3>
         <form @submit.prevent="saveNeed">
           <div class="form-group">
-            <label>ニーズ名 *</label>
+            <label>Need Name *</label>
             <input v-model="newNeed.name" type="text" required />
           </div>
           <div class="form-group">
-            <label>カテゴリ</label>
-            <input v-model="newNeed.category" type="text" placeholder="例: 発電性" />
+            <label>Category</label>
+            <input v-model="newNeed.category" type="text" placeholder="e.g., Power Generation" />
           </div>
           <div class="form-group">
-            <label>説明</label>
+            <label>Description</label>
             <textarea v-model="newNeed.description" rows="3"></textarea>
           </div>
           <div class="form-actions">
             <button type="button" @click="closeNeedDialog">
-              キャンセル
+              Cancel
             </button>
             <button type="submit" class="primary">
-              {{ editingNeed ? '更新' : '追加' }}
+              {{ editingNeed ? 'Update' : 'Add' }}
             </button>
           </div>
         </form>
@@ -202,6 +199,7 @@ import { ref } from 'vue'
 import { useProjectStore } from '../../stores/projectStore'
 import { storeToRefs } from 'pinia'
 import * as XLSX from 'xlsx'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const projectStore = useProjectStore()
 const { stakeholders, needs, stakeholderNeedRelations } = storeToRefs(projectStore)
@@ -280,7 +278,7 @@ async function saveStakeholder() {
     }
     closeStakeholderDialog()
   } catch (error) {
-    alert(editingStakeholder.value ? 'ステークホルダーの更新に失敗しました' : 'ステークホルダーの追加に失敗しました')
+    alert(editingStakeholder.value ? 'Failed to update stakeholder' : 'Failed to add stakeholder')
   }
 }
 
@@ -295,7 +293,7 @@ async function saveNeed() {
     }
     closeNeedDialog()
   } catch (error) {
-    alert(editingNeed.value ? 'ニーズの更新に失敗しました' : 'ニーズの追加に失敗しました')
+    alert(editingNeed.value ? 'Failed to update need' : 'Failed to add need')
   }
 }
 
@@ -306,26 +304,26 @@ async function updateStakeholderVotes(stakeholder: any) {
       votes: stakeholder.votes
     })
   } catch (error) {
-    alert('票数の更新に失敗しました')
+    alert('Failed to update votes')
   }
 }
 
 async function deleteStakeholder(id: string) {
-  if (confirm('このステークホルダーを削除しますか？')) {
+  if (confirm('Delete this stakeholder?')) {
     try {
       await projectStore.deleteStakeholder(id)
     } catch (error) {
-      alert('ステークホルダーの削除に失敗しました')
+      alert('Failed to delete stakeholder')
     }
   }
 }
 
 async function deleteNeed(id: string) {
-  if (confirm('このニーズを削除しますか？')) {
+  if (confirm('Delete this need?')) {
     try {
       await projectStore.deleteNeed(id)
     } catch (error) {
-      alert('ニーズの削除に失敗しました')
+      alert('Failed to delete need')
     }
   }
 }
@@ -339,7 +337,7 @@ async function downloadMatrixAsImage() {
     // マトリクステーブルを取得
     const matrixTable = document.querySelector('.matrix-table') as HTMLElement
     if (!matrixTable) {
-      alert('マトリクステーブルが見つかりません')
+      alert('Matrix table not found')
       return
     }
     
@@ -355,21 +353,21 @@ async function downloadMatrixAsImage() {
     // ダウンロード
     canvas.toBlob((blob: Blob | null) => {
       if (!blob) {
-        alert('画像データの作成に失敗しました')
+        alert('Failed to create image data')
         return
       }
       
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `ステークホルダー分析_${new Date().toISOString().slice(0, 10)}.png`
+      link.download = `Stakeholder_Analysis_${new Date().toISOString().slice(0, 10)}.png`
       link.click()
       URL.revokeObjectURL(url)
     }, 'image/png', 0.95)
     
   } catch (error) {
-    console.error('画像生成エラー:', error)
-    alert(`画像の生成に失敗しました: ${error}`)
+    console.error('Image generation error:', error)
+    alert(`Failed to generate image: ${error}`)
   }
 }
 
@@ -381,17 +379,17 @@ function downloadMatrixAsExcel() {
   // マトリクスデータを配列に変換
   const matrixData: (string | number)[][] = []
   
-  // ヘッダー行1: 角セル + ステークホルダー名
-  const headerRow: (string | number)[] = ['ニーズ']
+  // Header row 1: corner cell + stakeholder names
+  const headerRow: (string | number)[] = ['Needs']
   stakeholders.value.forEach(sh => {
     const header = sh.category 
-      ? `${sh.name} (${sh.category}) - ${sh.votes}票`
-      : `${sh.name} - ${sh.votes}票`
+      ? `${sh.name} (${sh.category}) - ${sh.votes} votes`
+      : `${sh.name} - ${sh.votes} votes`
     headerRow.push(header)
   })
   matrixData.push(headerRow)
   
-  // データ行: 各ニーズ
+  // Data rows: each need
   needs.value.forEach(need => {
     const row: (string | number)[] = []
     const needCell = need.category
@@ -399,7 +397,7 @@ function downloadMatrixAsExcel() {
       : need.name
     row.push(needCell)
     
-    // 各ステークホルダーとの関係
+    // Relationship with each stakeholder
     stakeholders.value.forEach(sh => {
       row.push(hasRelation(sh.id, need.id) ? '○' : '')
     })
@@ -422,34 +420,75 @@ function downloadMatrixAsExcel() {
   })
   ws['!cols'] = columnWidths
   
-  XLSX.utils.book_append_sheet(wb, ws, 'ステークホルダー分析')
+  XLSX.utils.book_append_sheet(wb, ws, 'Stakeholder Analysis')
   
-  // ファイルをダウンロード
-  const filename = `ステークホルダー分析_${new Date().toISOString().slice(0, 10)}.xlsx`
+  // Download file
+  const filename = `Stakeholder_Analysis_${new Date().toISOString().slice(0, 10)}.xlsx`
   XLSX.writeFile(wb, filename)
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '../../style/color';
+.stakeholder-matrix {
+  padding: 2vh;
+}
+
 .section-header {
-  margin-bottom: 20px;
+  margin-bottom: 3vh;
 }
 
 .section-header h2 {
-  font-size: 24px;
-  margin-bottom: 8px;
+  font-size: clamp(1.5rem, 2vw, 1.8rem);
+  color: $white;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .section-description {
-  color: #666;
-  font-size: 14px;
+  color: transparentize($white, 0.4);
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
 }
 
 .actions {
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 1vw;
+  margin-bottom: 3vh;
   align-items: center;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5vw;
+  padding: 1.5vh 1.5vw;
+  border-radius: 0.5vw;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  color: $white;
+}
+
+.stakeholder-btn {
+  background: linear-gradient(135deg, $main_3, darken($main_3, 10%));
+}
+
+.stakeholder-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5vh 2vh transparentize($main_3, 0.6);
+  background: linear-gradient(135deg, lighten($main_3, 5%), $main_3);
+}
+
+.need-btn {
+  background: linear-gradient(135deg, $main_2, darken($main_2, 10%));
+}
+
+.need-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5vh 2vh transparentize($main_2, 0.6);
+  background: linear-gradient(135deg, lighten($main_2, 5%), $main_2);
 }
 
 .download-buttons {
@@ -461,55 +500,57 @@ function downloadMatrixAsExcel() {
 .download-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: white;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
+  gap: 0.5vw;
+  padding: 1.2vh 1.2vw;
+  background: $white;
+  border: 1px solid darken($white, 12%);
+  border-radius: 0.5vw;
   cursor: pointer;
-  font-size: 13px;
+  font-size: clamp(0.8rem, 0.95vw, 0.9rem);
   font-weight: 500;
-  color: #495057;
+  color: lighten($black, 10%);
   transition: all 0.2s ease;
 }
 
 .download-btn:hover {
-  background: #f8f9fa;
-  border-color: #adb5bd;
+  background: lighten($white, 3%);
+  border-color: transparentize($black, 0.3);
 }
 
 .download-btn.image:hover {
-  color: #0866cc;
-  border-color: #0866cc;
+  color: $sub_6;
+  border-color: $sub_6;
 }
 
 .download-btn.excel:hover {
-  color: #107c41;
-  border-color: #107c41;
+  color: $sub_4;
+  border-color: $sub_4;
 }
 
 .matrix-container {
   overflow-x: auto;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 1vw;
+  box-shadow: 0 0.5vh 2vh transparentize($black, 0.5);
+  background: $white;
 }
 
 .matrix-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: $white;
   min-width: 800px;
 }
 
 .corner-cell {
-  background: #f5f5f5;
+  background: lighten($white, 2%);
   padding: 0;
   font-weight: 600;
-  border: 1px solid #ddd;
+  border: 1px solid darken($white, 10%);
   width: 260px;
   height: 60px;
   position: relative;
   overflow: hidden;
+  color: $black;
 }
 
 .corner-cell::after {
@@ -519,7 +560,7 @@ function downloadMatrixAsExcel() {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to top right, transparent 49.5%, #999 49.5%, #999 50.5%, transparent 50.5%);
+  background: linear-gradient(to top right, transparent 49.5%, transparentize($black, 0.4) 49.5%, transparentize($black, 0.4) 50.5%, transparent 50.5%);
 }
 
 .corner-cell > div:first-child {
@@ -527,6 +568,7 @@ function downloadMatrixAsExcel() {
   top: 8px;
   right: 8px;
   font-size: 13px;
+  color: $black;
 }
 
 .corner-cell > div:last-child {
@@ -534,6 +576,7 @@ function downloadMatrixAsExcel() {
   bottom: 8px;
   left: 8px;
   font-size: 13px;
+  color: $black;
 }
 
 .corner-cell .separator {
@@ -541,13 +584,17 @@ function downloadMatrixAsExcel() {
 }
 
 .stakeholder-header {
-  background: #667eea;
-  color: white;
+  background: $main_1;
+  color: $white;
   padding: 12px;
-  border: 1px solid #5568d3;
+  border: 1px solid darken($main_1, 10%);
   min-width: 120px;
   font-weight: 600;
   vertical-align: middle;
+}
+
+.stakeholder-header span {
+  color: $white;
 }
 
 .header-content {
@@ -563,25 +610,31 @@ function downloadMatrixAsExcel() {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: white;
+  color: $white;
   margin: 3px 0;
-}
-
-.votes-control label {
-  font-size : 10px;
 }
 
 .votes-control input {
   width: 55px;
   padding: 4px 6px;
   font-size: 13px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  color: $white;
+}
+
+.votes-control label {
+  font-size : 10px;
+  color: $white;
 }
 
 .need-header {
-  background: #f8f9fa;
+  background: lighten($white, 3%);
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid darken($white, 10%);
   min-width: 260px;
+  color: $black;
 }
 
 .need-info {
@@ -594,6 +647,7 @@ function downloadMatrixAsExcel() {
   font-weight: 600;
   font-size: 13px;
   min-width: 134.75px;
+  color: $black;
 }
 
 .category-tag {
@@ -607,8 +661,8 @@ function downloadMatrixAsExcel() {
 }
 
 .need-header .category-tag {
-  background: #e0e0e0;
-  color: #333;
+  background: darken($white, 8%);
+  color: $black;
   padding: 2px 8px;
   min-width: 50px;
 }
@@ -619,27 +673,28 @@ function downloadMatrixAsExcel() {
 }
 
 .matrix-cell {
-  border: 1px solid #ddd;
+  border: 1px solid darken($white, 10%);
   padding: 12px;
   text-align: center;
   cursor: pointer;
   transition: background-color 0.2s;
   min-width: 80px;
   min-height: 50px;
+  background: $white;
 }
 
 .matrix-cell:hover {
-  background: #f0f0f0;
+  background: lighten($white, 1%);
 }
 
 .matrix-cell.active {
-  background: #d4edda;
+  background: lighten($sub_4, 40%);
 }
 
 .cell-content {
   font-size: 20px;
   font-weight: bold;
-  color: #28a745;
+  color: $sub_4;
 }
 
 .action-buttons {
@@ -655,7 +710,7 @@ function downloadMatrixAsExcel() {
   border-radius: 4px;
   cursor: pointer;
   opacity: 0.8;
-  color: white;
+  color: $white;
 }
 
 .icon-btn:hover {
@@ -664,34 +719,36 @@ function downloadMatrixAsExcel() {
 }
 
 .need-header .icon-btn {
-  border-color: #ddd;
-  color: #333;
+  border-color: darken($white, 10%);
+  color: $black;
 }
 
 .icon-btn.edit:hover {
-  background: #e3f2fd;
-  border-color: #2196f3;
-  color: #2196f3;
+  background: lighten($sub_6, 40%);
+  border-color: $sub_6;
+  color: $sub_6;
 }
 
 .need-header .icon-btn.edit:hover {
-  background: #e3f2fd;
-  border-color: #2196f3;
-  color: #2196f3;
+  background: lighten($sub_6, 40%);
+  border-color: $sub_6;
+  color: $sub_6;
 }
 
 .icon-btn.danger:hover {
-  background: #fee;
-  border-color: #e74c3c;
-  color: #e74c3c;
+  background: lighten($sub_1, 45%);
+  border-color: $sub_1;
+  color: $sub_1;
 }
 
 .empty-matrix {
   text-align: center;
-  padding: 60px 20px;
-  color: #999;
-  background: #f8f9fa;
-  border-radius: 8px;
+  padding: 8vh 2vw;
+  color: transparentize($white, 0.3);
+  background: lighten($gray, 5%);
+  border-radius: 1vw;
+  border: 1px dashed transparentize($main_1, 0.7);
+  font-size: clamp(0.9rem, 1.1vw, 1rem);
 }
 
 .modal-overlay {
@@ -700,43 +757,94 @@ function downloadMatrixAsExcel() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: transparentize($black, 0.2);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(5px);
 }
 
 .modal-content {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
+  background: $gray;
+  border: 1px solid transparentize($white, 0.9);
+  border-radius: 1vw;
+  padding: 3vh 3vw;
   max-width: 500px;
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
+  box-shadow: 0 2vh 6vh transparentize($black, 0.5);
 }
 
 .modal-content h3 {
-  margin-bottom: 20px;
-  font-size: 20px;
+  margin-bottom: 2.5vh;
+  font-size: clamp(1.3rem, 1.8vw, 1.6rem);
+  color: $white;
+  font-weight: 600;
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 2vh;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 0.8vh;
   font-weight: 600;
-  font-size: 14px;
+  color: $white;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 1vh 1vw;
+  background: transparentize($black, 0.3);
+  border: 1px solid transparentize($white, 0.9);
+  border-radius: 0.5vw;
+  color: $white;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: $main_1;
+  background: transparentize($black, 0.1);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: transparentize($main_1, 0.3);
 }
 
 .form-actions {
   display: flex;
-  gap: 12px;
+  gap: 1vw;
   justify-content: flex-end;
-  margin-top: 20px;
+  margin-top: 3vh;
+}
+
+.form-actions button {
+  padding: 1vh 1.5vw;
+  border-radius: 0.5vw;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.form-actions button[type="button"] {
+  background: transparentize($gray, 0.5);
+  color: $white;
+  border: 1px solid transparentize($white, 0.8);
+}
+
+.form-actions button[type="button"]:hover {
+  background: transparentize($gray, 0.3);
+  border-color: transparentize($white, 0.7);
 }
 </style>

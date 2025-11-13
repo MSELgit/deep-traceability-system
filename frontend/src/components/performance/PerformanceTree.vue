@@ -13,35 +13,34 @@
           </span>
           <span class="node-name">{{ performance.name }}</span>
           <span v-if="performance.unit" class="node-unit">({{ performance.unit }})</span>
-          <span v-if="performance.is_leaf" class="leaf-badge">末端</span>
         </div>
 
         <div class="node-actions">
           <button 
             class="icon-btn"
             @click="$emit('add-child', performance)"
-            title="子性能を追加"
+            title="Add child performance"
           >
             +
           </button>
           <button 
             class="icon-btn"
             @click="$emit('edit', performance)"
-            title="編集"
+            title="Edit"
           >
             <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
           </button>
           <button 
             class="icon-btn danger"
             @click="$emit('delete', performance)"
-            title="削除"
+            title="Delete"
           >
             <FontAwesomeIcon :icon="['fas', 'trash']" />
           </button>
         </div>
       </div>
 
-      <!-- 子性能を再帰的に表示 -->
+      <!-- Display child performances recursively -->
       <PerformanceTree
         v-if="performance.children && performance.children.length > 0"
         :performances="performance.children"
@@ -55,6 +54,7 @@
 
 <script setup lang="ts">
 import type { Performance } from '../../types/project'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 defineProps<{
   performances: Performance[]
@@ -67,85 +67,90 @@ defineEmits<{
 }>()
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '../../style/color';
 .tree-node {
-  margin-bottom: 8px;
+  margin-bottom: 1vh;
 }
 
 .node-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: white;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  transition: all 0.2s;
+  padding: 1.5vh 1.5vw;
+  background: lighten($gray, 8%);
+  border: 1px solid transparentize($white, 0.9);
+  border-radius: 0.8vw;
+  transition: all 0.3s ease;
 }
 
 .node-content:hover {
-  border-color: #667eea;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+  border-color: transparentize($main_1, 0.5);
+  box-shadow: 0 0.5vh 1.5vh transparentize($main_1, 0.8);
+  background: lighten($gray, 10%);
 }
 
 .node-content.is-leaf {
-  border-left: 4px solid #28a745;
+  border-left: 4px solid $sub_4;
 }
 
 .node-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.8vw;
   flex: 1;
 }
 
 .node-icon {
-  font-size: 20px;
-  color: #666;
+  font-size: clamp(1rem, 1.3vw, 1.2rem);
+  color: $main_1;
 }
 
 .node-name {
   font-weight: 600;
-  font-size: 16px;
-  color: #333;
+  font-size: clamp(0.9rem, 1.1vw, 1rem);
+  color: $white;
 }
 
 .node-unit {
-  color: #666;
-  font-size: 14px;
-}
-
-.leaf-badge {
-  background: #28a745;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
+  color: transparentize($white, 0.4);
+  font-size: clamp(0.8rem, 0.95vw, 0.9rem);
 }
 
 .node-actions {
   display: flex;
-  gap: 8px;
+  gap: 0.5vw;
 }
 
 .icon-btn {
-  padding: 6px 10px;
-  font-size: 16px;
-  background: transparent;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 0.6vh 0.8vw;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+  background: transparentize($black, 0.5);
+  border: 1px solid transparentize($white, 0.9);
+  border-radius: 0.4vw;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  color: $white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
 }
 
 .icon-btn:hover {
-  background: #f0f0f0;
-  border-color: #999;
+  background: transparentize($black, 0.3);
+  border-color: transparentize($white, 0.8);
+  transform: scale(1.1);
 }
 
 .icon-btn.danger {
-  color: #e74c3c;
+  color: $sub_1;
+}
+
+.icon-btn.danger:hover {
+  background: transparentize($sub_1, 0.9);
+  border-color: $sub_1;
 }
 .icon-btn.danger:hover {
   background: #fee;

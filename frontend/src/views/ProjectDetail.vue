@@ -1,12 +1,13 @@
 <template>
   <div class="project-detail">
     <div class="container">
-      <!-- ローディング -->
+      <!-- Loading -->
       <div v-if="loading" class="loading">
         <div class="spinner"></div>
+        <p>Loading project...</p>
       </div>
 
-      <!-- プロジェクト情報 -->
+      <!-- Project Info -->
       <div v-else-if="currentProject">
         <div class="project-header">
           <div>
@@ -17,17 +18,17 @@
           </div>
           <div class="project-actions">
             <button 
-              class="icon-button" 
+              class="icon-button export" 
               @click="exportProject"
-              title="プロジェクトをエクスポート"
+              title="Export project"
             >
               <FontAwesomeIcon :icon="['fas', 'share-from-square']" />
-              エクスポート
+              Export
             </button>
           </div>
         </div>
 
-        <!-- タブナビゲーション -->
+        <!-- Tab Navigation -->
         <div class="tabs">
           <button
             v-for="tab in tabs"
@@ -61,11 +62,14 @@
             <MountainView :is-active="activeTab === 'mountain'" />
           </div>
 
-          <!-- 2軸評価（複数ビュー管理） -->
+          <!-- 2-axis Evaluation (Multiple Views) -->
           <div v-show="activeTab === 'twoaxis'">
             <div v-if="energyCalculated">
               <div class="twoaxis-multiview-header">
-                <button class="add-view-btn" @click="addTwoAxisView">＋ 新しいビューを追加</button>
+                <button class="add-view-btn" @click="addTwoAxisView">
+                  <FontAwesomeIcon :icon="['fas', 'plus']" />
+                  Add New View
+                </button>
               </div>
               <div class="twoaxis-multiview-row">
                 <TwoAxisEvaluation
@@ -83,7 +87,7 @@
             </div>
             <div v-else class="loading">
               <div class="spinner"></div>
-              <p>エネルギーを計算中...</p>
+              <p>Calculating energy...</p>
             </div>
           </div>
 
@@ -99,9 +103,9 @@
         </div>
       </div>
 
-      <!-- エラー -->
+      <!-- Error -->
       <div v-else-if="error" class="error">
-        <p>❌ プロジェクトの読み込みに失敗しました</p>
+        <p>Failed to load project</p>
         <p>{{ error }}</p>
       </div>
     </div>
@@ -148,7 +152,7 @@ async function saveTwoAxisPlots() {
   try {
     await projectApi.updateTwoAxisPlots(currentProject.value.id, twoAxisViews.value);
   } catch (error) {
-    console.error('2軸プロットの保存に失敗:', error);
+    console.error('Failed to save 2-axis plots:', error);
   }
 }
 
@@ -197,13 +201,13 @@ function handleAxisChange(viewId: string, axis: 'x' | 'y', value: string) {
 }
 
 const tabs = [
-  { key: 'stakeholders', label: 'ステークホルダー' },
-  { key: 'performances', label: '性能管理' },
-  { key: 'matrix', label: 'マトリクス' },
-  { key: 'mountain', label: '山の可視化' },
-  { key: 'twoaxis', label: '2軸評価' },
-  { key: 'opm3d', label: '立体OPM' },
-  { key: 'demo', label: 'ネットワークデモ' },
+  { key: 'stakeholders', label: 'Stakeholders' },
+  { key: 'performances', label: 'Performance' },
+  { key: 'matrix', label: 'Matrix' },
+  { key: 'mountain', label: 'Mountain View' },
+  { key: 'twoaxis', label: '2-axis' },
+  { key: 'opm3d', label: '3D OPM' },
+  { key: 'demo', label: 'Network' },
 ];
 
 function handleTabChange(tabKey: string) {
@@ -214,7 +218,7 @@ function handleTabChange(tabKey: string) {
         if (networkDemoRef.value && typeof networkDemoRef.value.resetAllViewers === 'function') {
           networkDemoRef.value.resetAllViewers();
         } else {
-          console.warn('networkDemoRef.value が利用できません');
+          console.warn('networkDemoRef.value is not available');
         }
       }, 200); // 200msに増やして確実にレンダリング完了を待つ
     });
@@ -237,8 +241,8 @@ async function exportProject() {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
   } catch (error) {
-    console.error('プロジェクトのエクスポートに失敗:', error)
-    alert('プロジェクトのエクスポートに失敗しました')
+    console.error('Failed to export project:', error)
+    alert('Failed to export project')
   }
 }
 
@@ -264,152 +268,267 @@ onMounted(async () => {
     // 2軸プロットの初期化
     await initializeTwoAxisPlots()
   } catch (e) {
-    console.error('プロジェクトの読み込みに失敗:', e)
+    console.error('Failed to load project:', e)
   }
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '../style/color';
+.project-detail {
+  min-height: 100vh;
+  background: $black;
+  color: $white;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2vh 3vw;
+}
+
+// Loading
+.loading {
+  text-align: center;
+  padding: 15vh 2vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 3px solid transparentize($white, 0.95);
+  border-top-color: $main_1;
+  border-right-color: $main_2;
+  border-radius: 50%;
+  margin: 0 auto 3vh;
+  animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+  box-shadow: 0 0 2vh transparentize($main_1, 0.8);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading p {
+  color: transparentize($white, 0.2);
+  font-size: clamp(1rem, 1.2vw, 1.1rem);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+// Two-axis view header
 .twoaxis-multiview-header {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 12px;
+  margin-bottom: 2vh;
 }
+
 .add-view-btn {
-  background: #667eea;
-  color: #fff;
+  background: linear-gradient(135deg, $main_1, $main_2);
+  color: $white;
   border: none;
-  border-radius: 6px;
-  padding: 8px 18px;
-  font-size: 15px;
-  font-weight: 500;
+  border-radius: 0.8vw;
+  padding: 1.2vh 2vw;
+  font-size: clamp(0.9rem, 1.1vw, 1rem);
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.8vw;
 }
+
 .add-view-btn:hover {
-  background: #5a67d8;
+  transform: translateY(-2px);
+  box-shadow: 0 0.5vh 2vh transparentize($main_2, 0.6);
 }
 .twoaxis-multiview-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0;
+  gap: 2vw;
   align-items: stretch;
 }
 .project-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #e0e0e0;
+  align-items: center;
+  margin-bottom: 4vh;
+  padding-bottom: 2vh;
+  border-bottom: 1px solid transparentize($white, 0.95);
 }
 
 .project-header h1 {
-  font-size: 32px;
-  color: #333;
-  margin-bottom: 8px;
+  font-size: clamp(2.2rem, 3.5vw, 3rem);
+  color: $white;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, $white, transparentize($white, 0.15));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .description {
-  color: #666;
-  font-size: 16px;
+  color: transparentize($white, 0.3);
+  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
+  line-height: 1.6;
 }
 
 .tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 30px;
-  border-bottom: 2px solid #e0e0e0;
+  gap: 1vw;
+  margin-bottom: 4vh;
+  border-bottom: 1px solid transparentize($white, 0.95);
   overflow-x: auto;
+  padding-bottom: 0;
 }
 
 .tabs button {
-  padding: 12px 24px;
+  padding: 1.5vh 2vw;
   background: none;
   border: none;
   border-bottom: 3px solid transparent;
-  font-size: 16px;
-  font-weight: 500;
-  color: #666;
+  font-size: clamp(0.9rem, 1.1vw, 1rem);
+  font-weight: 600;
+  color: transparentize($white, 0.4);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   white-space: nowrap;
+  position: relative;
 }
 
 .tabs button:hover {
-  color: #333;
-  background: rgba(102, 126, 234, 0.05);
+  color: $white;
+  background: transparentize($gray, 0.8);
 }
 
 .tabs button.active {
-  color: #667eea;
-  border-bottom-color: #667eea;
+  color: $white;
+  border-bottom-color: $main_1;
+}
+
+.tabs button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, $main_1, $main_2);
 }
 
 .tab-content {
-  min-height: 400px;
+  min-height: 60vh;
+  background: lighten($black, 2%);
+  border-radius: 1vw;
+  padding: 2vh;
 }
 
 .two-axis-placeholder {
-  padding: 16px;
+  padding: 2vh;
 }
 
 .placeholder-card {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  background: lighten($gray, 8%);
+  border: 1px solid transparentize($white, 0.9);
+  border-radius: 1vw;
+  padding: 3vh;
+  box-shadow: 0 0.5vh 2vh transparentize($black, 0.5);
 }
 
 .error {
   text-align: center;
-  padding: 40px;
-  color: #e74c3c;
+  padding: 10vh;
+  background: lighten($gray, 5%);
+  border-radius: 1vw;
+  border: 1px solid transparentize($sub_1, 0.7);
+}
+
+.error p:first-child {
+  font-size: clamp(1.2rem, 1.5vw, 1.4rem);
+  color: $sub_1;
+  margin-bottom: 2vh;
+  font-weight: 600;
+}
+
+.error p:last-child {
+  color: transparentize($white, 0.3);
+  font-size: clamp(0.9rem, 1.1vw, 1rem);
 }
 
 .project-actions {
   display: flex;
-  gap: 12px;
+  gap: 1vw;
 }
 
 .icon-button {
-  padding: 10px 16px;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 8px;
+  padding: 1.2vh 2vw;
+  background: transparentize($black, 0.1);
+  color: $white;
+  border: 1px solid transparentize($white, 0.85);
+  border-radius: 0.8vw;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: 0.8vw;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
   font-weight: 600;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  backdrop-filter: blur(10px);
 }
 
-.icon-button:hover {
-  background: #5a67d8;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+.icon-button.export:hover {
+  background: linear-gradient(135deg, $main_1, darken($main_1, 10%));
+  border-color: $main_1;
+  transform: translateY(-2px);
+  box-shadow: 0 0.5vh 1.5vh transparentize($main_1, 0.5);
 }
 
-/* 立体OPM */
+// 3D OPM
 .opm3d-container {
-  padding: 24px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  min-height: 600px;
+  padding: 3vh;
+  background: lighten($gray, 5%);
+  border-radius: 1vw;
+  min-height: 60vh;
 }
 
 .opm3d-container h3 {
-  font-size: 24px;
-  margin-bottom: 12px;
-  color: #333;
+  font-size: clamp(1.3rem, 1.8vw, 1.6rem);
+  margin-bottom: 1.5vh;
+  color: $white;
+  font-weight: 700;
 }
 
 .opm3d-container p {
-  color: #666;
-  margin-bottom: 24px;
+  color: transparentize($white, 0.3);
+  margin-bottom: 3vh;
+  font-size: clamp(0.9rem, 1.1vw, 1rem);
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .project-header {
+    flex-direction: column;
+    gap: 2vh;
+  }
+  
+  .tabs {
+    gap: 0.5vw;
+    overflow-x: scroll;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .tabs button {
+    padding: 1.5vh 3vw;
+    font-size: 0.9rem;
+  }
+  
+  .twoaxis-multiview-row {
+    flex-direction: column;
+  }
 }
 </style>

@@ -13,7 +13,7 @@ import {
 	faPenToSquare, faTrash, faEye, faCopy, faRotateRight,
 	faHexagonNodes, faExpand, faAlignJustify, faFloppyDisk, faArrowPointer,
 	faFolder, faFolderOpen, faShareFromSquare, faFileImport, faChevronDown, faChevronRight, faChevronUp, faChevronLeft,
-	faTriangleExclamation, faXmark, faPlus
+	faTriangleExclamation, faXmark, faPlus, faGear, faCircleInfo, faCamera, faPaste
 } from '@fortawesome/free-solid-svg-icons'
 
 // アイコンをライブラリに追加
@@ -21,7 +21,7 @@ library.add(
 	faPenToSquare, faTrash, faEye, faCopy, faRotateRight,
 	faHexagonNodes, faExpand, faAlignJustify, faFloppyDisk, faArrowPointer,
 	faFolder, faFolderOpen, faShareFromSquare, faFileImport, faChevronDown, faChevronRight, faChevronUp, faChevronLeft,
-	faTriangleExclamation, faXmark, faPlus
+	faTriangleExclamation, faXmark, faPlus, faGear, faCircleInfo, faCamera, faPaste
 )
 
 const app = createApp(App)

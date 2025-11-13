@@ -1,22 +1,17 @@
 <template>
   <div class="performance-management">
     <div class="section-header">
-      <h2>性能管理</h2>
-      <p class="section-description">
-        システムの性能を階層的に定義します。HHI分析により、詳細化すべき性能が明確になります。
-      </p>
+      <h2>Performance Management</h2>
     </div>
-
     <div class="actions">
       <button class="primary" @click="showAddDialog = true">
-        + 性能を追加
+        <FontAwesomeIcon :icon="['fas', 'plus']" />
+        Add Performance
       </button>
       <button class="secondary" @click="downloadPerformanceTree" v-if="performanceTree.length > 0">
-        ツリー構造をダウンロード
+        Download Tree
       </button>
     </div>
-
-    <!-- 性能ツリー -->
     <PerformanceTree 
       v-if="performanceTree.length > 0"
       :performances="performanceTree"
@@ -24,29 +19,25 @@
       @edit="editPerformance"
       @delete="deletePerformance"
     />
-
-    <!-- 空状態 -->
     <div v-else class="empty-state">
-      <p>性能を追加してシステムの評価指標を定義してください</p>
+      <p>Add performances to define system evaluation metrics</p>
     </div>
-
-    <!-- 追加/編集ダイアログ -->
     <div v-if="showAddDialog || editingPerformance" class="modal-overlay" @click="closeDialog">
       <div class="modal-content" @click.stop>
-        <h3>{{ editingPerformance ? '性能を編集' : '性能を追加' }}</h3>
+        <h3>{{ editingPerformance ? 'Edit Performance' : 'Add Performance' }}</h3>
         <form @submit.prevent="savePerformance">
           <div class="form-group">
-            <label>性能名 *</label>
+            <label>Performance Name *</label>
             <input 
               v-model="formData.name" 
               type="text" 
               required
-              placeholder="例: 発電効率"
+              placeholder="e.g., Power Generation Efficiency"
             />
           </div>
 
           <div class="form-group" v-if="parentPerformance">
-            <label>親性能</label>
+            <label>Parent Performance</label>
             <input 
               :value="parentPerformance.name" 
               type="text" 
@@ -55,29 +46,29 @@
           </div>
 
           <div class="form-group">
-            <label>単位</label>
+            <label>Unit</label>
             <input 
               v-model="formData.unit" 
               type="text"
-              placeholder="例: kW, km/h, kg"
+              placeholder="e.g., kW, km/h, kg"
             />
           </div>
 
           <div class="form-group">
-            <label>説明</label>
+            <label>Description</label>
             <textarea 
               v-model="formData.description" 
               rows="3"
-              placeholder="この性能の詳細説明"
+              placeholder="Detailed description of this performance"
             ></textarea>
           </div>
 
           <div class="form-actions">
             <button type="button" @click="closeDialog">
-              キャンセル
+              Cancel
             </button>
             <button type="submit" class="primary">
-              {{ editingPerformance ? '更新' : '追加' }}
+              {{ editingPerformance ? 'Update' : 'Add' }}
             </button>
           </div>
         </form>
@@ -87,11 +78,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useProjectStore } from '../../stores/projectStore'
 import { storeToRefs } from 'pinia'
 import PerformanceTree from './PerformanceTree.vue'
 import type { Performance } from '../../types/project'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const projectStore = useProjectStore()
 const { performanceTree } = storeToRefs(projectStore)
@@ -129,34 +121,33 @@ function editPerformance(performance: Performance) {
     parent_id: performance.parent_id,
     level: performance.level
   }
+  showAddDialog.value = true
 }
 
 async function savePerformance() {
   try {
     if (editingPerformance.value) {
-      // 更新
       await projectStore.updatePerformance(editingPerformance.value.id, {
         name: formData.value.name,
         unit: formData.value.unit,
         description: formData.value.description
       })
     } else {
-      // 新規追加
       await projectStore.addPerformance(formData.value)
     }
     closeDialog()
   } catch (error) {
-    alert('性能の保存に失敗しました')
+    alert('Failed to save performance')
   }
 }
 
 async function deletePerformance(performance: Performance) {
-  if (confirm(`「${performance.name}」を削除しますか？子要素がある場合はすべて削除されます。`)) {
+  if (confirm(`Delete "${performance.name}"? All child elements will also be deleted.`)) {
     try {
       await projectStore.deletePerformance(performance.id)
     } catch (error) {
-      console.error('削除エラー:', error)
-      alert('性能の削除に失敗しました')
+      console.error('Delete error:', error)
+      alert('Failed to delete performance')
     }
   }
 }
@@ -174,7 +165,6 @@ function closeDialog() {
   }
 }
 
-// ツリー構造をテキスト形式に変換
 function performanceTreeToText(performances: Performance[], indent: string = ''): string {
   let result = ''
   
@@ -182,26 +172,20 @@ function performanceTreeToText(performances: Performance[], indent: string = '')
     const isLast = index === performances.length - 1
     const connector = isLast ? '└─ ' : '├─ '
     const childIndent = indent + (isLast ? '   ' : '│  ')
-    
-    // 性能情報を整形
     let line = `${indent}${connector}${perf.name}`
     if (perf.unit) {
       line += ` [${perf.unit}]`
     }
     if (!perf.is_leaf) {
-      line += ' (親性能)'
+      line += ' (parent)'
     }
     result += line + '\n'
-    
-    // 説明がある場合は追加
     if (perf.description) {
       const descLines = perf.description.split('\n')
       descLines.forEach(descLine => {
         result += `${childIndent}  ${descLine}\n`
       })
     }
-    
-    // 子要素を再帰的に処理
     if ((perf as any).children && (perf as any).children.length > 0) {
       result += performanceTreeToText((perf as any).children, childIndent)
     }
@@ -210,21 +194,17 @@ function performanceTreeToText(performances: Performance[], indent: string = '')
   return result
 }
 
-// ツリー構造をダウンロード
 function downloadPerformanceTree() {
   const project = projectStore.currentProject
   if (!project || performanceTree.value.length === 0) {
     return
   }
-  
-  // テキスト生成
-  let content = `性能ツリー構造\n`
-  content += `プロジェクト: ${project.name}\n`
-  content += `生成日時: ${new Date().toLocaleString('ja-JP')}\n`
+  let content = `Performance Tree Structure\n`
+  content += `Project: ${project.name}\n`
+  content += `Generated: ${new Date().toLocaleString('en-US')}\n`
   content += `=${'='.repeat(60)}\n\n`
   content += performanceTreeToText(performanceTree.value)
-  
-  // ダウンロード
+
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -237,41 +217,76 @@ function downloadPerformanceTree() {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '../../style/color';
+.performance-management {
+  padding: 2vh;
+}
+
 .section-header {
-  margin-bottom: 20px;
+  margin-bottom: 3vh;
 }
 
 .section-header h2 {
-  font-size: 24px;
-  margin-bottom: 8px;
+  font-size: clamp(1.5rem, 2vw, 1.8rem);
+  color: $white;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .section-description {
-  color: #666;
-  font-size: 14px;
+  color: transparentize($white, 0.4);
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
 }
 
 .actions {
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 1vw;
+  margin-bottom: 3vh;
 }
 
-.actions button.secondary {
-  background-color: #6c757d;
+.primary, .secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.5vw;
+  padding: 1.5vh 1.5vw;
+  border-radius: 0.5vw;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  color: $white;
 }
 
-.actions button.secondary:hover {
-  background-color: #5a6268;
+.primary {
+  background: linear-gradient(135deg, $main_1, $main_2);
+}
+
+.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5vh 2vh transparentize($main_2, 0.6);
+}
+
+.secondary {
+  background: transparentize($gray, 0.3);
+  border: 1px solid transparentize($white, 0.8);
+}
+
+.secondary:hover {
+  background: transparentize($gray, 0.1);
+  border-color: transparentize($white, 0.7);
+  transform: translateY(-2px);
 }
 
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
-  color: #999;
-  background: #f8f9fa;
-  border-radius: 8px;
+  padding: 8vh 2vw;
+  color: transparentize($white, 0.3);
+  background: lighten($gray, 5%);
+  border-radius: 1vw;
+  border: 1px dashed transparentize($main_1, 0.7);
+  font-size: clamp(0.9rem, 1.1vw, 1rem);
 }
 
 .modal-overlay {
@@ -280,54 +295,110 @@ function downloadPerformanceTree() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: transparentize($black, 0.2);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(5px);
 }
 
 .modal-content {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
+  background: $gray;
+  border: 1px solid transparentize($white, 0.9);
+  border-radius: 1vw;
+  padding: 3vh 3vw;
   max-width: 600px;
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
+  box-shadow: 0 2vh 6vh transparentize($black, 0.5);
 }
 
 .modal-content h3 {
-  margin-bottom: 20px;
-  font-size: 20px;
+  margin-bottom: 2.5vh;
+  font-size: clamp(1.3rem, 1.8vw, 1.6rem);
+  color: $white;
+  font-weight: 600;
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 2vh;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 0.8vh;
   font-weight: 600;
-  font-size: 14px;
+  color: $white;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 1vh 1vw;
+  background: transparentize($black, 0.3);
+  border: 1px solid transparentize($white, 0.9);
+  border-radius: 0.5vw;
+  color: $white;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: $main_1;
+  background: transparentize($black, 0.1);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: transparentize($main_1, 0.3);
+}
+
+.form-group input[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .form-group input[type="checkbox"] {
   width: auto;
-  margin-right: 8px;
+  margin-right: 0.8vw;
 }
 
 .help-text {
-  font-size: 12px;
-  color: #666;
-  margin-top: 4px;
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
+  color: transparentize($white, 0.4);
+  margin-top: 0.5vh;
 }
 
 .form-actions {
   display: flex;
-  gap: 12px;
+  gap: 1vw;
   justify-content: flex-end;
-  margin-top: 20px;
+  margin-top: 3vh;
+}
+
+.form-actions button {
+  padding: 1vh 1.5vw;
+  border-radius: 0.5vw;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.form-actions button[type="button"] {
+  background: transparentize($gray, 0.5);
+  color: $white;
+  border: 1px solid transparentize($white, 0.8);
+}
+
+.form-actions button[type="button"]:hover {
+  background: transparentize($gray, 0.3);
+  border-color: transparentize($white, 0.7);
 }
 </style>

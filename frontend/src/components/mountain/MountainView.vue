@@ -143,7 +143,6 @@ const props = defineProps<{
   isActive?: boolean;
 }>();
 
-const route = useRoute();
 const projectStore = useProjectStore();
 const { currentProject } = storeToRefs(projectStore);
 
@@ -432,12 +431,11 @@ function updateMountainView() {
     scene.add(mesh);
     casePoints.set(designCase.id, mesh);
   });
-  // 各設計案の高さに半径R ^2 = R_mountain^2 - y^2 となる平面（円）となるレイヤーを配置
   designCases.value.forEach((designCase: DesignCase) => {
     if (!designCase.mountain_position) return;
     
     const y = designCase.mountain_position.y;
-    const hemisphereRadius = 10; // 山の半径
+    const hemisphereRadius = 10;
     const rSquared = hemisphereRadius ** 2 - y ** 2;
     const r = Math.sqrt(Math.max(0, rSquared));
     
@@ -540,8 +538,7 @@ async function handleSave(data: DesignCaseCreate) {
 async function handleCopy(designCase: DesignCase) {
   try {
     const copied = await projectStore.copyDesignCase(designCase.id);
-    
-    // コピーした設計案にズーム
+
     if (copied && copied.mountain_position) {
       setTimeout(() => {
         focusOnPosition(copied.mountain_position!);
@@ -643,16 +640,6 @@ function focusOnPosition(position: { x: number; y: number; z: number }) {
 
 function handleSortChange(newSortBy: string) {
   sortBy.value = newSortBy as any;
-}
-
-function selectCaseFromDebug(designCase: DesignCase) {
-  selectedCase.value = designCase;
-  rightPanelOpen.value = true;
-  
-  // 座標がある場合はフォーカスも
-  if (designCase.mountain_position) {
-    focusOnPosition(designCase.mountain_position);
-  }
 }
 
 function closeRightPanel() {
@@ -765,7 +752,6 @@ async function handleColorChange(designCase: DesignCase, color: string) {
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
 }
 
-/* パネルプレビュー（閉じている時） */
 .panel-preview {
   width: 100%;
   height: 100%;
