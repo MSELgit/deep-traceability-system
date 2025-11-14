@@ -1,8 +1,6 @@
 <template>
   <div class="network-viewer">
-    <!-- メインコンテンツ -->
     <div class="network-viewer-wrapper">
-      <!-- プロパティパネル -->
       <div class="properties-panel">
         <div class="panel-header">
           <h3>詳細情報</h3>
@@ -58,7 +56,6 @@
               </div>
             </div>
             
-            <!-- 十字キーでの移動コントロール -->
             <div class="movement-controls">
               <h5>ノード移動</h5>
               <div class="directional-pad">
@@ -80,9 +77,7 @@
               </div>
             </div>
             
-            <!-- 更新ボタンを一番下に移動 -->
             <div class="update-buttons">
-              <!-- ノードに変更がある場合：更新ボタンとキャンセルボタン -->
               <template v-if="hasNodeChanges">
                 <button 
                   class="update-btn primary" 
@@ -98,7 +93,6 @@
                 </button>
               </template>
               
-              <!-- 変更がない場合：削除ボタンとキャンセルボタン -->
               <template v-else>
                 <button 
                   class="update-btn danger" 
@@ -146,7 +140,6 @@
             </div>
             <div class="property-row">
               <div class="update-buttons">
-                <!-- エッジに変更がある場合：更新ボタンとキャンセルボタン -->
                 <template v-if="edgeEditData.weight !== (selectedEdge.weight || 0)">
                   <button 
                     class="update-btn primary" 
@@ -162,7 +155,6 @@
                   </button>
                 </template>
                 
-                <!-- 変更がない場合：削除ボタンとキャンセルボタン -->
                 <template v-else>
                   <button 
                     class="update-btn danger" 
@@ -183,7 +175,6 @@
         </div>
         
         <div v-else-if="selectedCase" class="add-panel">
-          <!-- ノード追加セクション -->
           <div class="add-section">
             <h5>ノード追加</h5>
             <div class="add-form">
@@ -218,7 +209,6 @@
           
           <div class="section-divider"></div>
           
-          <!-- エッジ追加セクション -->
           <div class="add-section">
             <h5>エッジ追加</h5>
             <div class="add-form">
@@ -278,7 +268,6 @@
         </div>
       </div>
 
-      <!-- 3Dキャンバス -->
       <div class="canvas-container">
         <OPM3DScene
           v-if="selectedCase"
@@ -300,7 +289,6 @@
         </div>
       </div>
 
-      <!-- コントロールパネル -->
       <div class="controls-panel">
         <div class="panel-header">
           <h3>3D表示設定</h3>
@@ -389,7 +377,6 @@ import { networkApi } from '../../utils/api';
 const projectStore = useProjectStore();
 const { currentProject } = storeToRefs(projectStore);
 
-// レイヤー定義
 const layers = [
   { id: 1, label: '性能', color: '#4CAF50' },
   { id: 2, label: '特性', color: '#2196F3' },
@@ -404,29 +391,22 @@ const LAYER_COLORS: { [key: number]: string } = {
   4: '#9C27B0'
 };
 
-// コンポーネント参照
 const sceneRef = ref<InstanceType<typeof OPM3DScene>>();
 
-// 設計案一覧
 const designCases = computed(() => currentProject.value?.design_cases || []);
 
-// 選択中の設計案
 const selectedCaseId = ref<string>('');
 const selectedCase = computed(() => 
   designCases.value.find(dc => dc.id === selectedCaseId.value)
 );
 
-// レイヤー表示制御
 const visibleLayers = ref<number[]>([1, 2, 3, 4]);
 
-// レイヤー間隔
 const layerSpacing = ref<number>(5);
 
-// 平面サイズ制御
 const planeSize = ref<number>(30);
 
 
-// 平面サイズの範囲計算
 const planeSizeRange = computed(() => {
   if (!selectedCase.value) {
     return { min: 20, max: 60 };
@@ -439,29 +419,23 @@ const planeSizeRange = computed(() => {
   return { min: minSize, max: maxSize };
 });
 
-// 選択中のノード/エッジ
 const selectedNode = ref<NetworkNode | null>(null);
 const selectedEdge = ref<NetworkEdge | null>(null);
 
-// 編集データ
 const nodeEditData = ref<{label: string, x3d: number | null, y3d: number | null}>({label: '', x3d: null, y3d: null});
 const edgeEditData = ref<{weight: number}>({weight: 0});
 
-// 新規追加データ
 const newNodeData = ref<{layer: string, label: string}>({layer: '', label: ''});
 const newEdgeData = ref<{sourceId: string, targetId: string, weight: string}>({sourceId: '', targetId: '', weight: ''});
 
 
-// 元の座標を保持（比較用）
 const originalNodePosition = ref<{x3d: number | null, y3d: number | null}>({x3d: null, y3d: null});
 
-// 性能ノード（レイヤー1）の編集可能性チェック
 const canEditNodeLabel = computed(() => {
   if (!selectedNode.value) return false;
-  return selectedNode.value.layer !== 1; // 性能ノード（レイヤー1）は編集不可
+  return selectedNode.value.layer !== 1;
 });
 
-// 編集状態管理
 const hasNodeChanges = computed(() => {
   if (!selectedNode.value) return false;
   const labelChanged = canEditNodeLabel.value && nodeEditData.value.label.trim() !== selectedNode.value.label;
@@ -470,17 +444,14 @@ const hasNodeChanges = computed(() => {
   return labelChanged || xChanged || yChanged;
 });
 
-// 利用可能なノード一覧（エッジ作成用）
 const availableNodes = computed(() => {
   return selectedCase.value?.network.nodes || [];
 });
 
-// ノード追加の可否
 const canAddNode = computed(() => {
   return newNodeData.value.layer && newNodeData.value.label.trim();
 });
 
-// エッジ追加の可否
 const canAddEdge = computed(() => {
   return newEdgeData.value.sourceId && 
          newEdgeData.value.targetId && 
@@ -488,20 +459,17 @@ const canAddEdge = computed(() => {
          newEdgeData.value.weight !== '';
 });
 
-// 設計案変更時の処理
 watch(selectedCase, (newCase) => {
   if (newCase) {
     const range = planeSizeRange.value;
     planeSize.value = Math.min(Math.max(planeSize.value, range.min), range.max);
     
-    // 保存済みの3D座標を復元
     setTimeout(() => {
       initializeExisting3DPositions();
-    }, 100); // 3Dシーンの初期化待ち
+    }, 100);
   }
 });
 
-// レイヤー切り替え
 function toggleLayer(layerId: number) {
   const index = visibleLayers.value.indexOf(layerId);
   if (index === -1) {
@@ -511,7 +479,6 @@ function toggleLayer(layerId: number) {
   }
 }
 
-// ビューリセット
 function resetView() {
   layerSpacing.value = 5;
   visibleLayers.value = [1, 2, 3, 4];
@@ -521,12 +488,10 @@ function resetView() {
   planeSize.value = Math.floor((range.min + range.max) / 2);
 }
 
-// ノード位置取得
 function getNodePosition(nodeId: string) {
   return sceneRef.value?.getNodePosition?.(nodeId) || { x3d: null, y3d: null };
 }
 
-// ノードラベル取得
 function getNodeLabel(nodeId: string) {
   const node = selectedCase.value?.network.nodes.find(n => n.id === nodeId);
   return node?.label || nodeId;
@@ -547,8 +512,6 @@ function handleEdgeSelected(edge: NetworkEdge | null) {
   }
 }
 
-// ========== 編集機能 ==========
-
 watch(selectedNode, (node) => {
   if (node) {
     nodeEditData.value.label = node.label;
@@ -561,7 +524,6 @@ watch(selectedNode, (node) => {
   }
 });
 
-// エッジ選択時に編集データを初期化
 watch(selectedEdge, (edge) => {
   if (edge) {
     edgeEditData.value.weight = edge.weight || 0;
@@ -570,7 +532,6 @@ watch(selectedEdge, (edge) => {
 });
 
 
-// エッジ重み更新
 async function updateEdgeWeight() {
   if (!selectedEdge.value || !currentProject.value || !selectedCaseId.value) {
     console.warn('⚠️ Missing required data for edge update');
@@ -594,7 +555,6 @@ async function updateEdgeWeight() {
     }
   } catch (error) {
     console.error('❌ エッジ重み更新エラー:', error);
-    // 元の値に戻す（selectedEdgeがnullでないことを確認）
     if (selectedEdge.value) {
       edgeEditData.value.weight = selectedEdge.value.weight || 0;
     } else {
@@ -603,13 +563,11 @@ async function updateEdgeWeight() {
   }
 }
 
-// ノード移動（十字キー）
-const MOVE_STEP = 2; // 移動ステップ
+const MOVE_STEP = 2;
 
 function moveNode(direction: 'up' | 'down' | 'left' | 'right') {
   if (!selectedNode.value) return;
   
-  // 現在の編集中の座標を使用（初期値がない場合は実際の座標を使用）
   let currentX = nodeEditData.value.x3d;
   let currentY = nodeEditData.value.y3d;
   
@@ -619,7 +577,6 @@ function moveNode(direction: 'up' | 'down' | 'left' | 'right') {
     currentY = position.y3d ?? 0;
   }
   
-  // TypeScriptのnullチェックのため明示的に数値型に変換
   const safeCurrentX: number = currentX ?? 0;
   const safeCurrentY: number = currentY ?? 0;
   
@@ -646,14 +603,10 @@ function moveNode(direction: 'up' | 'down' | 'left' | 'right') {
   sceneRef.value?.updateNodePosition(selectedNode.value.id, newX, newY);
 }
 
-// ========== 更新とリセット関数 ==========
-
-// ノード更新（ラベルと座標を統合）
 async function updateNodeWithReset() {
   if (!selectedNode.value || !currentProject.value || !selectedCaseId.value) return;
   
   try {
-    // ラベルの更新（性能ノード以外）
     if (canEditNodeLabel.value && nodeEditData.value.label.trim() !== selectedNode.value.label) {
       await networkApi.updateNode(
         currentProject.value.id,
@@ -667,7 +620,6 @@ async function updateNodeWithReset() {
       sceneRef.value?.updateNodeLabel(selectedNode.value.id, newLabel);
     }
     
-    // 3D座標の更新
     const xChanged = nodeEditData.value.x3d !== null && nodeEditData.value.x3d !== originalNodePosition.value.x3d;
     const yChanged = nodeEditData.value.y3d !== null && nodeEditData.value.y3d !== originalNodePosition.value.y3d;
     
@@ -685,12 +637,10 @@ async function updateNodeWithReset() {
     
   } catch (error) {
     console.error('❌ ノード更新エラー:', error);
-    // エラー時は元の値に戻す
     if (selectedNode.value) {
       nodeEditData.value.label = selectedNode.value.label;
       nodeEditData.value.x3d = originalNodePosition.value.x3d;
       nodeEditData.value.y3d = originalNodePosition.value.y3d;
-      // 3Dシーンの表示も元に戻す
       if (originalNodePosition.value.x3d !== null && originalNodePosition.value.y3d !== null) {
         sceneRef.value?.updateNodePosition(selectedNode.value.id, originalNodePosition.value.x3d, originalNodePosition.value.y3d);
       }
@@ -698,7 +648,6 @@ async function updateNodeWithReset() {
   }
 }
 
-// エッジ重み更新（リセット付き）
 async function updateEdgeWeightWithReset() {
   await updateEdgeWeight();
   clearSelection();
@@ -713,17 +662,12 @@ function clearSelection() {
   sceneRef.value?.clearHighlight?.();
 }
 
-// ========== ノード・エッジ追加機能 ==========
-
-// ノード追加
-// ノード追加
 async function addNode() {
   if (!canAddNode.value || !currentProject.value || !selectedCaseId.value) {
     return;
   }
   
   try {
-    // レイヤーに応じたタイプを決定
     const layerTypeMap: { [key: number]: 'property' | 'variable' | 'object' } = {
       2: 'property',
       3: 'variable',
@@ -759,7 +703,6 @@ async function addNode() {
       console.warn('⚠️ selectedCase.value が null です');
     }
     
-    // フォームをリセット
     newNodeData.value = { layer: '', label: '' };
   } catch (error) {
     console.error('❌ ノード追加エラー:', error);
@@ -768,8 +711,6 @@ async function addNode() {
   }
 }
 
-// エッジ追加
-// エッジ追加
 async function addEdge() {
   if (!canAddEdge.value || !currentProject.value || !selectedCaseId.value) {
     return;
@@ -802,7 +743,6 @@ async function addEdge() {
       }
     }
     
-    // フォームをリセット
     newEdgeData.value = { sourceId: '', targetId: '', weight: '' };
   } catch (error) {
     console.error('❌ エッジ追加エラー:', error);
@@ -811,17 +751,14 @@ async function addEdge() {
   }
 }
 
-// 性能ノードかどうかの判定関数（既存）
 function isPerformanceNode(node: NetworkNode | null): boolean {
   if (!node) return false;
   return node.layer === 1 && node.type === 'performance' && !!node.performance_id;
 }
 
-// ノード削除（確認ダイアログ付き）
 async function deleteNodeWithConfirm() {
   if (!selectedNode.value || !currentProject.value || !selectedCaseId.value) return;
   
-  // 性能ノードは削除不可
   if (isPerformanceNode(selectedNode.value)) {
     alert('性能ノードは削除できません');
     return;
@@ -904,9 +841,6 @@ function cancelEdgeChanges() {
   }
 }
 
-// ========== 初期化とリセット ==========
-
-// ページリロード時に3D座標を保持するための初期化改善
 function initializeExisting3DPositions() {
   if (!selectedCase.value) return;
   
@@ -930,24 +864,10 @@ function initializeExisting3DPositions() {
 }
 
 
-// 設計案変更時の処理
-watch(selectedCase, (newCase) => {
-  if (newCase) {
-    const range = planeSizeRange.value;
-    planeSize.value = Math.min(Math.max(planeSize.value, range.min), range.max);
-    
-    // 保存済みの3D座標を復元
-    setTimeout(() => {
-      initializeExisting3DPositions();
-      
-    }, 100); // 3Dシーンの初期化待ち
-  }
-});
 
 </script>
 
 <style scoped>
-/* メインレイアウト */
 .network-viewer {
   display: flex;
   flex-direction: column;
@@ -955,7 +875,6 @@ watch(selectedCase, (newCase) => {
   background: #f5f5f5;
 }
 
-/* ツールバー */
 .toolbar {
   display: flex;
   align-items: center;
@@ -967,7 +886,6 @@ watch(selectedCase, (newCase) => {
 }
 
 
-/* メインコンテンツエリア */
 .network-viewer-wrapper {
   display: flex;
   flex: 1;
@@ -976,7 +894,6 @@ watch(selectedCase, (newCase) => {
   overflow: hidden;
 }
 
-/* プロパティパネル */
 .properties-panel {
   width: 250px;
   background: white;
@@ -1119,7 +1036,6 @@ watch(selectedCase, (newCase) => {
   color: #999;
 }
 
-/* キャンバスエリア */
 .canvas-container {
   flex: 1;
   background: white;
@@ -1157,7 +1073,6 @@ watch(selectedCase, (newCase) => {
   font-size: 14px;
 }
 
-/* コントロールパネル */
 .controls-panel {
   width: 280px;
   background: white;
@@ -1276,7 +1191,6 @@ watch(selectedCase, (newCase) => {
   margin: 16px 0;
 }
 
-/* ========== 編集フォーム ========== */
 
 .property-input {
   width: 100%;
@@ -1309,7 +1223,6 @@ watch(selectedCase, (newCase) => {
   border-color: #2196F3;
 }
 
-/* ========== 十字キーコントロール ========== */
 
 .movement-controls {
   margin-top: 16px;
@@ -1368,7 +1281,6 @@ watch(selectedCase, (newCase) => {
   height: 32px;
 }
 
-/* ========== 更新ボタン ========== */
 
 .update-buttons {
   display: flex;
@@ -1420,7 +1332,6 @@ watch(selectedCase, (newCase) => {
   border-color: #999;
 }
 
-/* ========== ノード・エッジ追加パネル ========== */
 
 .add-panel {
   padding: 16px;
