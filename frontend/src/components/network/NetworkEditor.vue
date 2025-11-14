@@ -1,9 +1,9 @@
 <template>
   <div class="network-editor">
-    <!-- ツールバー -->
+    <!-- Toolbar -->
     <div class="toolbar">
       <div class="tool-group">
-        <!-- レイヤー2, 3 のボタン -->
+        <!-- Layer 2, 3 buttons -->
         <button 
           v-for="layer in layers.filter(l => l.id === 2 || l.id === 3)"
           :key="layer.id"
@@ -15,7 +15,7 @@
           <span class="tool-icon" :style="{ color: layer.color }">●</span>
           {{ layer.label }}
         </button>
-        <!-- レイヤー4: モノ -->
+        <!-- Layer 4: Object -->
         <button 
           class="tool-btn"
           :class="{ active: selectedTool === 'add-layer4-object' }"
@@ -23,9 +23,9 @@
           :style="{ borderColor: layers[3].color }"
         >
           <span class="tool-icon" :style="{ color: layers[3].color }">■</span>
-          モノ
+          Object
         </button>
-        <!-- レイヤー4: 環境 -->
+        <!-- Layer 4: Environment -->
         <button 
           class="tool-btn"
           :class="{ active: selectedTool === 'add-layer4-environment' }"
@@ -33,7 +33,7 @@
           :style="{ borderColor: layers[3].color }"
         >
           <span class="tool-icon" :style="{ color: layers[3].color }">□</span>
-          環境
+          Environment
         </button>
       </div>
 
@@ -44,82 +44,44 @@
           class="tool-btn"
           :class="{ active: selectedTool === 'select' }"
           @click="selectedTool = 'select'"
-          title="選択モード"
+          title="Select Mode"
         >
           <span class="tool-icon"><FontAwesomeIcon :icon="['fas', 'arrow-pointer']" /></span>
-          選択
+          Select
         </button>
         <button 
           class="tool-btn"
           :class="{ active: selectedTool === 'edge' }"
           @click="selectedTool = 'edge'"
-          title="エッジ作成"
+          title="Create Edge"
         >
           <span class="tool-icon">—</span>
-          接続
+          Connect
         </button>
         <button 
           class="tool-btn danger"
           @click="deleteSelected"
           :disabled="!selectedNode && !selectedEdge"
-          title="削除"
+          title="Delete"
         >
           <span class="tool-icon"><FontAwesomeIcon :icon="['fas', 'trash']" /></span>
-          削除
+          Delete
         </button>
       </div>
 
-      <div class="tool-divider"></div>
-
-      <div class="tool-group" style="background: #ffffcc; padding: 4px;">
-        <label class="zoom-label">ズーム</label>
-        <input 
-          type="range" 
-          v-model.number="zoom" 
-          :min="minZoom" 
-          max="3" 
-          step="0.1"
-          class="zoom-slider"
-        />
-        <span class="zoom-value">{{ Math.round(zoom * 100) }}%</span>
-        <button class="tool-btn" @click="resetViewWithDebug" title="全体表示">
-          <span class="tool-icon"><FontAwesomeIcon :icon="['fas', 'expand']" /></span>
-          全体表示
-        </button>
-      </div>
-
-      <div class="tool-divider"></div>
-
-      <div class="tool-group">
-        <button class="tool-btn" @click="downloadAsImage" title="画像ダウンロード">
-          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" style="margin-right: 4px;">
-            <path d="M10.5 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
-            <path d="M2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2zm.5 2a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm9 2.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/>
-          </svg>
-          画像ダウンロード
-        </button>
-        <button class="tool-btn" @click="autoLayout" title="自動レイアウト">
-          <span class="tool-icon"><FontAwesomeIcon :icon="['fas', 'align-justify']" /></span>
-          整列
-        </button>
-        <button class="tool-btn" @click="clearAll" title="全削除">
-          <span class="tool-icon"><FontAwesomeIcon :icon="['fas', 'rotate-right']" /></span>
-          リセット
-        </button>
-      </div>
     </div>
     
     <div class="network-editor-wrapper">
-      <!-- プロパティパネル（左側に常設） -->
+      <!-- Properties Panel (Always on the left) -->
     <div class="properties-panel">
-      <h3 v-if="selectedNode">ノードのプロパティ</h3>
-      <h3 v-else-if="selectedEdge">エッジのプロパティ</h3>
-      <h3 v-else>プロパティ</h3>
+      <h3 v-if="selectedNode">Node Properties</h3>
+      <h3 v-else-if="selectedEdge">Edge Properties</h3>
+      <h3 v-else>Properties</h3>
       
-      <!-- ノードのプロパティ -->
+      <!-- Node Properties -->
       <template v-if="selectedNode">
         <div class="property-group">
-          <label>ラベル</label>
+          <label>Label</label>
           <input
             v-model="tempNodeData.label"
             type="text"
@@ -129,36 +91,36 @@
         </div>
 
         <div class="property-group">
-          <label>レイヤー</label>
+          <label>Layer</label>
           <select 
             v-model.number="tempNodeData.layer" 
             class="property-select"
             :disabled="isPerformanceNode(selectedNode)"
           >
-            <option :value="1">Layer 1 - 性能</option>
-            <option :value="2">Layer 2 - 特性</option>
-            <option :value="3">Layer 3 - 変数</option>
-            <option :value="4">Layer 4 - モノ・環境</option>
+            <option :value="1">Layer 1 - Performance</option>
+            <option :value="2">Layer 2 - Property</option>
+            <option :value="3">Layer 3 - Variable</option>
+            <option :value="4">Layer 4 - Object/Environment</option>
           </select>
         </div>
 
         <div class="property-group">
-          <label>タイプ</label>
+          <label>Type</label>
           <select 
             v-model="tempNodeData.type" 
             class="property-select"
             :disabled="isPerformanceNode(selectedNode)"
           >
-            <option value="performance">性能</option>
-            <option value="property">特性</option>
-            <option value="variable">変数</option>
-            <option value="object">モノ</option>
-            <option value="environment">環境</option>
+            <option value="performance">Performance</option>
+            <option value="property">Property</option>
+            <option value="variable">Variable</option>
+            <option value="object">Object</option>
+            <option value="environment">Environment</option>
           </select>
         </div>
 
         <div class="property-group" v-if="tempNodeData.type === 'performance'">
-          <label>性能ID</label>
+          <label>Performance ID</label>
           <select 
             v-model="tempNodeData.performance_id" 
             class="property-select"
@@ -171,7 +133,7 @@
         </div>
 
         <div class="property-group">
-          <label>座標</label>
+          <label>Coordinates</label>
           <div class="coords">
             <span>X: {{ Math.round(selectedNode.x) }}</span>
             <span>Y: {{ Math.round(selectedNode.y) }}</span>
@@ -179,31 +141,31 @@
         </div>
         
         <div class="property-actions">
-          <button class="save-btn" @click="saveNodeChanges">保存</button>
-          <button class="cancel-btn" @click="cancelNodeChanges">キャンセル</button>
+          <button class="save-btn" @click="saveNodeChanges">Save</button>
+          <button class="cancel-btn" @click="cancelNodeChanges">Cancel</button>
         </div>
       </template>
 
-      <!-- エッジのプロパティ -->
+      <!-- Edge Properties -->
       <template v-else-if="selectedEdge">
         <div class="property-group">
-          <label>重み (因果関係の強さ)</label>
+          <label>Weight (Causal Strength)</label>
           <select 
             v-model.number="tempEdgeWeight" 
             class="property-select"
           >
-            <option :value="3">+3 (強い正の因果関係)</option>
-            <option :value="1">+1 (中程度の正の因果関係)</option>
-            <option :value="0.33">+1/3 (弱い正の因果関係)</option>
-            <option :value="0">0 (無相関)</option>
-            <option :value="-0.33">-1/3 (弱い負の因果関係)</option>
-            <option :value="-1">-1 (中程度の負の因果関係)</option>
-            <option :value="-3">-3 (強い負の因果関係)</option>
+            <option :value="3">+3 (Strong positive causality)</option>
+            <option :value="1">+1 (Moderate positive causality)</option>
+            <option :value="0.33">+1/3 (Weak positive causality)</option>
+            <option :value="0">0 (No correlation)</option>
+            <option :value="-0.33">-1/3 (Weak negative causality)</option>
+            <option :value="-1">-1 (Moderate negative causality)</option>
+            <option :value="-3">-3 (Strong negative causality)</option>
           </select>
         </div>
         
         <div class="property-group">
-          <label>接続情報</label>
+          <label>Connection Info</label>
           <div class="connection-info">
             <p>From: {{ getNodeById(selectedEdge.source_id)?.label }}</p>
             <p>To: {{ getNodeById(selectedEdge.target_id)?.label }}</p>
@@ -211,20 +173,20 @@
         </div>
         
         <div class="property-actions">
-          <button class="save-btn" @click="saveEdgeChanges">保存</button>
-          <button class="cancel-btn" @click="cancelEdgeChanges">キャンセル</button>
+          <button class="save-btn" @click="saveEdgeChanges">Save</button>
+          <button class="cancel-btn" @click="cancelEdgeChanges">Cancel</button>
         </div>
       </template>
 
-      <!-- 何も選択されていない時 -->
+      <!-- When nothing is selected -->
       <div v-else class="property-empty">
-        <p>ノードまたはエッジを選択してください</p>
+        <p>Select a node or edge</p>
       </div>
     </div>
 
-    <!-- キャンバスエリア -->
+    <!-- Canvas Area -->
     <div class="canvas-container" ref="canvasContainer">
-        <!-- SVGキャンバス -->
+        <!-- SVG Canvas -->
         <svg
           ref="svgCanvas"
           class="network-canvas"
@@ -237,7 +199,7 @@
           @mousedown="handlePanStart"
           @contextmenu.prevent
         >
-          <!-- グリッド背景パターン定義 -->
+          <!-- Grid Background Pattern Definition -->
           <defs>
             <pattern
               id="grid"
@@ -253,7 +215,7 @@
               />
             </pattern>
             
-            <!-- 矢印マーカー定義（各色用） -->
+            <!-- Arrow Marker Definition (for each color) -->
             <marker
               v-for="(color, weight) in edgeWeightColors"
               :key="`arrow-${weight}`"
@@ -271,7 +233,7 @@
               />
             </marker>
             
-            <!-- 選択時の赤い矢印 -->
+            <!-- Red arrow when selected -->
             <marker
               id="arrow-selected"
               markerWidth="10"
@@ -288,9 +250,9 @@
             </marker>
           </defs>
 
-          <!-- メインコンテンツグループ（ズーム・パン適用） - すべての要素を含む -->
+          <!-- Main Content Group (Zoom/Pan applied) - contains all elements -->
           <g :transform="`scale(${zoom})`">
-            <!-- グリッド背景 -->
+            <!-- Grid Background -->
             <rect 
               :x="0" 
               :y="0" 
@@ -299,9 +261,9 @@
               fill="url(#grid)" 
             />
 
-            <!-- レイヤー背景（4段分割） -->
+            <!-- Layer Background (4 layers) -->
             <g class="layer-backgrounds">
-              <!-- 性能レイヤー（1段目: Y=0-200） -->
+              <!-- Performance Layer (Level 1: Y=0-200) -->
               <rect 
                 :x="0" 
                 :y="0" 
@@ -310,7 +272,7 @@
                 :fill="layers[0].color"
                 opacity="0.1"
               />
-              <!-- 特性レイヤー（2段目: Y=200-400） -->
+              <!-- Property Layer (Level 2: Y=200-400) -->
               <rect 
                 :x="0" 
                 :y="200" 
@@ -319,7 +281,7 @@
                 :fill="layers[1].color"
                 opacity="0.1"
               />
-              <!-- 変数レイヤー（3段目: Y=400-600） -->
+              <!-- Variable Layer (Level 3: Y=400-600) -->
               <rect 
                 :x="0" 
                 :y="400" 
@@ -328,7 +290,7 @@
                 :fill="layers[2].color"
                 opacity="0.1"
               />
-              <!-- モノ・環境レイヤー（4段目: Y=600-800） -->
+              <!-- Object/Environment Layer (Level 4: Y=600-800) -->
               <rect 
                 :x="0" 
                 :y="600" 
@@ -339,7 +301,7 @@
               />
             </g>
 
-          <!-- エッジ（線） -->
+          <!-- Edges (lines) -->
           <g class="edges-layer">
             <g
               v-for="edge in network.edges"
@@ -348,7 +310,7 @@
               :class="{ selected: selectedEdge?.id === edge.id }"
               @click.stop="selectEdge(edge)"
             >
-              <!-- クリック判定用の透明な太い線 -->
+              <!-- Transparent thick line for click detection -->
               <line
                 :x1="getNodeById(edge.source_id)?.x"
                 :y1="getNodeById(edge.source_id)?.y"
@@ -358,7 +320,7 @@
                 stroke-width="10"
                 style="cursor: pointer"
               />
-              <!-- 表示用の線 -->
+              <!-- Display line -->
               <line
                 :x1="getNodeById(edge.source_id)?.x"
                 :y1="getNodeById(edge.source_id)?.y"
@@ -370,7 +332,7 @@
                 :marker-end="selectedEdge?.id === edge.id ? 'url(#arrow-selected)' : `url(#arrow-${edge.weight ?? 0})`"
                 style="pointer-events: none"
               />
-              <!-- エッジの中点に削除ボタン -->
+              <!-- Delete button at edge midpoint -->
               <circle
                 v-if="selectedEdge?.id === edge.id"
                 :cx="(getNodeById(edge.source_id)?.x! + getNodeById(edge.target_id)?.x!) / 2"
@@ -384,7 +346,7 @@
               />
             </g>
 
-            <!-- エッジ作成中のプレビュー -->
+            <!-- Edge creation preview -->
             <line
               v-if="edgeStart && tempEdgeEnd"
               :x1="edgeStart.x"
@@ -399,7 +361,7 @@
             />
           </g>
 
-          <!-- ノード -->
+          <!-- Nodes -->
           <g class="nodes-layer">
             <g
               v-for="node in network.nodes"
@@ -409,7 +371,7 @@
               @mousedown="startDrag($event, node)"
               @click.stop="handleNodeClick(node)"
             >
-              <!-- レイヤー1: 性能（円） -->
+              <!-- Layer 1: Performance (circle) -->
               <circle
                 v-if="node.layer === 1"
                 :cx="node.x"
@@ -421,7 +383,7 @@
                 class="node-shape"
               />
               
-              <!-- レイヤー2: 特性（正三角形、高さ36px） -->
+              <!-- Layer 2: Property (equilateral triangle, height 36px) -->
               <polygon
                 v-else-if="node.layer === 2"
                 :points="getTrianglePoints(node.x, node.y)"
@@ -431,7 +393,7 @@
                 class="node-shape"
               />
               
-              <!-- レイヤー3: 変数（横長ダイヤ、高さ36px、幅54px） -->
+              <!-- Layer 3: Variable (horizontal diamond, height 36px, width 54px) -->
               <polygon
                 v-else-if="node.layer === 3"
                 :points="getDiamondPoints(node.x, node.y)"
@@ -441,7 +403,7 @@
                 class="node-shape"
               />
               
-              <!-- レイヤー4: モノ（縦1:横2の長方形、高さ36px、幅72px） -->
+              <!-- Layer 4: Object (1:2 rectangle, height 36px, width 72px) -->
               <rect
                 v-else-if="node.layer === 4 && node.type === 'object'"
                 :x="node.x - 36"
@@ -455,7 +417,7 @@
                 class="node-shape"
               />
               
-              <!-- レイヤー4: 環境（正方形、36px × 36px） -->
+              <!-- Layer 4: Environment (square, 36px × 36px) -->
               <rect
                 v-else-if="node.layer === 4 && node.type === 'environment'"
                 :x="node.x - 18"
@@ -469,7 +431,7 @@
                 class="node-shape"
               />
               
-              <!-- フォールバック: レイヤー4でtypeが不明な場合（円） -->
+              <!-- Fallback: Layer 4 with unknown type (circle) -->
               <circle
                 v-else-if="node.layer === 4"
                 :cx="node.x"
@@ -481,7 +443,7 @@
                 class="node-shape"
               />
               
-              <!-- ノードラベル -->
+              <!-- Node label -->
               <text
                 :x="node.x"
                 :y="node.y + 18 + 15"
@@ -493,19 +455,19 @@
               </text>m
             </g>
           </g>
-          </g> <!-- メインコンテンツグループ終了 -->
+          </g> <!-- End main content group -->
         </svg>
 
-        <!-- ヘルプテキスト -->
+        <!-- Help text -->
         <div class="canvas-help" v-if="network.nodes.length === 0">
-          <p><FontAwesomeIcon :icon="['fas', 'expand']" /> 上のツールバーから「性能」「特性」「変数」「モノ・環境」ボタンを選択</p>
-          <p>キャンバスをクリックしてノードを配置</p>
+          <p><FontAwesomeIcon :icon="['fas', 'expand']" /> Select "Performance", "Property", "Variable", or "Object/Environment" from the toolbar above</p>
+          <p>Click on the canvas to place nodes</p>
         </div>
       </div>
 
-      <!-- レイヤーガイド（右側） -->
+      <!-- Layer Guide (Right Side) -->
       <div class="layer-legend">
-        <h3>凡例</h3>
+        <h3>Legend</h3>
         <div 
           v-for="layer in layers"
           :key="layer.id"
@@ -514,8 +476,48 @@
           <span class="legend-color" :style="{ background: layer.color }"></span>
           <span class="legend-label">{{ layer.label }}</span>
         </div>
+
+        <!-- Zoom Controls -->
+        <div class="legend-section">
+          <h4>View Controls</h4>
+          <div class="zoom-controls">
+            <label class="zoom-label">Zoom</label>
+            <input 
+              type="range" 
+              v-model.number="zoom" 
+              :min="minZoom" 
+              max="3" 
+              step="0.1"
+              class="zoom-slider"
+            />
+            <span class="zoom-value">{{ Math.round(zoom * 100) }}%</span>
+            <button class="control-btn" @click="resetViewWithDebug" title="Fit">
+              <FontAwesomeIcon :icon="['fas', 'expand']" />
+              <span>Fit</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="legend-section">
+          <h4>Actions</h4>
+          <div class="action-controls">
+            <button class="control-btn" @click="downloadAsImage" title="Download">
+              <FontAwesomeIcon :icon="['fas', 'camera']" />
+              <span>Download</span>
+            </button>
+            <button class="control-btn" @click="autoLayout" title="Auto Layout">
+              <FontAwesomeIcon :icon="['fas', 'align-justify']" />
+              <span>Auto Layout</span>
+            </button>
+            <button class="control-btn danger" @click="clearAll" title="Clear All">
+              <FontAwesomeIcon :icon="['fas', 'rotate-right']" />
+              <span>Reset</span>
+            </button>
+          </div>
+        </div>
       </div>
-    </div> <!-- network-editor-wrapper終了 -->
+    </div> <!-- End network-editor-wrapper -->
   </div>
 </template>
 
@@ -532,12 +534,12 @@ const emit = defineEmits<{
   'update:modelValue': [value: NetworkStructure];
 }>();
 
-// キャンバスサイズ
+// Canvas size
 const canvasWidth = ref(1200);
 const canvasHeight = ref(800);
 const nodeRadius = 18;
 
-// ズーム・パン状態
+// Zoom/pan state
 const zoom = ref(1);
 const minZoom = ref(0.3);
 const panX = ref(0);
@@ -545,30 +547,30 @@ const panY = ref(0);
 const isPanning = ref(false);
 const panStart = ref({ x: 0, y: 0 });
 
-// 内部状態
+// Internal state
 const network = ref<NetworkStructure>({
   nodes: [],
   edges: []
 });
 
-// 更新中フラグ（循環参照防止）
+// Update flag (prevent circular references)
 const isUpdating = ref(false);
 
-// ツール選択
+// Tool selection
 const selectedTool = ref<string>('select');
 const selectedNode = ref<NetworkNode | null>(null);
 const selectedEdge = ref<NetworkEdge | null>(null);
 
-// ドラッグ状態
+// Drag state
 const isDragging = ref(false);
 const dragNode = ref<NetworkNode | null>(null);
 const dragOffset = ref({ x: 0, y: 0 });
 
-// エッジ作成状態
+// Edge creation state
 const edgeStart = ref<NetworkNode | null>(null);
 const tempEdgeEnd = ref<{ x: number; y: number } | null>(null);
 
-// プロパティ編集用の一時データ
+// Temporary data for property editing
 const tempNodeData = ref({
   label: '',
   layer: 1 as 1 | 2 | 3 | 4,
@@ -580,42 +582,42 @@ const tempEdgeWeight = ref<3 | 1 | 0.33 | 0 | -0.33 | -1 | -3>(0);
 const svgCanvas = ref<SVGSVGElement>();
 const canvasContainer = ref<HTMLDivElement>();
 
-// レイヤー定義
+// Layer definition
 const layers = [
-  { id: 1, label: '性能', color: '#4CAF50', type: 'performance' },
-  { id: 2, label: '特性', color: '#2196F3', type: 'property' },
-  { id: 3, label: '変数', color: '#FFC107', type: 'variable' },
-  { id: 4, label: 'モノ・環境', color: '#9C27B0', type: 'object' }
+  { id: 1, label: 'Performance', color: '#4CAF50', type: 'performance' },
+  { id: 2, label: 'Property', color: '#2196F3', type: 'property' },
+  { id: 3, label: 'Variable', color: '#FFC107', type: 'variable' },
+  { id: 4, label: 'Object/Environment', color: '#9C27B0', type: 'object' }
 ];
 
-// エッジの重みと色の対応
+// Edge weight and color mapping
 const edgeWeightColors = {
-  3: '#004563',      // 強い正の因果関係
-  1: '#588da2',      // 中程度の正の因果関係
-  0.33: '#c3dde2',   // 弱い正の因果関係
-  0: 'silver',       // 無相関
-  [-0.33]: '#e9c1c9', // 弱い負の因果関係
-  [-1]: '#c94c62',   // 中程度の負の因果関係
-  [-3]: '#9f1e35'    // 強い負の因果関係
+  3: '#004563',      // Strong positive causality
+  1: '#588da2',      // Moderate positive causality
+  0.33: '#c3dde2',   // Weak positive causality
+  0: 'silver',       // No correlation
+  [-0.33]: '#e9c1c9', // Weak negative causality
+  [-1]: '#c94c62',   // Moderate negative causality
+  [-3]: '#9f1e35'    // Strong negative causality
 };
 
 const edgeWeightLabels = {
-  3: '+3 (強い正の因果関係)',
-  1: '+1 (中程度の正の因果関係)',
-  0.33: '+1/3 (弱い正の因果関係)',
-  0: '0 (無相関)',
-  [-0.33]: '-1/3 (弱い負の因果関係)',
-  [-1]: '-1 (中程度の負の因果関係)',
-  [-3]: '-3 (強い負の因果関係)'
+  3: '+3 (Strong positive causality)',
+  1: '+1 (Moderate positive causality)',
+  0.33: '+1/3 (Weak positive causality)',
+  0: '0 (No correlation)',
+  [-0.33]: '-1/3 (Weak negative causality)',
+  [-1]: '-1 (Moderate negative causality)',
+  [-3]: '-3 (Strong negative causality)'
 };
 
-// エッジの色を取得
+// Get edge color
 function getEdgeColor(edge: NetworkEdge): string {
   const weight = edge.weight ?? 0;
   return edgeWeightColors[weight] || 'silver';
 }
 
-// キャンバスのカーソルスタイル（computed）
+// Canvas cursor style (computed)
 const canvasStyle = computed(() => {
   if (isPanning.value) {
     return { cursor: 'move' };
@@ -629,67 +631,67 @@ const canvasStyle = computed(() => {
   return { cursor: 'default' };
 });
 
-// ノード形状計算関数
-// 正三角形の座標（高さ36px、上向き）
+// Node shape calculation functions
+// Equilateral triangle coordinates (height 36px, pointing up)
 function getTrianglePoints(cx: number, cy: number): string {
   const height = 36;
-  const halfBase = height / Math.sqrt(3); // 底辺の半分 ≈ 20.8
+  const halfBase = height / Math.sqrt(3); // Half of base ≈ 20.8
   return `${cx},${cy - height/2} ${cx - halfBase},${cy + height/2} ${cx + halfBase},${cy + height/2}`;
 }
 
-// 横長ダイヤの座標（高さ36px、幅54px）
+// Horizontal diamond coordinates (height 36px, width 54px)
 function getDiamondPoints(cx: number, cy: number): string {
   const halfHeight = 18;
   const halfWidth = 27;
   return `${cx},${cy - halfHeight} ${cx + halfWidth},${cy} ${cx},${cy + halfHeight} ${cx - halfWidth},${cy}`;
 }
 
-// 初期化
+// Initialize
 onMounted(() => {
   if (props.modelValue) {
     network.value = JSON.parse(JSON.stringify(props.modelValue));
     
-    // 既存のエッジにweightがない場合はデフォルト値を設定
+    // Set default weight for existing edges without weight
     network.value.edges.forEach(edge => {
       if (edge.weight === undefined) {
-        edge.weight = 0; // デフォルトは無相関
+        edge.weight = 0; // Default is no correlation
       }
     });
   }
   if (network.value.nodes.length === 0) {
-    ensurePerformanceNodes(false); // emitしない
+    ensurePerformanceNodes(false); // Don't emit
   } else {
-    ensurePerformanceNodes(false); // emitしない
+    ensurePerformanceNodes(false); // Don't emit
   }
   
-  // ノードがあれば全体表示
+  // Reset view if there are nodes
   if (network.value.nodes.length > 0) {
     nextTick(() => resetView());
   }
 });
 
-// 監視
+// Watch
 watch(() => props.modelValue, (newVal, oldVal) => {
   
-  // 自分自身の更新による変更は無視
+  // Ignore changes from our own updates
   if (isUpdating.value) {
     return;
   }
   
   if (newVal) {
-    // 新しいデータをコピー
+    // Copy new data
     network.value = JSON.parse(JSON.stringify(newVal));
     
-    // 既存のエッジにweightがない場合はデフォルト値を設定
+    // Set default weight for existing edges without weight
     network.value.edges.forEach(edge => {
       if (edge.weight === undefined) {
-        edge.weight = 0; // デフォルトは無相関
+        edge.weight = 0; // Default is no correlation
       }
     });
   }
 }, { deep: true });
 
-// 性能データの変更を監視
+// Watch performance data changes
 watch(() => props.performances, (newVal) => {
   
   // 性能ノードがない場合のみ追加
@@ -703,7 +705,7 @@ watch(() => props.performances, (newVal) => {
   }
 }, { deep: true });
 
-// 性能ノードが存在することを保証
+// Ensure performance nodes exist
 function ensurePerformanceNodes(shouldEmit: boolean = true) {
   if (props.performances.length === 0) {
     return;
@@ -711,14 +713,14 @@ function ensurePerformanceNodes(shouldEmit: boolean = true) {
   
   const leafPerfs = props.performances.filter(p => p.is_leaf);
   
-  // 既存の性能ノードIDを取得
+  // Get existing performance node IDs
   const existingPerfIds = new Set(
     network.value.nodes
       .filter(n => n.type === 'performance' && n.performance_id)
       .map(n => n.performance_id)
   );
   const startX = 100;
-  const startY = 100; // レイヤー1の中央
+  const startY = 100; // Center of layer 1
   const spacingX = 180;
   const spacingY = 80;
   const itemsPerRow = 6;
@@ -751,38 +753,38 @@ function ensurePerformanceNodes(shouldEmit: boolean = true) {
   }
 }
 
-// デバッグ情報を出力するヘルパー
+// Helper to output debug information
 function logResetViewDebug() {
   network.value.nodes.forEach(node => {
   });
 }
 
-// ノード色を取得
+// Get node color
 function getNodeColor(node: NetworkNode): string {
   const layer = layers.find(l => l.id === node.layer);
   return layer?.color || '#999';
 }
 
-// エッジの終点を調整（矢印がノードと重ならないように）
+// Adjust edge endpoint (prevent arrow overlapping with node)
 function getAdjustedLineEnd(source: NetworkNode, target: NetworkNode): { x: number, y: number } {
   const dx = target.x - source.x;
   const dy = target.y - source.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
   
-  // ノードの半径（形状に応じて調整）
-  let targetRadius = 18; // デフォルト（円）
+  // Node radius (adjusted by shape)
+  let targetRadius = 18; // Default (circle)
   
-  if (target.layer === 2) { // 三角形
+  if (target.layer === 2) { // Triangle
     targetRadius = 20;
-  } else if (target.layer === 3) { // ダイヤ
+  } else if (target.layer === 3) { // Diamond
     targetRadius = 24;
-  } else if (target.layer === 4 && target.type === 'object') { // 長方形
+  } else if (target.layer === 4 && target.type === 'object') { // Rectangle
     targetRadius = 36;
-  } else if (target.layer === 4 && target.type === 'environment') { // 正方形
+  } else if (target.layer === 4 && target.type === 'environment') { // Square
     targetRadius = 18;
   }
   
-  // 矢印の分だけさらに短くする
+  // Shorten further by arrow size
   const adjustment = targetRadius + 10;
   const ratio = (distance - adjustment) / distance;
   
@@ -792,12 +794,12 @@ function getAdjustedLineEnd(source: NetworkNode, target: NetworkNode): { x: numb
   };
 }
 
-// ノードIDから取得
+// Get node by ID
 function getNodeById(id: string): NetworkNode | undefined {
   return network.value.nodes.find(n => n.id === id);
 }
 
-// SVG座標をワールド座標に変換（ズーム考慮）
+// Convert SVG coordinates to world coordinates (considering zoom)
 function screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
   return {
     x: screenX / zoom.value,
@@ -805,17 +807,17 @@ function screenToWorld(screenX: number, screenY: number): { x: number; y: number
   };
 }
 
-// 性能ノードかどうか判定
+// Check if node is performance node
 function isPerformanceNode(node: NetworkNode | null): boolean {
   if (!node) return false;
   return node.type === 'performance' && !!node.performance_id;
 }
 
-// タイプ変更時の処理
+// Handle type change
 function handleTypeChange() {
   if (!selectedNode.value) return;
   
-  // タイプに応じてレイヤーを自動設定
+  // Automatically set layer based on type
   const typeLayerMap: Record<string, 1 | 2 | 3 | 4> = {
     'performance': 1,
     'property': 2,
@@ -832,7 +834,7 @@ function handleTypeChange() {
   emitUpdate();
 }
 
-// ノード選択時に一時データを初期化
+// Initialize temporary data when node is selected
 function updateTempNodeData() {
   if (selectedNode.value) {
     tempNodeData.value = {
@@ -844,24 +846,24 @@ function updateTempNodeData() {
   }
 }
 
-// エッジ選択時に一時データを初期化
+// Initialize temporary data when edge is selected
 function updateTempEdgeData() {
   if (selectedEdge.value) {
     tempEdgeWeight.value = (selectedEdge.value.weight ?? 0) as 3 | 1 | 0.33 | 0 | -0.33 | -1 | -3;
   }
 }
 
-// ノードの変更を保存
+// Save node changes
 function saveNodeChanges() {
   if (!selectedNode.value) return;
   
-  // 変更を適用
+  // Apply changes
   selectedNode.value.label = tempNodeData.value.label;
   selectedNode.value.layer = tempNodeData.value.layer;
   selectedNode.value.type = tempNodeData.value.type;
   selectedNode.value.performance_id = tempNodeData.value.performance_id;
   
-  // タイプに応じてレイヤーを自動設定
+  // Automatically set layer based on type
   const typeLayerMap: Record<string, 1 | 2 | 3 | 4> = {
     'performance': 1,
     'property': 2,
@@ -876,29 +878,29 @@ function saveNodeChanges() {
   }
   
   emitUpdate();
-  selectedNode.value = null; // 選択を解除
+  selectedNode.value = null; // Clear selection
 }
 
-// ノードの変更をキャンセル
+// Cancel node changes
 function cancelNodeChanges() {
   selectedNode.value = null;
 }
 
-// エッジの変更を保存
+// Save edge changes
 function saveEdgeChanges() {
   if (!selectedEdge.value) return;
   
   selectedEdge.value.weight = tempEdgeWeight.value;
   emitUpdate();
-  selectedEdge.value = null; // 選択を解除
+  selectedEdge.value = null; // Clear selection
 }
 
-// エッジの変更をキャンセル
+// Cancel edge changes
 function cancelEdgeChanges() {
   selectedEdge.value = null;
 }
 
-// ノード追加ツール選択
+// Select add node tool
 function selectAddNodeTool(layerId: number, nodeType?: string) {
   if (layerId === 4 && nodeType) {
     selectedTool.value = `add-layer4-${nodeType}`;
@@ -909,21 +911,21 @@ function selectAddNodeTool(layerId: number, nodeType?: string) {
   selectedEdge.value = null;
 }
 
-// キャンバスクリック
+// Canvas click
 function handleCanvasClick(event: MouseEvent) {
-  // パン中は無視
+  // Ignore during panning
   if (isPanning.value) return;
   
   const rect = svgCanvas.value!.getBoundingClientRect();
   const screenX = event.clientX - rect.left;
   const screenY = event.clientY - rect.top;
   
-  // ワールド座標に変換
+  // Convert to world coordinates
   const { x, y } = screenToWorld(screenX, screenY);
 
-  // ノード追加モード
+  // Node addition mode
   if (selectedTool.value.startsWith('add-layer')) {
-    // レイヤー4の場合はモノ/環境を判定
+    // For layer 4, determine object/environment
     if (selectedTool.value === 'add-layer4-object') {
       addNode(x, y, 4, 'object');
     } else if (selectedTool.value === 'add-layer4-environment') {
@@ -933,22 +935,22 @@ function handleCanvasClick(event: MouseEvent) {
       addNode(x, y, layerId);
     }
   }
-  // 選択解除
+  // Deselect
   else if (selectedTool.value === 'select') {
     selectedNode.value = null;
     selectedEdge.value = null;
   }
 }
 
-// ノード追加
+// Add node
 function addNode(x: number, y: number, layer: number, nodeType?: string) {
   const layerInfo = layers.find(l => l.id === layer);
   
-  // レイヤーに応じたY座標範囲（キャンバス800を4分割）
+  // Y coordinate range based on layer (canvas 800 divided by 4)
   const layerYStart = (layer - 1) * 200;
   const layerYEnd = layer * 200;
   
-  // Y座標をレイヤーの範囲内に制限
+  // Restrict Y coordinate within layer range
   let adjustedY = y;
   if (y < layerYStart) {
     adjustedY = layerYStart + 50;
@@ -956,7 +958,7 @@ function addNode(x: number, y: number, layer: number, nodeType?: string) {
     adjustedY = layerYEnd - 50;
   }
   
-  // typeを決定
+  // Determine type
   let type: NetworkNode['type'];
   if (nodeType) {
     type = nodeType as NetworkNode['type'];
@@ -964,15 +966,15 @@ function addNode(x: number, y: number, layer: number, nodeType?: string) {
     type = layerInfo?.type as NetworkNode['type'] || 'property';
   }
   
-  // labelを決定
+  // Determine label
   let label: string;
   if (layer === 4) {
     if (type === 'object') {
-      label = `モノ ${network.value.nodes.filter(n => n.layer === 4 && n.type === 'object').length + 1}`;
+      label = `Object ${network.value.nodes.filter(n => n.layer === 4 && n.type === 'object').length + 1}`;
     } else if (type === 'environment') {
-      label = `環境 ${network.value.nodes.filter(n => n.layer === 4 && n.type === 'environment').length + 1}`;
+      label = `Environment ${network.value.nodes.filter(n => n.layer === 4 && n.type === 'environment').length + 1}`;
     } else {
-      label = `${layerInfo?.label || 'ノード'} ${network.value.nodes.filter(n => n.layer === layer).length + 1}`;
+      label = `${layerInfo?.label || 'Node'} ${network.value.nodes.filter(n => n.layer === layer).length + 1}`;
     }
   } else {
     label = `${layerInfo?.label || 'ノード'} ${network.value.nodes.filter(n => n.layer === layer).length + 1}`;
@@ -990,24 +992,24 @@ function addNode(x: number, y: number, layer: number, nodeType?: string) {
   network.value.nodes.push(newNode);
   emitUpdate();
   
-  // 追加後は選択モードに戻る
+  // Return to selection mode after adding
   selectedTool.value = 'select';
   selectedNode.value = newNode;
-  updateTempNodeData(); // 一時データを更新
+  updateTempNodeData(); // Update temporary data
 }
 
-// ノードクリック
+// Node click
 function handleNodeClick(node: NetworkNode) {
   if (selectedTool.value === 'select') {
     selectedNode.value = node;
     selectedEdge.value = null;
-    updateTempNodeData(); // 一時データを更新
+    updateTempNodeData(); // Update temporary data
   } else if (selectedTool.value === 'edge') {
-    // エッジ作成開始
+    // Start edge creation
     if (!edgeStart.value) {
       edgeStart.value = node;
     } else {
-      // エッジ作成完了
+      // Complete edge creation
       createEdge(edgeStart.value, node);
       edgeStart.value = null;
       tempEdgeEnd.value = null;
@@ -1015,18 +1017,18 @@ function handleNodeClick(node: NetworkNode) {
   }
 }
 
-// エッジ作成
+// Create edge
 function createEdge(from: NetworkNode, to: NetworkNode) {
   if (from.id === to.id) return;
   
-  // 既存チェック
+  // Check if exists
   const exists = network.value.edges.some(
     e => (e.source_id === from.id && e.target_id === to.id) ||
          (e.source_id === to.id && e.target_id === from.id)
   );
   
   if (exists) {
-    alert('このエッジは既に存在します');
+    alert('This edge already exists');
     return;
   }
 
@@ -1035,36 +1037,36 @@ function createEdge(from: NetworkNode, to: NetworkNode) {
     source_id: from.id,
     target_id: to.id,
     type: 'type1',
-    weight: 0 // デフォルトは無相関
+    weight: 0 // Default is no correlation
   };
 
   network.value.edges.push(newEdge);
   emitUpdate();
   
-  // エッジを自動選択してプロパティを表示
+  // Automatically select edge and show properties
   selectedTool.value = 'select';
   selectedEdge.value = newEdge;
   selectedNode.value = null;
-  updateTempEdgeData(); // 一時データを更新
+  updateTempEdgeData(); // Update temporary data
 }
 
-// エッジ選択
+// Select edge
 function selectEdge(edge: NetworkEdge) {
   if (selectedTool.value === 'select') {
     selectedEdge.value = edge;
     selectedNode.value = null;
-    updateTempEdgeData(); // 一時データを更新
+    updateTempEdgeData(); // Update temporary data
   }
 }
 
-// エッジ削除
+// Delete edge
 function deleteEdge(edge: NetworkEdge) {
   network.value.edges = network.value.edges.filter(e => e.id !== edge.id);
   selectedEdge.value = null;
   emitUpdate();
 }
 
-// マウス移動（エッジプレビュー）
+// Mouse move (edge preview)
 function handleCanvasMouseMove(event: MouseEvent) {
   if (selectedTool.value === 'edge' && edgeStart.value) {
     const rect = svgCanvas.value!.getBoundingClientRect();
@@ -1075,7 +1077,7 @@ function handleCanvasMouseMove(event: MouseEvent) {
   }
 }
 
-// ドラッグ開始
+// Start drag
 function startDrag(event: MouseEvent, node: NetworkNode) {
   if (selectedTool.value !== 'select') return;
   
@@ -1098,7 +1100,7 @@ function startDrag(event: MouseEvent, node: NetworkNode) {
   document.addEventListener('mouseup', handleDragEnd);
 }
 
-// ドラッグ中
+// During drag
 function handleDragMove(event: MouseEvent) {
   if (!isDragging.value || !dragNode.value) return;
   
@@ -1361,95 +1363,176 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use 'sass:color';
+@import '../../style/color';
+
+// カスタムスクロールバースタイル
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 0.8vw;
+    height: 0.8vw;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: color.adjust($gray, $lightness: 5%);
+    border-radius: 0.4vw;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: color.adjust($main_1, $alpha: -0.5);
+    border-radius: 0.4vw;
+    transition: background 0.3s ease;
+    
+    &:hover {
+      background: color.adjust($main_1, $alpha: -0.3);
+    }
+    
+    &:active {
+      background: $main_1;
+    }
+  }
+  
+  // Firefox
+  scrollbar-width: thin;
+  scrollbar-color: color.adjust($main_1, $alpha: -0.5) color.adjust($gray, $lightness: 5%);
+}
+
 .network-editor {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  background: $gray;
+  min-height: 0; // flexboxで適切に縮小できるように
 }
 
 .network-editor-wrapper {
   display: flex;
   flex-direction: row;
   flex: 1;
-  gap: 12px;
-  overflow: hidden;
+  gap: 1.2vw;
+  overflow: visible;
   min-height: 0; /* flexboxで縮小可能にする */
+  position: relative;
 }
 
 .toolbar {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
-  gap: 12px;
+  padding: clamp(0.6rem, 1.2vh, 0.8rem) clamp(0.8rem, 1.5vw, 1rem);
+  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
+  gap: 1.2vw;
   overflow-x: auto;
   flex-wrap: nowrap;
   flex-shrink: 0; /* ツールバーは縮まないように */
+  @include custom-scrollbar;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.7);
 }
 
 .tool-group {
   display: flex;
-  gap: 6px;
+  gap: 0.6vw;
   align-items: center;
 }
 
 .zoom-label {
-  font-size: 13px;
-  color: #666;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.4);
   font-weight: 500;
 }
 
 .zoom-slider {
-  width: 120px;
-  height: 6px;
+  width: clamp(6rem, 10vw, 8rem);
+  height: 0.6vh;
   cursor: pointer;
+  
+  // Webkitブラウザ用のスタイル
+  &::-webkit-slider-track {
+    background: color.adjust($gray, $lightness: 15%);
+    border-radius: 0.3vh;
+  }
+  
+  &::-webkit-slider-thumb {
+    background: $main_1;
+    border: none;
+    width: 1.2vw;
+    height: 1.2vw;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  
+  // Firefox用のスタイル
+  &::-moz-range-track {
+    background: color.adjust($gray, $lightness: 15%);
+    border-radius: 0.3vh;
+  }
+  
+  &::-moz-range-thumb {
+    background: $main_1;
+    border: none;
+    width: 1.2vw;
+    height: 1.2vw;
+    border-radius: 50%;
+    cursor: pointer;
+  }
 }
 
 .zoom-value {
-  font-size: 12px;
-  color: #666;
-  min-width: 45px;
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+  color: color.adjust($white, $alpha: -0.4);
+  min-width: clamp(2.5rem, 4vw, 3rem);
   text-align: right;
 }
 
 .tool-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: white;
-  border: 2px solid #ddd;
-  border-radius: 6px;
+  gap: 0.6vw;
+  padding: clamp(0.4rem, 0.8vh, 0.5rem) clamp(0.6rem, 1.2vw, 0.8rem);
+  background: color.adjust($gray, $lightness: 20%);
+  border: 2px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.5vw;
   cursor: pointer;
-  font-size: 13px;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  color: $white;
   transition: all 0.2s;
 }
 
 .tool-btn:hover:not(:disabled) {
-  background: #f5f5f5;
-  border-color: #999;
+  background: color.adjust($gray, $lightness: 25%);
+  border-color: color.adjust($white, $alpha: -0.7);
+  transform: translateY(-0.1vh);
 }
 
 .tool-btn.active {
-  background: #E3F2FD;
-  border-color: #2196F3;
-  color: #2196F3;
+  background: color.adjust($main_1, $alpha: -0.85);
+  border-color: $main_1;
+  color: $main_1;
+  box-shadow: 0 0.2vh 0.5vh color.adjust($main_1, $alpha: -0.7);
 }
 
 .tool-btn.danger {
-  color: #f44336;
+  color: $sub_1;
+  
+  &:hover:not(:disabled) {
+    color: lighten($sub_1, 10%);
+    border-color: $sub_1;
+  }
 }
 
 .tool-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  background: color.adjust($gray, $lightness: 10%);
 }
 
 .tool-icon {
-  font-size: 16px;
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
 }
 
 .tool-divider {
@@ -1476,48 +1559,195 @@ onUnmounted(() => {
   flex: 1;
   position: relative;
   overflow: auto;
-  background: white;
-  border-radius: 8px;
+  background: lighten($gray, 5%);
   min-width: 0; /* flexboxで必要 */
+  @include custom-scrollbar;
+  margin-top: 0; // 上部の余白を削除して見切れを防ぐ
 }
 
 .layer-legend {
   display: flex;
   flex-direction: column;
-  width: 250px;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  width: clamp(12rem, 20vw, 16rem);
+  padding: clamp(1rem, 2vh, 1.25rem);
+  background: lighten($gray, 8%);
+  border-radius: 0 0 0.8vw 0;
+  box-shadow: 0 0.3vh 0.8vh color.adjust($black, $alpha: -0.5);
   overflow-y: auto;
   flex-shrink: 0;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  @include custom-scrollbar;
 }
 
 .layer-legend h3 {
-  margin: 0 0 16px 0;
-  font-size: 15px;
+  margin: 0 0 clamp(0.8rem, 1.5vh, 1rem) 0;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
   font-weight: 600;
+  color: $white;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 0.6vw;
+  font-size: clamp(0.7rem, 0.9vw, 0.75rem);
 }
 
 .legend-color {
-  width: 12px;
-  height: 12px;
+  width: clamp(0.7rem, 1.2vw, 0.8rem);
+  height: clamp(0.7rem, 1.2vw, 0.8rem);
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .legend-label {
-  color: #666;
+  color: color.adjust($white, $alpha: -0.3);
+}
+
+.legend-section {
+  margin-top: clamp(1.2rem, 2vh, 1.5rem);
+  padding-top: clamp(1rem, 1.8vh, 1.25rem);
+  border-top: 1px solid color.adjust($white, $alpha: -0.9);
+}
+
+.legend-section h4 {
+  margin: 0 0 clamp(0.6rem, 1.2vh, 0.8rem) 0;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  font-weight: 600;
+  color: $white;
+}
+
+.zoom-controls {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.4rem, 0.8vh, 0.6rem);
+}
+
+.zoom-label {
+  font-size: clamp(0.7rem, 0.9vw, 0.75rem);
+  color: color.adjust($white, $alpha: -0.3);
+  font-weight: 500;
+}
+
+.zoom-slider {
+  width: 100%;
+  height: clamp(0.3rem, 0.5vh, 0.4rem);
+  cursor: pointer;
+  background: color.adjust($gray, $lightness: -10%);
+  border-radius: 0.3vw;
+  outline: none;
+  
+  // Track styling
+  &::-webkit-slider-track {
+    background: linear-gradient(90deg, 
+      color.adjust($gray, $lightness: -15%) 0%, 
+      color.adjust($main_1, $alpha: -0.7) 50%, 
+      color.adjust($main_2, $alpha: -0.7) 100%);
+    border-radius: 0.3vw;
+    height: 100%;
+  }
+  
+  &::-moz-range-track {
+    background: linear-gradient(90deg, 
+      color.adjust($gray, $lightness: -15%) 0%, 
+      color.adjust($main_1, $alpha: -0.7) 50%, 
+      color.adjust($main_2, $alpha: -0.7) 100%);
+    border-radius: 0.3vw;
+    height: 100%;
+    border: none;
+  }
+  
+  // Thumb styling
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: clamp(0.8rem, 1.2vw, 1rem);
+    height: clamp(0.8rem, 1.2vw, 1rem);
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0.1vh 0.3vh color.adjust($black, $alpha: -0.5);
+    transition: all 0.2s ease;
+    
+    &:hover {
+      transform: scale(1.1);
+      background: linear-gradient(135deg, lighten($main_1, 15%) 0%, lighten($main_2, 15%) 100%);
+    }
+  }
+  
+  &::-moz-range-thumb {
+    width: clamp(0.8rem, 1.2vw, 1rem);
+    height: clamp(0.8rem, 1.2vw, 1rem);
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0.1vh 0.3vh color.adjust($black, $alpha: -0.5);
+  }
+}
+
+.zoom-value {
+  font-size: clamp(0.65rem, 0.85vw, 0.7rem);
+  color: color.adjust($white, $alpha: -0.4);
+  text-align: center;
+  font-weight: 500;
+  font-family: monospace;
+}
+
+.action-controls {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.4rem, 0.8vh, 0.6rem);
+}
+
+.control-btn {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.3rem, 0.5vw, 0.4rem);
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.6rem, 1vw, 0.8rem);
+  background: color.adjust($gray, $lightness: 15%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.4vw;
+  cursor: pointer;
+  font-size: clamp(0.7rem, 0.9vw, 0.75rem);
+  font-weight: 500;
+  color: $white;
+  transition: all 0.3s ease;
+  text-align: left;
+  width: 100%;
+
+  &:hover {
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border-color: color.adjust($main_1, $alpha: -0.3);
+    transform: translateY(-0.05vh);
+    box-shadow: 0 0.2vh 0.5vh color.adjust($main_1, $alpha: -0.6);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 0.1vh 0.3vh color.adjust($main_1, $alpha: -0.7);
+  }
+
+  &.danger {
+    &:hover {
+      background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+      border-color: #d32f2f;
+      box-shadow: 0 0.2vh 0.5vh rgba(211, 47, 47, 0.4);
+    }
+  }
+
+  svg {
+    font-size: clamp(0.75rem, 0.95vw, 0.8rem);
+    flex-shrink: 0;
+  }
+
+  span {
+    flex: 1;
+  }
 }
 
 .network-canvas {
   display: block;
+  background: $white; // SVGキャンバスは白背景を維持
   user-select: none;
 }
 
@@ -1550,7 +1780,7 @@ onUnmounted(() => {
 }
 
 .node-label {
-  font-size: 13px;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
   font-weight: 500;
   pointer-events: none;
   user-select: none;
@@ -1566,7 +1796,7 @@ onUnmounted(() => {
 }
 
 .edge:hover line {
-  stroke: #FF5722 !important;
+  stroke: $sub_1 !important;
   stroke-width: 3 !important;
 }
 
@@ -1576,87 +1806,99 @@ onUnmounted(() => {
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
-  color: #999;
+  color: color.adjust($gray, $lightness: 30%);
   pointer-events: none;
 }
 
 .canvas-help p {
-  margin: 8px 0;
-  font-size: 14px;
+  margin: 0.8vh 0;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
 }
 
 .properties-panel {
-  width: 250px;
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  width: clamp(12rem, 20vw, 16rem);
+  background: lighten($gray, 8%);
+  border-radius: 0 0 0 0.8vw;
+  padding: clamp(1rem, 2vh, 1.25rem);
+  box-shadow: 0 0.3vh 0.8vh color.adjust($black, $alpha: -0.5);
   overflow-y: auto;
   flex-shrink: 0;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  @include custom-scrollbar;
 }
 
 .properties-panel h3 {
-  margin: 0 0 16px 0;
-  font-size: 15px;
+  margin: 0 0 clamp(0.8rem, 1.5vh, 1rem) 0;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
   font-weight: 600;
+  color: $white;
 }
 
 .property-group {
-  margin-bottom: 12px;
+  margin-bottom: clamp(0.6rem, 1.2vh, 0.75rem);
 }
 
 .property-group label {
   display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
+  margin-bottom: clamp(0.3rem, 0.6vh, 0.4rem);
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
   font-weight: 500;
-  color: #666;
+  color: color.adjust($white, $alpha: -0.3);
 }
 
 .property-input,
 .property-select {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 13px;
+  padding: clamp(0.4rem, 0.8vh, 0.5rem);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.4vw;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  background: $gray;
+  color: $white;
+  transition: all 0.2s;
+  
+  &:focus {
+    outline: none;
+    border-color: $main_1;
+  }
 }
 
 .coords {
   display: flex;
-  gap: 12px;
-  font-size: 13px;
-  color: #666;
+  gap: 1.2vw;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.4);
 }
 
 .connection-info {
-  background: #f8f9fa;
-  padding: 8px;
-  border-radius: 4px;
-  font-size: 13px;
+  background: $gray;
+  padding: clamp(0.4rem, 0.8vh, 0.5rem);
+  border-radius: 0.4vw;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .connection-info p {
-  margin: 4px 0;
-  color: #666;
+  margin: 0.4vh 0;
+  color: color.adjust($white, $alpha: -0.4);
 }
 
 .property-empty {
-  color: #999;
+  color: color.adjust($white, $alpha: -0.5);
   text-align: center;
-  padding: 40px 20px;
+  padding: clamp(2rem, 4vh, 2.5rem) clamp(1rem, 2vw, 1.25rem);
 }
 
 .property-empty p {
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
 }
 
 .property-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #e0e0e0;
+  gap: 0.8vw;
+  margin-top: clamp(1rem, 2vh, 1.25rem);
+  padding-top: clamp(0.8rem, 1.5vh, 1rem);
+  border-top: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .save-btn,

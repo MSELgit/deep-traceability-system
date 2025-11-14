@@ -1,9 +1,9 @@
 <template>
   <div class="network-viewer-wrapper">
-      <!-- ツールバー -->
+      <!-- Toolbar -->
       <div class="viewer-toolbar">
         <div class="tool-group">
-          <label v-if="!hideToolbar" class="zoom-label">ズーム</label>
+          <label v-if="!hideToolbar" class="zoom-label">Zoom</label>
           <input  v-if="!hideToolbar"
             type="range" 
             v-model.number="zoom" 
@@ -13,16 +13,13 @@
             class="zoom-slider"
           />
           <span v-if="!hideToolbar" class="zoom-value">{{ Math.round(zoom * 100) }}%</span>
-          <button v-if="!hideToolbar" class="tool-btn" @click="resetView" title="全体表示">
+          <button v-if="!hideToolbar" class="tool-btn" @click="resetView" title="Fit">
             <span class="tool-icon"><FontAwesomeIcon :icon="['fas', 'expand']" /></span>
-            全体表示
+            Fit
           </button>
-          <button class="tool-btn" @click="downloadAsImage" title="ダウンロード">
-            <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M10.5 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
-              <path d="M2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2zm.5 2a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm9 2.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/>
-            </svg>
-            画像ダウンロード
+          <button class="tool-btn" @click="downloadAsImage" title="Download">
+            <span class="tool-icon"><FontAwesomeIcon :icon="['fas', 'camera']" /></span>
+            Download
           </button>
         </div>
       </div>
@@ -37,7 +34,7 @@
         :height="canvasHeight * zoom"
         @contextmenu.prevent
       >
-      <!-- グリッド背景パターン定義 -->
+      <!-- Grid background pattern definition -->
       <defs>
         <pattern
           id="grid-viewer"
@@ -53,7 +50,7 @@
           />
         </pattern>
         
-        <!-- 矢印マーカー定義（各色用） -->
+        <!-- Arrow marker definition (for each color) -->
         <marker
           v-for="(color, weight) in edgeWeightColors"
           :key="`arrow-${weight}`"
@@ -72,9 +69,9 @@
         </marker>
       </defs>
 
-      <!-- メインコンテンツグループ（ズーム適用） - すべての要素を含む -->
+      <!-- Main content group (zoom applied) - contains all elements -->
       <g :transform="`scale(${zoom})`">
-        <!-- グリッド背景 -->
+        <!-- Grid background -->
         <rect 
           :x="0" 
           :y="0" 
@@ -83,9 +80,9 @@
           fill="url(#grid-viewer)" 
         />
 
-        <!-- レイヤー背景（4段分割） -->
+        <!-- Layer backgrounds (4 divisions) -->
         <g class="layer-backgrounds">
-          <!-- 性能レイヤー（1段目: Y=0-200） -->
+          <!-- Performance layer (Level 1: Y=0-200) -->
           <rect 
             :x="0" 
             :y="0" 
@@ -94,7 +91,7 @@
             :fill="layers[0].color"
             opacity="0.1"
           />
-          <!-- 特性レイヤー（2段目: Y=200-400） -->
+          <!-- Property layer (Level 2: Y=200-400) -->
           <rect 
             :x="0" 
             :y="200" 
@@ -103,7 +100,7 @@
             :fill="layers[1].color"
             opacity="0.1"
           />
-          <!-- 変数レイヤー（3段目: Y=400-600） -->
+          <!-- Variable layer (Level 3: Y=400-600) -->
           <rect 
             :x="0" 
             :y="400" 
@@ -112,7 +109,7 @@
             :fill="layers[2].color"
             opacity="0.1"
           />
-          <!-- モノ・環境レイヤー（4段目: Y=600-800） -->
+          <!-- Object/Environment layer (Level 4: Y=600-800) -->
           <rect 
             :x="0" 
             :y="600" 
@@ -123,7 +120,7 @@
           />
         </g>
 
-      <!-- エッジ -->
+      <!-- Edges -->
       <g class="edges-layer">
         <line
           v-for="edge in network.edges"
@@ -139,14 +136,14 @@
         />
       </g>
 
-      <!-- ノード -->
+      <!-- Nodes -->
       <g class="nodes-layer">
         <g
           v-for="node in network.nodes"
           :key="node.id"
           class="node"
         >
-          <!-- レイヤー1: 性能（円） -->
+          <!-- Layer 1: Performance (circle) -->
           <circle
             v-if="node.layer === 1"
             :cx="node.x"
@@ -157,7 +154,7 @@
             stroke-width="1.5"
           />
           
-          <!-- レイヤー2: 特性（正三角形、高さ36px） -->
+          <!-- Layer 2: Property (equilateral triangle, height 36px) -->
           <polygon
             v-else-if="node.layer === 2"
             :points="getTrianglePoints(node.x, node.y)"
@@ -166,7 +163,7 @@
             stroke-width="1.5"
           />
           
-          <!-- レイヤー3: 変数（横長ダイヤ、高さ36px、幅54px） -->
+          <!-- Layer 3: Variable (horizontal diamond, height 36px, width 54px) -->
           <polygon
             v-else-if="node.layer === 3"
             :points="getDiamondPoints(node.x, node.y)"
@@ -175,7 +172,7 @@
             stroke-width="1.5"
           />
           
-          <!-- レイヤー4: モノ（縦1:横2の長方形、高さ36px、幅72px） -->
+          <!-- Layer 4: Object (1:2 rectangle, height 36px, width 72px) -->
           <rect
             v-else-if="node.layer === 4 && node.type === 'object'"
             :x="node.x - 36"
@@ -188,7 +185,7 @@
             rx="4"
           />
           
-          <!-- レイヤー4: 環境（正方形、36px × 36px） -->
+          <!-- Layer 4: Environment (square, 36px × 36px) -->
           <rect
             v-else-if="node.layer === 4 && node.type === 'environment'"
             :x="node.x - 18"
@@ -201,7 +198,7 @@
             rx="4"
           />
           
-          <!-- フォールバック: レイヤー4でtypeが不明な場合（円） -->
+          <!-- Fallback: Layer 4 with unknown type (circle) -->
           <circle
             v-else-if="node.layer === 4"
             :cx="node.x"
@@ -223,12 +220,12 @@
           </text>
         </g>
       </g>
-      </g> <!-- メインコンテンツグループ終了 -->
+      </g> <!-- End main content group -->
     </svg>
-    </div> <!-- canvas-container終了 -->
-    </div> <!-- network-viewer終了 -->
+    </div> <!-- End canvas-container -->
+    </div> <!-- End network-viewer -->
 
-    <!-- レイヤーガイド（ネットワーク表示エリアの外） -->
+    <!-- Layer guide (outside network display area) -->
     <div class="layer-legend">
       <div 
         v-for="layer in layers"
@@ -245,6 +242,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import type { NetworkStructure, NetworkNode, Performance } from '../../types/project';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 defineExpose({
   resetView
@@ -260,7 +258,7 @@ const canvasWidth = ref(1200);
 const canvasHeight = ref(800);
 const nodeRadius = 18;
 
-// ズーム・パン状態
+// Zoom/pan state
 const zoom = ref(1);
 const minZoom = ref(0.3);
 const panX = ref(0);
@@ -272,13 +270,13 @@ const svgCanvas = ref<SVGSVGElement>();
 const viewerContainer = ref<HTMLDivElement>();
 
 const layers = [
-  { id: 1, label: '性能', color: '#4CAF50' },
-  { id: 2, label: '特性', color: '#2196F3' },
-  { id: 3, label: '変数', color: '#FFC107' },
-  { id: 4, label: 'モノ・環境', color: '#9C27B0' }
+  { id: 1, label: 'Performance', color: '#4CAF50' },
+  { id: 2, label: 'Property', color: '#2196F3' },
+  { id: 3, label: 'Variable', color: '#FFC107' },
+  { id: 4, label: 'Object/Environment', color: '#9C27B0' }
 ];
 
-// エッジの重みと色の対応
+// Edge weight and color mapping
 const edgeWeightColors = {
   3: '#004563',
   1: '#588da2', 
@@ -289,21 +287,21 @@ const edgeWeightColors = {
   [-3]: '#9f1e35'
 };
 
-// エッジの色を取得
+// Get edge color
 function getEdgeColor(edge: any): string {
   const weight = edge.weight ?? 0;
   return edgeWeightColors[weight as keyof typeof edgeWeightColors] || 'silver';
 }
 
-// ノード形状計算関数
-// 正三角形の座標（高さ36px、上向き）
+// Node shape calculation functions
+// Equilateral triangle coordinates (height 36px, pointing up)
 function getTrianglePoints(cx: number, cy: number): string {
   const height = 36;
-  const halfBase = height / Math.sqrt(3); // 底辺の半分 ≈ 20.8
+  const halfBase = height / Math.sqrt(3); // Half of base ≈ 20.8
   return `${cx},${cy - height/2} ${cx - halfBase},${cy + height/2} ${cx + halfBase},${cy + height/2}`;
 }
 
-// 横長ダイヤの座標（高さ36px、幅54px）
+// Horizontal diamond coordinates (height 36px, width 54px)
 function getDiamondPoints(cx: number, cy: number): string {
   const halfHeight = 18;
   const halfWidth = 27;
@@ -319,26 +317,26 @@ function getNodeById(id: string): NetworkNode | undefined {
   return props.network.nodes.find(n => n.id === id);
 }
 
-// エッジの終点を調整（矢印がノードと重ならないように）
+// Adjust edge endpoint (prevent arrow overlapping with node)
 function getAdjustedLineEnd(source: NetworkNode, target: NetworkNode): { x: number, y: number } {
   const dx = target.x - source.x;
   const dy = target.y - source.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
   
-  // ノードの半径（形状に応じて調整）
-  let targetRadius = 18; // デフォルト（円）
+  // Node radius (adjusted by shape)
+  let targetRadius = 18; // Default (circle)
   
-  if (target.layer === 2) { // 三角形
+  if (target.layer === 2) { // Triangle
     targetRadius = 20;
-  } else if (target.layer === 3) { // ダイヤ
+  } else if (target.layer === 3) { // Diamond
     targetRadius = 24;
-  } else if (target.layer === 4 && target.type === 'object') { // 長方形
+  } else if (target.layer === 4 && target.type === 'object') { // Rectangle
     targetRadius = 36;
-  } else if (target.layer === 4 && target.type === 'environment') { // 正方形
+  } else if (target.layer === 4 && target.type === 'environment') { // Square
     targetRadius = 18;
   }
   
-  // 矢印の分だけさらに短くする
+  // Shorten further by arrow size
   const adjustment = targetRadius + 10;
   const ratio = (distance - adjustment) / distance;
   
@@ -348,7 +346,7 @@ function getAdjustedLineEnd(source: NetworkNode, target: NetworkNode): { x: numb
   };
 }
 
-// ズーム・パン機能
+// Zoom/pan functionality
 function resetView() {
   
   if (props.network.nodes.length === 0) {
@@ -359,49 +357,49 @@ function resetView() {
     return;
   }
 
-  // SVGキャンバスが準備できているか確認
+  // Check if SVG canvas is ready
   if (!svgCanvas.value) {
-    console.warn('  ⚠️ SVGキャンバスが準備できていません');
+    console.warn('  ⚠️ SVG canvas is not ready');
     return;
   }
 
-  // キャンバス全体のサイズを使用（ノードの配置に関わらず）
+  // Use entire canvas size (regardless of node placement)
   const contentWidth = canvasWidth.value; // 1200
   const contentHeight = canvasHeight.value; // 800
   
-  // 実際の表示領域のサイズを取得（canvas-containerのサイズ）
+  // Get actual display area size (canvas-container size)
   const container = viewerContainer.value?.querySelector('.canvas-container') as HTMLElement;
   if (!container) {
-    console.warn('  ⚠️ canvas-containerが見つかりません');
+    console.warn('  ⚠️ canvas-container not found');
     return;
   }
   const rect = container.getBoundingClientRect();
   const viewWidth = rect.width;
   const viewHeight = rect.height;
   
-  // 親要素のサイズも確認
+  // Also check parent element size
   const viewerRect = viewerContainer.value?.getBoundingClientRect();
   const wrapperElement = viewerContainer.value?.parentElement;
   const wrapperRect = wrapperElement?.getBoundingClientRect();
   
-  // viewSizeが0の場合は処理をスキップ
+  // Skip processing if viewSize is 0
   if (viewWidth === 0 || viewHeight === 0) {
     return;
   }
   
-  // スクロールバーの幅を考慮して計算（約17px）
+  // Calculate considering scrollbar width (about 17px)
   const scrollbarSize = 0;
   const effectiveWidth = viewWidth - scrollbarSize;
   const effectiveHeight = viewHeight - scrollbarSize;
   
-  // コンテンツが表示領域に収まるズーム比率を計算
+  // Calculate zoom ratio for content to fit in display area
   const zoomX = effectiveWidth / contentWidth;
   const zoomY = effectiveHeight / contentHeight;
-  const calculatedZoom = Math.min(zoomX, zoomY); // 少し余白を追加
+  const calculatedZoom = Math.min(zoomX, zoomY); // Add some margin
   
-  // 異常な値をチェック
+  // Check for abnormal values
   if (calculatedZoom <= 0 || !isFinite(calculatedZoom)) {
-    console.warn('  ⚠️ 異常なズーム値:', calculatedZoom);
+    console.warn('  ⚠️ Abnormal zoom value:', calculatedZoom);
     zoom.value = 1;
     minZoom.value = 0.3;
     return;
@@ -409,10 +407,10 @@ function resetView() {
   
   zoom.value = calculatedZoom;
   
-  // 計算されたズーム値を最小値として設定
+  // Set calculated zoom value as minimum
   minZoom.value = Math.max(0.1, Math.floor(zoom.value * 10) / 10);
   
-  // スクロールをリセット
+  // Reset scroll
   if (container) {
     container.scrollTop = 0;
     container.scrollLeft = 0;
@@ -436,29 +434,29 @@ async function downloadAsImage() {
   if (!svgCanvas.value) return;
 
   try {
-    // SVGを複製
+    // Clone SVG
     const svgClone = svgCanvas.value.cloneNode(true) as SVGSVGElement;
     
-    // 複製したSVGのtransformをリセットして、全体を表示
+    // Reset transform of cloned SVG to show entire view
     const mainGroup = svgClone.querySelector('g[transform]');
     if (mainGroup) {
       mainGroup.setAttribute('transform', 'translate(0, 0) scale(1)');
     }
     
-    // SVGのviewBoxを設定して全体が見えるようにする
+    // Set SVG viewBox to make everything visible
     svgClone.setAttribute('viewBox', `0 0 ${canvasWidth.value} ${canvasHeight.value}`);
     svgClone.setAttribute('width', String(canvasWidth.value));
     svgClone.setAttribute('height', String(canvasHeight.value));
     
-    // SVGをdata URLに変換
+    // Convert SVG to data URL
     const svgData = new XMLSerializer().serializeToString(svgClone);
     const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
     const svgUrl = URL.createObjectURL(svgBlob);
     
-    // Imageオブジェクトを作成してSVGを読み込む
+    // Create Image object and load SVG
     const img = new Image();
     img.onload = () => {
-      // Canvasを作成
+      // Create canvas
       const canvas = document.createElement('canvas');
       canvas.width = canvasWidth.value;
       canvas.height = canvasHeight.value;
@@ -466,37 +464,37 @@ async function downloadAsImage() {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       
-      // 背景を塗る
+      // Fill background
       ctx.fillStyle = '#fafafa';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // SVGを描画
+      // Draw SVG
       ctx.drawImage(img, 0, 0);
       
-      // ダウンロード
+      // Download
       const link = document.createElement('a');
       link.download = `network-diagram-${new Date().toISOString().slice(0, 10)}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
       
-      // クリーンアップ
+      // Cleanup
       URL.revokeObjectURL(svgUrl);
     };
     
     img.onerror = () => {
-      console.error('SVGの変換に失敗しました');
-      alert('画像のダウンロードに失敗しました');
+      console.error('Failed to convert SVG');
+      alert('Failed to Download');
       URL.revokeObjectURL(svgUrl);
     };
     
     img.src = svgUrl;
   } catch (error) {
-    console.error('画像の生成に失敗しました:', error);
+    console.error('Failed to generate image:', error);
     alert('画像のダウンロードに失敗しました');
   }
 }
 
-// リサイズハンドラーを保持
+// Hold resize handler
 let resizeHandler: (() => void) | null = null;
 
 onMounted(() => {
@@ -517,12 +515,47 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use 'sass:color';
+@import '../../style/color';
+
+// Custom scrollbar style
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 0.8vw;
+    height: 0.8vw;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: color.adjust($gray, $lightness: 5%);
+    border-radius: 0.4vw;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: color.adjust($main_1, $alpha: -0.5);
+    border-radius: 0.4vw;
+    transition: background 0.3s ease;
+    
+    &:hover {
+      background: color.adjust($main_1, $alpha: -0.3);
+    }
+    
+    &:active {
+      background: $main_1;
+    }
+  }
+  
+  // Firefox
+  scrollbar-width: thin;
+  scrollbar-color: color.adjust($main_1, $alpha: -0.5) color.adjust($gray, $lightness: 5%);
+}
+
 .network-viewer-wrapper {
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
+  background: $gray;
 }
 
 .network-viewer {
@@ -546,58 +579,137 @@ onUnmounted(() => {
 .viewer-toolbar {
   display: flex;
   align-items: center;
-  padding: 8px 12px;
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
-  gap: 12px;
+  padding: clamp(0.5rem, 1vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem);
+  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
+  gap: clamp(0.75rem, 1.5vw, 1rem);
   flex-shrink: 0;
+  box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.7);
 }
 
 .tool-group {
   display: flex;
-  gap: 6px;
+  gap: clamp(0.4rem, 0.8vw, 0.6rem);
   align-items: center;
 }
 
 .zoom-label {
-  font-size: 12px;
-  color: #666;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.3);
   font-weight: 500;
 }
 
 .zoom-slider {
-  width: 100px;
-  height: 6px;
+  width: clamp(6rem, 10vw, 8rem);
+  height: clamp(0.4rem, 0.6vh, 0.5rem);
   cursor: pointer;
+  background: color.adjust($gray, $lightness: -10%);
+  border-radius: 0.3vw;
+  outline: none;
+  
+  // Track styling
+  &::-webkit-slider-track {
+    background: linear-gradient(90deg, 
+      color.adjust($gray, $lightness: -15%) 0%, 
+      color.adjust($main_1, $alpha: -0.7) 50%, 
+      color.adjust($main_2, $alpha: -0.7) 100%);
+    border-radius: 0.3vw;
+    height: 100%;
+  }
+  
+  &::-moz-range-track {
+    background: linear-gradient(90deg, 
+      color.adjust($gray, $lightness: -15%) 0%, 
+      color.adjust($main_1, $alpha: -0.7) 50%, 
+      color.adjust($main_2, $alpha: -0.7) 100%);
+    border-radius: 0.3vw;
+    height: 100%;
+    border: none;
+  }
+  
+  // Thumb styling
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: clamp(1rem, 1.5vw, 1.2rem);
+    height: clamp(1rem, 1.5vw, 1.2rem);
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.5), 
+                0 0 0 0.1vw color.adjust($white, $alpha: -0.8);
+    transition: all 0.2s ease;
+    
+    &:hover {
+      transform: scale(1.1);
+      background: linear-gradient(135deg, lighten($main_1, 15%) 0%, lighten($main_2, 15%) 100%);
+      box-shadow: 0 0.3vh 0.8vh color.adjust($main_1, $alpha: -0.4),
+                  0 0 0 0.15vw color.adjust($white, $alpha: -0.6),
+                  0 0 1vh color.adjust($main_1, $alpha: -0.3);
+    }
+    
+    &:active {
+      transform: scale(0.95);
+      box-shadow: 0 0.1vh 0.3vh color.adjust($black, $alpha: -0.3);
+    }
+  }
+  
+  &::-moz-range-thumb {
+    width: clamp(1rem, 1.5vw, 1.2rem);
+    height: clamp(1rem, 1.5vw, 1.2rem);
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border: 0.1vw solid color.adjust($white, $alpha: -0.8);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.5);
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: linear-gradient(135deg, lighten($main_1, 15%) 0%, lighten($main_2, 15%) 100%);
+      border-color: color.adjust($white, $alpha: -0.6);
+    }
+  }
 }
 
 .zoom-value {
-  font-size: 11px;
-  color: #666;
-  min-width: 40px;
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+  color: color.adjust($white, $alpha: -0.4);
+  min-width: clamp(2.5rem, 4vw, 3rem);
   text-align: right;
+  font-weight: 500;
+  font-family: monospace;
 }
 
 .tool-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  background: white;
-  border: 2px solid #ddd;
-  border-radius: 4px;
+  gap: clamp(0.3rem, 0.5vw, 0.4rem);
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.6rem, 1vw, 0.8rem);
+  background: color.adjust($gray, $lightness: 20%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.5vw;
   cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  font-weight: 500;
+  color: $white;
+  transition: all 0.3s ease;
+  box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.8);
 }
 
 .tool-btn:hover {
-  background: #f5f5f5;
-  border-color: #999;
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  border-color: color.adjust($main_1, $alpha: -0.3);
+  color: $white;
+  transform: translateY(-0.1vh);
+  box-shadow: 0 0.4vh 1vh color.adjust($main_1, $alpha: -0.5);
+}
+
+.tool-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 0.2vh 0.5vh color.adjust($main_1, $alpha: -0.6);
 }
 
 .tool-icon {
-  font-size: 14px;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
 }
 
 .spacer {
@@ -610,8 +722,8 @@ onUnmounted(() => {
 }
 
 .info-text {
-  font-size: 12px;
-  color: #666;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.4);
 }
 
 .network-canvas {
@@ -638,10 +750,10 @@ onUnmounted(() => {
 
 .layer-legend {
   display: flex;
-  gap: 16px;
-  padding: 8px 16px;
-  background: white;
-  border-top: 1px solid #e0e0e0;
+  gap: 1.6vw;
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.8rem, 1.5vw, 1rem);
+  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  border-top: 1px solid color.adjust($white, $alpha: -0.95);
   justify-content: center;
   flex-shrink: 0;
 }
@@ -649,17 +761,18 @@ onUnmounted(() => {
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 0.6vw;
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
 }
 
 .legend-color {
-  width: 12px;
-  height: 12px;
+  width: clamp(0.7rem, 1.2vw, 0.8rem);
+  height: clamp(0.7rem, 1.2vw, 0.8rem);
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .legend-label {
-  color: #666;
+  color: color.adjust($white, $alpha: -0.3);
 }
 </style>

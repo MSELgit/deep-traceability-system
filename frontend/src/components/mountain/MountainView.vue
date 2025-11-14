@@ -1,26 +1,26 @@
 <template>
   <div class="mountain-view">
-    <!-- オーバーレイ: パネル展開時に背景をクリック不可にする -->
+    <!-- Overlay: Makes background non-clickable when panels are expanded -->
     <div 
       v-if="leftPanelState !== 'closed' || rightPanelOpen"
       class="overlay"
       @click="closeAllPanels"
     ></div>
 
-    <!-- 左パネル -->
+    <!-- Left Panel -->
     <div 
       class="left-panel" 
       :class="{ 
         'open-level-1': leftPanelState === 'level1',
         'open-level-2': leftPanelState === 'level2'
       }">
-      <!-- 閉じている時のプレビュー -->
+      <!-- Preview when closed -->
       <div v-if="leftPanelState === 'closed'" class="panel-preview left">
         <div class="preview-header">
-          <div class="preview-title">設計案</div>
+          <div class="preview-title">Design Cases</div>
         </div>
         
-        <!-- 頂点標高表示 -->
+        <!-- Peak elevation display -->
         <div v-if="H_max !== null" class="preview-h-max">
           <span class="preview-h-max-label">H<sub>max</sub>:</span>
           <span class="preview-h-max-value">{{ H_max.toFixed(1) }}</span>
@@ -44,13 +44,13 @@
           </div>
         </div>
         
-        <!-- 開くボタン（右端中央） -->
+        <!-- Open button (right edge center) -->
         <button class="panel-expand-btn right" @click="toggleLeftPanel">
           <span class="expand-icon">›</span>
         </button>
       </div>
 
-      <!-- レベル1: 設計案一覧 -->
+      <!-- Level 1: Design case list -->
       <DesignCaseList
         v-if="leftPanelState === 'level1'"
         :design-cases="sortedDesignCases"
@@ -65,7 +65,7 @@
         @sort-change="handleSortChange"
       />
       
-      <!-- レベル2: 作成・編集フォーム -->
+      <!-- Level 2: Create/Edit form -->
       <DesignCaseForm
         v-if="leftPanelState === 'level2'"
         :design-case="editingCase"
@@ -75,33 +75,38 @@
       />
     </div>
 
-    <!-- 中央: 3D山 -->
+    <!-- Center: 3D Mountain -->
     <div class="mountain-canvas">
       <div ref="threeContainer" class="three-container"></div>
       
-      <!-- 再計算ボタン -->
+      <!-- Camera button for 3D mountain -->
+      <button class="mountain-camera-btn" @click="downloadMountainImage" title="Download 3D Mountain">
+        <FontAwesomeIcon :icon="['fas', 'camera']" />
+      </button>
+      
+      <!-- Recalculation button -->
       <div class="recalculate-panel">
         <button 
           class="recalculate-btn" 
           @click="handleRecalculate"
           :disabled="isRecalculating"
         >
-          <template v-if="isRecalculating">再計算中...</template>
-          <template v-else><FontAwesomeIcon :icon="['fas', 'rotate-right']" /> 座標を再計算</template>
+          <template v-if="isRecalculating">Recalculating...</template>
+          <template v-else><FontAwesomeIcon :icon="['fas', 'rotate-right']" /> Recalculate Coordinates</template>
         </button>
         <span v-if="recalculateMessage" class="recalculate-message">{{ recalculateMessage }}</span>
       </div>
     </div>
 
-    <!-- 右パネル -->
+    <!-- Right Panel -->
     <div class="right-panel" :class="{ 'open': rightPanelOpen }">
-      <!-- 閉じている時のプレビュー -->
+      <!-- Preview when closed -->
       <div v-if="!rightPanelOpen" class="panel-preview right">
         <div class="preview-header">
-          <div class="preview-title">詳細</div>
+          <div class="preview-title">Details</div>
         </div>
         
-        <!-- 開くボタン（左端中央） -->
+        <!-- Open button (left edge center) -->
         <button 
           v-if="selectedCase"
           class="panel-expand-btn left" 
@@ -138,7 +143,7 @@ import DesignCaseList from './DesignCaseList.vue';
 import DesignCaseForm from './DesignCaseForm.vue';
 import DesignCaseDetail from './DesignCaseDetail.vue';
 
-// プロップ定義
+// Props definition
 const props = defineProps<{
   isActive?: boolean;
 }>();
@@ -146,7 +151,7 @@ const props = defineProps<{
 const projectStore = useProjectStore();
 const { currentProject } = storeToRefs(projectStore);
 
-// UI状態
+// UI state
 const leftPanelState = ref<'closed' | 'level1' | 'level2'>('closed');
 const rightPanelOpen = ref(false);
 const selectedCase = ref<DesignCase | null>(null);
@@ -166,17 +171,17 @@ let controls: OrbitControls;
 let mountainMesh: THREE.Mesh;
 const casePoints = new Map<string, THREE.Mesh>();
 
-// 設計案一覧
+// Design case list
 const designCases = computed(() => {
   const cases = currentProject.value?.design_cases || [];
   return cases;
 });
 
-// ツリー構造の順序で性能をソート（深さ優先探索）
+// Sort performances by tree structure (depth-first search)
 const sortPerformancesByTree = (performances: ProjectPerformance[]): ProjectPerformance[] => {
   if (!performances || performances.length === 0) return [];
   
-  // 親子関係のマップを作成
+  // Create parent-child relationship map
   const childrenMap = new Map<string | null, ProjectPerformance[]>();
   performances.forEach(perf => {
     const parentId = perf.parent_id || null;
@@ -186,12 +191,12 @@ const sortPerformancesByTree = (performances: ProjectPerformance[]): ProjectPerf
     childrenMap.get(parentId)!.push(perf);
   });
   
-  // 各グループを名前順にソート
+  // Sort each group by name
   childrenMap.forEach((children) => {
     children.sort((a, b) => a.name.localeCompare(b.name));
   });
   
-  // 深さ優先探索で順序を構築
+  // Build order with depth-first search
   const result: ProjectPerformance[] = [];
   const traverse = (parentId: string | null) => {
     const children = childrenMap.get(parentId) || [];
@@ -201,18 +206,18 @@ const sortPerformancesByTree = (performances: ProjectPerformance[]): ProjectPerf
     });
   };
   
-  traverse(null); // ルートから開始
+  traverse(null); // Start from root
   return result;
 };
 
-// 末端性能一覧（ツリー順）
+// Leaf performance list (tree order)
 const leafPerformances = computed(() => {
   const allPerfs = currentProject.value?.performances || [];
   const sorted = sortPerformancesByTree(allPerfs);
   return sorted.filter(p => p.is_leaf);
 });
 
-// ソート済み設計案
+// Sorted design cases
 const sortedDesignCases = computed(() => {
   const cases = [...designCases.value];
   
@@ -234,19 +239,19 @@ const sortedDesignCases = computed(() => {
 
 onMounted(() => {
   initThreeJS();
-  // watcherで自動的にロード・再計算されるため、ここでは不要
+  // Automatically loaded and recalculated by watcher, not needed here
 });
 
-// タブがアクティブになったときに再計算を実行
+// Execute recalculation when tab becomes active
 watch(() => props.isActive, async (isActive, wasActive) => {
-  // 非アクティブ → アクティブに変わったとき
+  // When changed from inactive to active
   if (isActive && !wasActive && currentProject.value) {
     await handleRecalculate();
     updateMountainView();
   }
 });
 
-// H_maxを取得
+// Fetch H_max
 async function fetchHMax() {
   if (!currentProject.value) return;
   
@@ -261,20 +266,20 @@ async function fetchHMax() {
       performance_h_max.value = data.performance_h_max || {};
     }
   } catch (error) {
-    console.error('H_max取得エラー:', error);
+    console.error('H_max fetch error:', error);
   }
 }
 
-// プロジェクトが変更されたらH_maxを更新し、必要なら自動再計算
+// Update H_max when project changes and auto-recalculate if needed
 watch(() => currentProject.value?.id, async (newId) => {
   if (!newId) return;
   
   await fetchHMax();
   
-  // プロジェクトロード後、設計案の座標チェック
+  // Check design case coordinates after project load
   await loadAndRenderCases();
   
-  // 座標未計算の設計案があれば自動再計算
+  // Auto-recalculate if there are design cases without calculated coordinates
   if (designCases.value.length > 0) {
     const hasUnpositionedCases = designCases.value.some(dc => !dc.mountain_position);
     if (hasUnpositionedCases) {
@@ -283,13 +288,38 @@ watch(() => currentProject.value?.id, async (newId) => {
   }
 }, { immediate: true });
 
+// Download 3D mountain as image
+function downloadMountainImage() {
+  if (!renderer || !scene || !camera) {
+    console.error('3D scene not available');
+    return;
+  }
+
+  try {
+    // Render the current scene
+    renderer.render(scene, camera);
+    
+    // Get the canvas from the renderer
+    const canvas = renderer.domElement;
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.download = `mountain-3d-${currentProject.value?.name || 'view'}-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch (error) {
+    console.error('Failed to download 3D mountain:', error);
+    alert('Failed to download 3D mountain');
+  }
+}
+
 onUnmounted(() => {
   if (renderer) {
     renderer.dispose();
   }
 });
 
-// 設計案が変更されたら再描画
+// Redraw when design cases change
 watch(designCases, () => {
   updateMountainView();
 }, { deep: true });
@@ -299,11 +329,11 @@ watch(designCases, () => {
 function initThreeJS() {
   if (!threeContainer.value) return;
 
-  // シーン
+  // Scene
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf5f5f5);
 
-  // カメラ
+  // Camera
   camera = new THREE.PerspectiveCamera(
     60,
     threeContainer.value.clientWidth / threeContainer.value.clientHeight,
@@ -312,19 +342,19 @@ function initThreeJS() {
   );
   camera.position.set(15, 15, 15);
 
-  // レンダラー
+  // Renderer
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(threeContainer.value.clientWidth, threeContainer.value.clientHeight);
   threeContainer.value.appendChild(renderer.domElement);
 
-  // コントロール
+  // Controls
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
   controls.minDistance = 5;
   controls.maxDistance = 50;
 
-  // ライト
+  // Lights
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
   scene.add(ambientLight);
   
@@ -332,7 +362,7 @@ function initThreeJS() {
   directionalLight.position.set(10, 20, 10);
   scene.add(directionalLight);
 
-  // 半球状の山
+  // Hemispherical mountain
   const geometry = new THREE.SphereGeometry(10, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
   const material = new THREE.MeshPhongMaterial({
     color: 0xadff2f,
@@ -342,7 +372,7 @@ function initThreeJS() {
     side: THREE.DoubleSide
   });
   mountainMesh = new THREE.Mesh(geometry, material);
-  mountainMesh.rotation.x = 0; // 半球を上向きに
+  mountainMesh.rotation.x = 0; // Orient hemisphere upward
   scene.add(mountainMesh);
   const peakGeometry = new THREE.SphereGeometry(0.3, 16, 16);
   const peakMaterial = new THREE.MeshPhongMaterial({
@@ -354,14 +384,14 @@ function initThreeJS() {
   peakPoint.position.set(0, 10, 0);
   scene.add(peakPoint);
 
-  // グリッド
+  // Grid
   const gridHelper = new THREE.GridHelper(30, 30, 0xcccccc, 0xeeeeee);
   scene.add(gridHelper);
 
-  // リサイズ対応
+  // Resize handling
   window.addEventListener('resize', onWindowResize);
 
-  // アニメーションループ
+  // Animation loop
   animate();
 }
 
@@ -397,19 +427,19 @@ function updateMountainView() {
   const maxEnergy = Math.max(...energies) || 1;
   const energyRange = maxEnergy - minEnergy || 1;
 
-  // 各設計案をポイントとして配置
+  // Place each design case as a point
   designCases.value.forEach((designCase: DesignCase) => {
     if (!designCase.mountain_position) {
       return;
     }
     
-    // エネルギーを計算（utility_vectorの合計値）
+    // Calculate energy (sum of utility_vector values)
     let energy = 0;
     if (designCase.utility_vector) {
       energy = Object.values(designCase.utility_vector).reduce((sum: number, val) => sum + (val as number), 0);
     }
     
-    // エネルギーに基づいて球体のサイズを決定（0.2〜1.0の範囲）
+    // Determine sphere size based on energy (range 0.2-1.0)
     const normalizedEnergy = (energy - minEnergy) / energyRange;
     const sphereRadius = 0.35 + normalizedEnergy * 0.4;
     
@@ -447,13 +477,13 @@ function updateMountainView() {
       opacity: 0.1
     });
     const circleMesh = new THREE.Mesh(circleGeometry, circleMaterial);
-    circleMesh.rotation.x = -Math.PI / 2; // 水平に配置
+    circleMesh.rotation.x = -Math.PI / 2; // Place horizontally
     circleMesh.position.set(0, y, 0);
     scene.add(circleMesh);
   });
 
   
-  // クリックイベント
+  // Click event
   setupClickHandler();
 }
 
@@ -505,6 +535,10 @@ function openCreateForm() {
 }
 
 function openEditForm(designCase: DesignCase) {
+  
+  // Log the current performance tree
+  const currentPerformances = currentProject.value?.performances || [];
+  
   editingCase.value = designCase;
   leftPanelState.value = 'level2';
 }
@@ -521,7 +555,7 @@ async function handleSave(data: DesignCaseCreate) {
     } else {
       const newCase = await projectStore.createDesignCase(data);
       
-      // 新しい設計案にカメラをズーム
+      // Zoom camera to new design case
       if (newCase && newCase.mountain_position) {
         setTimeout(() => {
           focusOnPosition(newCase.mountain_position!);
@@ -530,8 +564,8 @@ async function handleSave(data: DesignCaseCreate) {
     }
     closeForm();
   } catch (error) {
-    console.error('保存エラー:', error);
-    alert('保存に失敗しました');
+    console.error('Save error:', error);
+    alert('Failed to save');
   }
 }
 
@@ -545,24 +579,24 @@ async function handleCopy(designCase: DesignCase) {
       }, 500);
     }
   } catch (error) {
-    console.error('コピーエラー:', error);
-    alert('コピーに失敗しました');
+    console.error('Copy error:', error);
+    alert('Failed to copy');
   }
 }
 
 async function handleDelete(designCase: DesignCase) {
-  if (!confirm(`「${designCase.name}」を削除しますか？この操作は取り消せません。`)) return;
+  if (!confirm(`Delete "${designCase.name}"? This action cannot be undone.`)) return;
   
   try {
     await projectStore.deleteDesignCase(designCase.id);
     
-    // 右パネルで表示していた場合は閉じる
+    // Close right panel if it was displaying this case
     if (selectedCase.value?.id === designCase.id) {
       closeRightPanel();
     }
   } catch (error) {
-    console.error('削除エラー:', error);
-    alert('削除に失敗しました');
+    console.error('Delete error:', error);
+    alert('Failed to delete');
   }
 }
 
@@ -573,13 +607,13 @@ async function handleRecalculate() {
   recalculateMessage.value = '';
   
   try {
-    // 各設計案のネットワーク情報を収集
+    // Collect network information for each design case
     const networks = designCases.value.map(designCase => {
       return {
         nodes: designCase.network?.nodes || [],
         edges: (designCase.network?.edges || []).map(edge => ({
           ...edge,
-          weight: edge.weight !== undefined ? edge.weight : 0  // weightがない場合は0
+          weight: edge.weight !== undefined ? edge.weight : 0  // Default to 0 if no weight
         }))
       };
     });
@@ -589,36 +623,36 @@ async function handleRecalculate() {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ networks })  // ネットワーク情報を送信
+        body: JSON.stringify({ networks })  // Send network information
       }
     );
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      console.error('再計算エラー詳細:', errorData);
-      throw new Error(errorData.detail || '再計算に失敗しました');
+      console.error('Recalculation error details:', errorData);
+      throw new Error(errorData.detail || 'Recalculation failed');
     }
     
     const result = await response.json();
     recalculateMessage.value = result.message;
     
-    // H_maxを保存
+    // Save H_max
     if (result.H_max !== undefined) {
       H_max.value = result.H_max;
     }
     
-    // プロジェクトを再取得して最新の座標を反映
+    // Reload project to reflect latest coordinates
     await projectStore.loadProject(currentProject.value.id);
     
-    // 再取得後の座標を確認
+    // Verify coordinates after reload
     await loadAndRenderCases();
     
     setTimeout(() => {
       recalculateMessage.value = '';
     }, 3000);
   } catch (error) {
-    console.error('再計算エラー:', error);
-    recalculateMessage.value = '再計算に失敗しました';
+    console.error('Recalculation error:', error);
+    recalculateMessage.value = 'Recalculation failed';
   } finally {
     isRecalculating.value = false;
   }
@@ -633,7 +667,7 @@ function focusOnPosition(position: { x: number; y: number; z: number }) {
   const targetPos = new THREE.Vector3(position.x, position.y, position.z);
   controls.target.copy(targetPos);
   
-  // カメラ位置も調整
+  // Adjust camera position
   const offset = new THREE.Vector3(5, 5, 5);
   camera.position.copy(targetPos).add(offset);
 }
@@ -648,7 +682,7 @@ function closeRightPanel() {
 }
 
 function closeAllPanels() {
-  // 左パネルのレベル2(フォーム)が開いている場合は閉じない(誤操作防止)
+  // Don't close if left panel level 2 (form) is open (prevent accidental closing)
   if (leftPanelState.value === 'level2') {
     return;
   }
@@ -661,35 +695,70 @@ async function handleColorChange(designCase: DesignCase, color: string) {
   try {
     await projectStore.updateDesignCaseColor(designCase.id, color);
     
-    // 3Dシーンの色も更新
+    // Update color in 3D scene
     const mesh = casePoints.get(designCase.id);
     if (mesh) {
       (mesh.material as THREE.MeshPhongMaterial).color.set(color);
       (mesh.material as THREE.MeshPhongMaterial).emissive.set(color);
     }
   } catch (error) {
-    console.error('色変更エラー:', error);
-    alert('色の変更に失敗しました');
+    console.error('Color change error:', error);
+    alert('Failed to change color');
   }
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use 'sass:color';
+@import '../../style/color';
+
+// カスタムスクロールバースタイル
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 0.8vw;
+    height: 0.8vw;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: color.adjust($gray, $lightness: 5%);
+    border-radius: 0.4vw;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: color.adjust($main_1, $alpha: -0.5);
+    border-radius: 0.4vw;
+    transition: background 0.3s ease;
+    
+    &:hover {
+      background: color.adjust($main_1, $alpha: -0.3);
+    }
+    
+    &:active {
+      background: $main_1;
+    }
+  }
+  
+  // Firefox
+  scrollbar-width: thin;
+  scrollbar-color: color.adjust($main_1, $alpha: -0.5) color.adjust($gray, $lightness: 5%);
+}
+
 .mountain-view {
   display: flex;
   height: calc(100vh - 200px);
   position: relative;
-  background: #fafafa;
+  background: $black;
 }
 
-/* オーバーレイ: パネル展開時に背景を暗くして操作を制限 */
+/* Overlay: Darkens background and restricts interaction when panels are expanded */
 .overlay {
   position: absolute;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   z-index: 10;
   transition: opacity 0.3s ease;
 }
@@ -700,8 +769,7 @@ async function handleColorChange(designCase: DesignCase, color: string) {
   top: 0;
   height: 100%;
   width: 15%;
-  background: #ffffff;
-  border-right: 1px solid #e0e0e0;
+  background: lighten($gray, 8%);
   transition: all 0.3s ease;
   overflow: hidden;
   display: flex;
@@ -711,11 +779,12 @@ async function handleColorChange(designCase: DesignCase, color: string) {
 
 .left-panel.open-level-1 {
   width: 30%;
-
+  box-shadow: 0 0 2vh color.adjust($black, $alpha: -0.5);
 }
 
 .left-panel.open-level-2 {
   width: 50%;
+  box-shadow: 0 0 2vh color.adjust($black, $alpha: -0.5);
 }
 
 .mountain-canvas {
@@ -724,6 +793,35 @@ async function handleColorChange(designCase: DesignCase, color: string) {
   top: 0;
   width: 70%;
   height: 100%;
+  background: $black;
+}
+
+.mountain-camera-btn {
+  position: absolute;
+  top: clamp(1rem, 2vh, 1.25rem);
+  right: clamp(1rem, 2vw, 1.25rem);
+  background: color.adjust($gray, $lightness: 20%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.5vw;
+  padding: clamp(0.5rem, 1vh, 0.75rem) clamp(0.7rem, 1.2vw, 1rem);
+  cursor: pointer;
+  font-size: clamp(1rem, 1.3vw, 1.1rem);
+  color: $white;
+  transition: all 0.3s ease;
+  box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.8);
+  z-index: 10;
+
+  &:hover {
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border-color: color.adjust($main_1, $alpha: -0.3);
+    transform: translateY(-0.1vh);
+    box-shadow: 0 0.4vh 1vh color.adjust($main_1, $alpha: -0.5);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 0.2vh 0.5vh color.adjust($main_1, $alpha: -0.6);
+  }
 }
 
 .three-container {
@@ -737,8 +835,7 @@ async function handleColorChange(designCase: DesignCase, color: string) {
   top: 0;
   height: 100%;
   width: 15%;
-  background: #ffffff;
-  border-left: 1px solid #e0e0e0;
+  background: lighten($gray, 8%);
   transition: all 0.3s ease;
   overflow: hidden;
   z-index: 10;
@@ -749,7 +846,7 @@ async function handleColorChange(designCase: DesignCase, color: string) {
 .right-panel.open {
   width: 50%;
   transform: translateX(0);
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+  box-shadow: -0.5vw 0 2vh color.adjust($black, $alpha: -0.5);
 }
 
 .panel-preview {
@@ -757,7 +854,7 @@ async function handleColorChange(designCase: DesignCase, color: string) {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 20px 12px;
+  padding: clamp(1rem, 2vh, 1.5rem) clamp(0.75rem, 1.5vw, 1rem);
   position: relative;
   overflow: hidden;
 }
@@ -774,47 +871,50 @@ async function handleColorChange(designCase: DesignCase, color: string) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 0.5vh;
+  margin-bottom: 2vh;
   width: 100%;
 }
 
 .preview-icon {
-  font-size: 32px;
-  filter: grayscale(0.3);
+  font-size: clamp(1.8rem, 3vw, 2rem);
+  color: color.adjust($white, $alpha: -0.7);
 }
 
 .preview-title {
-  font-size: 12px;
+  font-size: clamp(0.7rem, 1vw, 0.8rem);
   font-weight: 600;
-  color: #666;
+  color: color.adjust($white, $alpha: -0.4);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.1em;
 }
 
 .preview-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  margin-bottom: 24px;
+  gap: 0.5vh;
+  margin-bottom: 2.5vh;
 }
 
 .preview-count {
-  font-size: 36px;
+  font-size: clamp(2rem, 4vw, 2.5rem);
   font-weight: 700;
-  color: #3357FF;
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
   line-height: 1;
 }
 
 .preview-label {
-  font-size: 11px;
-  color: #999;
+  font-size: clamp(0.65rem, 0.9vw, 0.75rem);
+  color: color.adjust($white, $alpha: -0.6);
 }
 
 .preview-hint {
-  font-size: 13px;
-  color: #999;
+  font-size: clamp(0.75rem, 1vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.5);
   text-align: center;
   line-height: 1.4;
 }
@@ -823,138 +923,147 @@ async function handleColorChange(designCase: DesignCase, color: string) {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.8vh;
   overflow: hidden;
 }
 
-/* 閉じた状態での頂点標高表示 */
+/* Peak elevation display when closed */
 .preview-h-max {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 8px;
-  margin: 0 8px 12px 8px;
+  padding: clamp(0.5rem, 1vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem);
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  color: $white;
+  border-radius: 0.5vw;
+  margin: 0 0.8vw 1.5vh 0.8vw;
+  box-shadow: 0 0.5vh 1.5vh color.adjust($main_1, $alpha: -0.6);
 }
 
 .preview-h-max-label {
-  font-size: 11px;
+  font-size: clamp(0.65rem, 0.9vw, 0.75rem);
   font-weight: 600;
   opacity: 0.95;
 }
 
 .preview-h-max-value {
-  font-size: 18px;
+  font-size: clamp(1.1rem, 1.8vw, 1.3rem);
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
 }
 
 .preview-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #666;
+  gap: 0.5vw;
+  font-size: clamp(0.65rem, 0.9vw, 0.75rem);
+  color: color.adjust($white, $alpha: -0.3);
   white-space: nowrap;
   overflow: hidden;
-  padding: 4px 8px 4px 4px;
-  border-radius: 4px;
-  transition: background 0.2s;
-  margin-right: 24px; /* 開くボタンと被らないように */
+  padding: 0.5vh 0.8vw 0.5vh 0.5vw;
+  border-radius: 0.3vw;
+  transition: all 0.2s;
+  margin-right: 2vw; /* Avoid overlap with expand button */
 }
 
 .preview-item:hover {
-  background: #f5f5f5;
+  background: color.adjust($gray, $lightness: 15%);
+  transform: translateX(0.2vw);
 }
 
 .color-indicator {
-  width: 8px;
-  height: 8px;
+  width: 0.8vw;
+  height: 0.8vw;
+  min-width: 8px;
+  min-height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
 }
 
 .preview-item-name {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-width: 0; /* flexboxで省略を有効にする */
+  min-width: 0; /* Enable text truncation in flexbox */
 }
 
 .preview-item-height {
-  font-size: 10px;
+  font-size: clamp(0.6rem, 0.8vw, 0.7rem);
   font-weight: 700;
-  color: #667eea;
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
   flex-shrink: 0;
-  min-width: 30px;
+  min-width: 2.5vw;
   text-align: right;
 }
 
 .preview-more {
-  font-size: 10px;
-  color: #999;
+  font-size: clamp(0.6rem, 0.8vw, 0.7rem);
+  color: color.adjust($white, $alpha: -0.6);
   text-align: center;
-  padding: 4px;
+  padding: 0.5vh;
   font-style: italic;
 }
 
 .instruction-icon {
-  font-size: 28px;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  color: color.adjust($white, $alpha: -0.5);
   animation: pointDown 1.5s ease-in-out infinite;
 }
 
 @keyframes pointDown {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(5px); }
+  50% { transform: translateY(0.5vh); }
 }
 
 .instruction-text {
-  font-size: 11px;
-  color: #666;
+  font-size: clamp(0.65rem, 0.9vw, 0.75rem);
+  color: color.adjust($white, $alpha: -0.5);
   text-align: center;
   line-height: 1.4;
 }
 
-/* パネル展開ボタン（右端/左端中央） */
+/* Panel expand button (right/left edge center) */
 .panel-expand-btn {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 32px;
-  height: 80px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  width: clamp(1.8rem, 3vw, 2.2rem);
+  height: clamp(4rem, 8vh, 5rem);
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 0.5vh 1.5vh color.adjust($main_1, $alpha: -0.6);
   transition: all 0.3s ease;
   z-index: 25;
 }
 
 .panel-expand-btn.right {
-  right: -0px;
+  right: 0;
+  border-radius: 0.8vw 0 0 0.8vw;
 }
 
 .panel-expand-btn.left {
-  left: -16px;
-  border-radius: 12px 0 0 12px;
+  left: -1vw;
+  border-radius: 0.8vw 0 0 0.8vw;
 }
 
 .panel-expand-btn:hover {
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  box-shadow: 0 0.8vh 2.5vh color.adjust($main_1, $alpha: -0.4);
   transform: translateY(-50%) scale(1.05);
 }
 
 .panel-expand-btn .expand-icon {
-  font-size: 24px;
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
   font-weight: bold;
-  color: white;
+  color: $white;
   line-height: 1;
 }
 
@@ -964,38 +1073,38 @@ async function handleColorChange(designCase: DesignCase, color: string) {
 
 @keyframes slideHint {
   0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(3px); }
+  50% { transform: translateX(0.3vw); }
 }
 
-/* 再計算パネル */
+/* Recalculation panel */
 .recalculate-panel {
   position: absolute;
-  bottom: 20px;
+  bottom: 2vh;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 1vw;
   z-index: 8;
 }
 
 .recalculate-btn {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #3357FF 0%, #5577FF 100%);
-  color: white;
+  padding: clamp(0.6rem, 1.2vh, 0.8rem) clamp(1rem, 2vw, 1.5rem);
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  color: $white;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 0.5vw;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(51, 87, 255, 0.3);
+  box-shadow: 0 0.3vh 1vh color.adjust($main_1, $alpha: -0.7);
 }
 
 .recalculate-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2247EE 0%, #4467EE 100%);
-  box-shadow: 0 4px 12px rgba(51, 87, 255, 0.4);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, lighten($main_1, 10%) 0%, lighten($main_2, 10%) 100%);
+  box-shadow: 0 0.5vh 1.5vh color.adjust($main_1, $alpha: -0.5);
+  transform: translateY(-0.1vh);
 }
 
 .recalculate-btn:disabled {
@@ -1004,158 +1113,159 @@ async function handleColorChange(designCase: DesignCase, color: string) {
 }
 
 .recalculate-message {
-  font-size: 13px;
-  color: #2d8659;
-  background: rgba(45, 134, 89, 0.1);
-  padding: 8px 16px;
-  border-radius: 6px;
+  font-size: clamp(0.75rem, 1vw, 0.85rem);
+  color: $sub_1;
+  background: color.adjust($sub_1, $alpha: -0.9);
+  padding: clamp(0.5rem, 1vh, 0.75rem) clamp(0.8rem, 1.5vw, 1rem);
+  border-radius: 0.4vw;
   animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
+  from { opacity: 0; transform: translateY(-0.5vh); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* 性能ごとの部分標高最大値デバッグ表示 */
+/* Debug display for partial height max values per performance */
 .performance-h-max-debug {
   position: absolute;
-  bottom: 80px;
-  left: 20px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 12px 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  max-width: 300px;
+  bottom: 8vh;
+  left: 2vw;
+  background: color.adjust($gray, $lightness: 12%);
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  border-radius: 0.5vw;
+  padding: clamp(0.75rem, 1.5vh, 1rem) clamp(1rem, 1.5vw, 1.25rem);
+  box-shadow: 0 0.3vh 1vh color.adjust($black, $alpha: -0.5);
+  max-width: 20vw;
   z-index: 5;
 }
 
 .performance-h-max-debug h4 {
-  margin: 0 0 8px 0;
-  font-size: 12px;
-  color: #666;
+  margin: 0 0 1vh 0;
+  font-size: clamp(0.7rem, 1vw, 0.8rem);
+  color: color.adjust($white, $alpha: -0.4);
   font-weight: 600;
 }
 
 .performance-h-max-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.5vh;
 }
 
 .performance-h-max-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
-  padding: 4px 8px;
-  background: #f8f9fa;
-  border-radius: 4px;
+  font-size: clamp(0.65rem, 0.9vw, 0.75rem);
+  padding: 0.5vh 0.8vw;
+  background: color.adjust($black, $alpha: -0.8);
+  border-radius: 0.3vw;
 }
 
 .performance-h-max-item .perf-name {
-  color: #333;
+  color: color.adjust($white, $alpha: -0.3);
   font-weight: 500;
   flex: 1;
 }
 
 .performance-h-max-item .perf-h-max {
-  color: #667eea;
+  color: $main_2;
   font-weight: 700;
-  margin-left: 12px;
+  margin-left: 1vw;
 }
 
-/* デバッグ用座標表示 */
+/* Debug coordinate display */
 .debug-coordinates {
   position: absolute;
-  bottom: 20px;
+  bottom: 2vh;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 12px 16px;
-  max-height: 200px;
+  background: color.adjust($gray, $lightness: 12%);
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  border-radius: 0.5vw;
+  padding: clamp(0.75rem, 1.5vh, 1rem) clamp(1rem, 1.5vw, 1.25rem);
+  max-height: 20vh;
   overflow-y: auto;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  min-width: 400px;
-  max-width: 600px;
+  box-shadow: 0 0.3vh 1vh color.adjust($black, $alpha: -0.5);
+  min-width: 30vw;
+  max-width: 40vw;
   z-index: 5;
 }
 
 .debug-coordinates h4 {
-  margin: 0 0 8px 0;
-  font-size: 13px;
-  color: #666;
-  border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 6px;
+  margin: 0 0 1vh 0;
+  font-size: clamp(0.75rem, 1vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.4);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
+  padding-bottom: 0.5vh;
 }
 
 .debug-coordinates .h-max-info {
-  font-size: 12px;
-  color: #2563eb;
+  font-size: clamp(0.7rem, 0.95vw, 0.8rem);
+  color: $main_2;
   font-weight: 600;
-  margin-bottom: 8px;
-  padding: 6px 10px;
-  background: #eff6ff;
-  border-radius: 4px;
-  border-left: 3px solid #2563eb;
+  margin-bottom: 1vh;
+  padding: 0.6vh 1vw;
+  background: color.adjust($main_1, $alpha: -0.9);
+  border-radius: 0.3vw;
+  border-left: 0.3vw solid $main_2;
 }
 
 .debug-coordinates .performance-headers {
   display: flex;
-  gap: 4px;
-  margin-bottom: 8px;
-  padding: 4px 8px;
-  background: #f8f9fa;
-  border-radius: 4px;
-  font-size: 10px;
+  gap: 0.4vw;
+  margin-bottom: 1vh;
+  padding: 0.5vh 0.8vw;
+  background: color.adjust($black, $alpha: -0.8);
+  border-radius: 0.3vw;
+  font-size: clamp(0.6rem, 0.85vw, 0.7rem);
   overflow-x: auto;
 }
 
 .debug-coordinates .header-label {
   font-weight: 600;
-  color: #333;
-  margin-right: 4px;
+  color: color.adjust($white, $alpha: -0.3);
+  margin-right: 0.4vw;
 }
 
 .debug-coordinates .perf-header {
-  padding: 2px 4px;
-  background: #e3f2fd;
-  border-radius: 3px;
-  color: #1976d2;
+  padding: 0.2vh 0.4vw;
+  background: color.adjust($main_1, $alpha: -0.8);
+  border-radius: 0.2vw;
+  color: $main_2;
   font-weight: 500;
   white-space: nowrap;
 }
 
 .debug-coordinates .no-cases {
-  color: #999;
-  font-size: 12px;
+  color: color.adjust($white, $alpha: -0.6);
+  font-size: clamp(0.7rem, 0.95vw, 0.8rem);
   text-align: center;
-  padding: 8px;
+  padding: 1vh;
 }
 
 .debug-coordinates .case-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.6vh;
 }
 
 .debug-coordinates .case-item {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 8px;
-  border-radius: 4px;
+  padding: 0.8vh;
+  border-radius: 0.3vw;
   cursor: pointer;
-  transition: background 0.2s;
-  font-size: 12px;
-  gap: 4px;
+  transition: all 0.2s;
+  font-size: clamp(0.7rem, 0.95vw, 0.8rem);
+  gap: 0.4vh;
 }
 
 .debug-coordinates .case-item:hover {
-  background: #f5f5f5;
+  background: color.adjust($gray, $lightness: 15%);
+  transform: translateX(0.2vw);
 }
 
 .debug-coordinates .case-item.no-position {
@@ -1165,27 +1275,30 @@ async function handleColorChange(designCase: DesignCase, color: string) {
 .debug-coordinates .case-name {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.6vw;
   font-weight: 500;
+  color: color.adjust($white, $alpha: -0.2);
 }
 
 .debug-coordinates .color-dot {
-  width: 10px;
-  height: 10px;
+  width: 1vw;
+  height: 1vw;
+  min-width: 10px;
+  min-height: 10px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
 }
 
 .debug-coordinates .coordinates {
   font-family: 'Courier New', monospace;
-  color: #666;
-  font-size: 11px;
+  color: color.adjust($white, $alpha: -0.4);
+  font-size: clamp(0.65rem, 0.9vw, 0.75rem);
 }
 
 .debug-coordinates .performance-values {
   font-family: 'Courier New', monospace;
-  color: #FF8C00;
-  font-size: 10px;
+  color: $sub_3;
+  font-size: clamp(0.6rem, 0.85vw, 0.7rem);
   max-width: 100%;
   overflow-x: auto;
   white-space: nowrap;
@@ -1193,8 +1306,8 @@ async function handleColorChange(designCase: DesignCase, color: string) {
 
 .debug-coordinates .partial-heights {
   font-family: 'Courier New', monospace;
-  color: #3357FF;
-  font-size: 10px;
+  color: $main_2;
+  font-size: clamp(0.6rem, 0.85vw, 0.7rem);
   max-width: 100%;
   overflow-x: auto;
   white-space: nowrap;

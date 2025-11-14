@@ -1,34 +1,34 @@
 <template>
   <div class="design-case-detail">
     <div class="detail-header">
-      <h2>{{ designCase.name }}の詳細</h2>
+      <h2>{{ designCase.name }} Details</h2>
       <button class="close-btn" @click="$emit('close')">✕</button>
     </div>
 
     <div class="detail-content">
-      <!-- 基本情報（常に表示） -->
+      <!-- Basic Information (always displayed) -->
       <section class="detail-section basic-info-section">
-        <h3>基本情報</h3>
+        <h3>Basic Information</h3>
         
         <div class="section-content">
-          <!-- 構造不一致警告 -->
+          <!-- Structure mismatch warning -->
           <div v-if="isStructureMismatch" class="structure-warning">
             <FontAwesomeIcon :icon="['fas', 'triangle-exclamation']" />
-            <span>この設計案の性能ツリー構造は最新のものと異なります</span>
+            <span>This design case's performance tree structure differs from the latest one</span>
           </div>
           
           <div class="info-row">
-            <span class="info-label">標高</span>
+            <span class="info-label">Elevation</span>
             <span class="info-value">{{ designCase.mountain_position ? designCase.mountain_position.H.toFixed(2) : '-' }}</span>
           </div>
           
           <div class="info-row">
-            <span class="info-label">エネルギー</span>
+            <span class="info-label">Energy</span>
             <span class="info-value">{{ energyData ? energyData.total_energy.toFixed(2) : '-' }}</span>
           </div> 
 
           <div class="info-row">
-            <span class="info-label">色</span>
+            <span class="info-label">Color</span>
             <div class="color-display">
               <div 
                 class="color-box" 
@@ -39,17 +39,17 @@
           </div>
 
           <div class="info-row">
-            <span class="info-label">作成日時</span>
+            <span class="info-label">Created</span>
             <span class="info-value">{{ formatDateTime(designCase.created_at) }}</span>
           </div>
 
           <div class="info-row">
-            <span class="info-label">更新日時</span>
+            <span class="info-label">Updated</span>
             <span class="info-value">{{ formatDateTime(designCase.updated_at) }}</span>
           </div>
 
           <div v-if="designCase.description" class="info-row vertical">
-            <span class="info-label">説明</span>
+            <span class="info-label">Description</span>
             <p class="description-text">{{ designCase.description }}</p>
           </div>
         </div>
@@ -57,11 +57,11 @@
 
       <div class="divider"></div>
 
-      <!-- 性能値 -->
+      <!-- Performance Values -->
       <section class="detail-section">
         <h3 @click="toggleSection('performance')" class="section-header">
           <FontAwesomeIcon :icon="['fas', sectionStates.performance ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
-          性能値
+          Performance Values
         </h3>
         
         <div v-show="sectionStates.performance" class="section-content">
@@ -79,7 +79,7 @@
           </div>
 
             <div v-if="performancesWithValues.length === 0" class="empty-state">
-              性能値がありません
+              No performance values
             </div>
           </div>
         </div>
@@ -87,30 +87,33 @@
 
       <div class="divider"></div>
 
-      <!-- 平均効用 -->
+      <!-- Average Utility -->
       <section class="detail-section">
         <h3 @click="toggleSection('utility')" class="section-header">
           <FontAwesomeIcon :icon="['fas', sectionStates.utility ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
-          効用レーダーチャート
+          Utility Radar Chart
         </h3>
         
         <div v-show="sectionStates.utility" class="section-content">
           <div v-if="!designCase.partial_heights || !designCase.performance_weights" class="empty-state">
-          平均効用を計算するには、再計算ボタン（<FontAwesomeIcon :icon="['fas', 'rotate-right']" />）をクリックしてください
+          To calculate average utility, click the recalculate button (<FontAwesomeIcon :icon="['fas', 'rotate-right']" />)
           </div>
           <div v-else class="radar-chart-container">
-            <Radar :data="radarChartData" :options="radarChartOptions" />
+            <button class="radar-download-btn" @click="downloadRadarChart" title="Download Radar Chart">
+              <FontAwesomeIcon :icon="['fas', 'camera']" />
+            </button>
+            <Radar ref="radarChartRef" :data="radarChartData" :options="radarChartOptions" />
           </div>
         </div>
       </section>
 
       <div class="divider"></div>
 
-      <!-- 性能分析（残り標高＋エネルギー） -->
+      <!-- Performance Analysis (remaining height + energy) -->
       <section v-if="remainingHeights.length > 0" class="detail-section">
         <h3 @click="toggleSection('remaining')" class="section-header">
           <FontAwesomeIcon :icon="['fas', sectionStates.remaining ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
-          性能分析
+          Performance Analysis
         </h3>
         
         <div v-show="sectionStates.remaining" class="section-content">
@@ -133,22 +136,22 @@
                   />
                   <span class="remaining-height-name">{{ item.perfName }}</span>
                 </div>
-                <span class="performance-importance">重要度: {{ getPerformanceImportance(item.perfId).toFixed(1) }}</span>
+                <span class="performance-importance">Importance: {{ getPerformanceImportance(item.perfId).toFixed(1) }}</span>
               </div>
               <div class="remaining-height-values">
-                <span class="remaining-value">残り: {{ item.remaining.toFixed(2) }}</span>
+                <span class="remaining-value">Remaining: {{ item.remaining.toFixed(2) }}</span>
                 <span class="detail-values">
-                  (実際: {{ item.actual.toFixed(2) }} / 最大: {{ item.hMax.toFixed(2) }})
+                  (Actual: {{ item.actual.toFixed(2) }} / Max: {{ item.hMax.toFixed(2) }})
                 </span>
                 <span v-if="energyData" class="energy-value">
-                  部分エネルギー: {{ (energyData.partial_energies[item.perfId] || 0).toFixed(3) }}
+                  Partial Energy: {{ (energyData.partial_energies[item.perfId] || 0).toFixed(3) }}
                 </span>
               </div>
             </div>
             
-            <!-- 展開部分：エネルギー詳細 -->
+            <!-- Expanded section: Energy details -->
             <div v-if="expandedPerfId === item.perfId && energyData" class="energy-details">
-              <!-- ネットワークビュー -->
+              <!-- Network view -->
               <div class="perf-network-view">
                 <NetworkHighlightViewer 
                   v-if="designCase.network.nodes.length > 0"
@@ -159,7 +162,7 @@
                 />
               </div>
               
-              <h5>他性能との相性（Match値）</h5>
+              <h5>Compatibility with Other Performances (Match Value)</h5>
               <div class="match-details">
                 <div 
                   v-for="(matchData, index) in getMatchDetailsForPerformance(item.perfId)"
@@ -168,13 +171,13 @@
                 >
                   <span class="match-perf-name">
                     {{ matchData.perfName }}
-                    <span class="match-perf-importance">(重要度: {{ matchData.perfImportance.toFixed(1) }})</span>
+                    <span class="match-perf-importance">(Importance: {{ matchData.perfImportance.toFixed(1) }})</span>
                   </span>
                   <span class="match-value">Match: {{ matchData.match.toFixed(4) }}</span>
-                  <span class="partial-partial-energy">エネルギー: {{ matchData.energy.toFixed(4) }}</span>
+                  <span class="partial-partial-energy">Energy: {{ matchData.energy.toFixed(4) }}</span>
                 </div>
                 <div v-if="getMatchDetailsForPerformance(item.perfId).length === 0" class="no-matches">
-                  他の性能との相性データがありません
+                  No compatibility data with other performances
                 </div>
               </div>
             </div>
@@ -185,11 +188,11 @@
 
       <div class="divider"></div>
 
-      <!-- ネットワーク構造 -->
+      <!-- Network Structure -->
       <section class="detail-section">
         <h3 @click="toggleSection('network')" class="section-header">
           <FontAwesomeIcon :icon="['fas', sectionStates.network ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
-          ネットワーク構造
+          Network Structure
         </h3>
         
         <div v-show="sectionStates.network" class="section-content">
@@ -201,7 +204,7 @@
             :performances="performances"
           />
             <div v-else class="empty-state">
-              ネットワークが未定義です
+              Network is undefined
             </div>
           </div>
         </div>
@@ -219,6 +222,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { calculationApi } from '../../utils/api';
 import { useProjectStore } from '../../stores/projectStore';
 import { Radar } from 'vue-chartjs';
+import { isDesignCaseEditable } from '../../utils/performanceComparison';
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -229,7 +233,7 @@ import {
   Legend
 } from 'chart.js';
 
-// Chart.jsのコンポーネントを登録
+// Register Chart.js components
 ChartJS.register(
   RadialLinearScale,
   PointElement,
@@ -239,9 +243,18 @@ ChartJS.register(
   Legend
 );
 
-// 基準線を描画するカスタムプラグイン（n角形）
+// Custom plugin to draw background and reference lines (n-sided polygon)
 const referenceLinePlugin = {
   id: 'customLines',
+  beforeDraw(chart: any, _args: any, _options: any) {
+    const { ctx, width, height } = chart;
+    
+    // Draw white background for entire canvas
+    ctx.save();
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+  },
   afterDatasetsDraw(chart: any, _args: any, options: any) {
     const { ctx, scales } = chart;
     const { r } = scales;
@@ -261,12 +274,12 @@ const referenceLinePlugin = {
       ctx.save();
       ctx.strokeStyle = line.color;
       ctx.lineWidth = line.width;
-      ctx.setLineDash([5, 5]); // 破線
+      ctx.setLineDash([5, 5]); // Dashed line
       ctx.beginPath();
       
-      // n角形を描画
+      // Draw n-sided polygon
       for (let i = 0; i < numPoints; i++) {
-        const angle = r.getIndexAngle(i) - Math.PI / 2; // -90度回転（上から開始）
+        const angle = r.getIndexAngle(i) - Math.PI / 2; // -90 degree rotation (start from top)
         const x = centerX + radius * Math.cos(angle);
         const y = centerY + radius * Math.sin(angle);
         
@@ -301,46 +314,31 @@ const emit = defineEmits<{
 
 const projectStore = useProjectStore();
 
-// 構造不一致チェック
+// Radar chart ref
+const radarChartRef = ref();
+
+// Structure mismatch check - use the same logic as DesignCaseForm
 const isStructureMismatch = computed(() => {
   if (!props.designCase.performance_snapshot) return false;
   
   const currentPerformances = projectStore.currentProject?.performances || [];
   
-  // スナップショットと現在の性能数が違えば不一致
-  if (props.designCase.performance_snapshot.length !== currentPerformances.length) return true;
-  
-  // 各性能の詳細を比較
-  const snapshotMap = new Map(props.designCase.performance_snapshot.map(p => [p.id, p]));
-  
-  for (const currentPerf of currentPerformances) {
-    const snapshotPerf = snapshotMap.get(currentPerf.id);
-    if (!snapshotPerf) return true;  // IDが見つからない
-    
-    // 主要な属性を比較
-    if (snapshotPerf.name !== currentPerf.name ||
-        snapshotPerf.parent_id !== currentPerf.parent_id ||
-        snapshotPerf.level !== currentPerf.level ||
-        snapshotPerf.unit !== currentPerf.unit) {
-      return true;
-    }
-  }
-  
-  return false;
+  // Use the same structural comparison as the form
+  return !isDesignCaseEditable(currentPerformances, props.designCase.performance_snapshot);
 });
 
-// エネルギーデータ
+// Energy data
 const energyData = ref<{
   total_energy: number;
   partial_energies: { [key: string]: number };
-  match_matrix?: { [key: string]: number }; // "perfId1_perfId2": value の形式
+  match_matrix?: { [key: string]: number }; // "perfId1_perfId2": value format
 } | null>(null);
 
-// 展開された性能ID
+// Expanded performance ID
 const expandedPerfId = ref<string | null>(null);
 
 
-// セクションの開閉状態（基本情報は常に開いているので除外）
+// Section open/close states (basic info is always open so excluded)
 const sectionStates = ref({
   performance: true,
   utility: true,
@@ -348,23 +346,23 @@ const sectionStates = ref({
   network: true
 });
 
-// セクションの開閉切り替え
+// Toggle section open/close
 function toggleSection(section: keyof typeof sectionStates.value) {
   sectionStates.value[section] = !sectionStates.value[section];
 }
 
-// 値を持つ性能のみ（スナップショットから取得）
+// Only performances with values (from snapshot)
 const performancesWithValues = computed(() => {
-  // スナップショットがある場合はそれを使用、なければ現在の性能ツリーを使用（後方互換性）
+  // Use snapshot if available, otherwise use current performance tree (backward compatibility)
   const performances = props.designCase.performance_snapshot || props.performances;
   
-  // 末端性能のみ抽出して、値を持つものだけフィルタ
+  // Extract only leaf performances and filter those with values
   return performances
     .filter(perf => perf.is_leaf)
     .filter(perf => props.designCase.performance_values[perf.id] !== undefined);
 });
 
-// レーダーチャートのデータ
+// Radar chart data
 const radarChartData = computed(() => {
   if (!props.designCase.partial_heights || !props.designCase.performance_weights) {
     return { labels: [], datasets: [] };
@@ -377,7 +375,7 @@ const radarChartData = computed(() => {
     labels,
     datasets: [
       {
-        label: '平均効用',
+        label: 'Average Utility',
         data,
         backgroundColor: 'rgba(51, 87, 255, 0.2)',
         borderColor: 'rgba(51, 87, 255, 1)',
@@ -396,7 +394,7 @@ const radarChartData = computed(() => {
   };
 });
 
-// レーダーチャートのオプション
+// Radar chart options
 const radarChartOptions = computed(() => {
   const data = performancesWithValues.value.map(perf => getAverageUtilityForPerf(perf.id));
   
@@ -407,11 +405,19 @@ const radarChartOptions = computed(() => {
       r: {
         min: 0,
         max: 1,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)'
+        },
+        angleLines: {
+          color: 'rgba(0, 0, 0, 0.1)'
+        },
         ticks: {
           stepSize: 0.2,
           font: {
             size: 12
-          }
+          },
+          color: 'rgba(102, 102, 102, 1)',
+          backdropColor: 'rgba(255, 255, 255, 0.8)'
         },
         pointLabels: {
           font: {
@@ -419,7 +425,7 @@ const radarChartOptions = computed(() => {
             weight: 'bold' as const
           },
           color: (context: any) => {
-            // 0.5未満の性能名を赤く表示
+            // Display performance names below 0.5 in red
             const index = context.index;
             return data[index] < 0.5 ? 'rgba(255, 68, 68, 1)' : '#666';
           }
@@ -437,12 +443,20 @@ const radarChartOptions = computed(() => {
           }
         }
       },
-      // 基準線を描画するカスタムプラグイン
+      // Custom plugin to draw reference lines
       customLines: {
         lines: [
-          { value: 0.5, color: 'rgba(255, 68, 68, 0.5)', width: 2 },  // 赤線（0.5）
-          { value: 0.8, color: 'rgba(255, 193, 7, 0.5)', width: 2 }   // 黄線（0.8）
+          { value: 0.5, color: 'rgba(255, 68, 68, 0.5)', width: 2 },  // Red line (0.5)
+          { value: 0.8, color: 'rgba(255, 193, 7, 0.5)', width: 2 }   // Yellow line (0.8)
         ]
+      }
+    },
+    layout: {
+      padding: 20
+    },
+    elements: {
+      arc: {
+        backgroundColor: 'white'
       }
     }
   };
@@ -460,7 +474,7 @@ function formatValue(value: number | string): string {
 }
 
 
-// 平均効用を計算（部分標高 / 合計票数）
+// Calculate average utility (partial height / total votes)
 function getAverageUtilityForPerf(perfId: string): number {
   if (!props.designCase.partial_heights || !props.designCase.performance_weights) return 0;
   
@@ -471,7 +485,7 @@ function getAverageUtilityForPerf(perfId: string): number {
   return partialHeight / totalWeight;
 }
 
-// 性能ごとの残り標高を計算（最大値 - 実際の部分標高）
+// Calculate remaining height for each performance (max value - actual partial height)
 const remainingHeights = computed(() => {
   if (!props.designCase.partial_heights || !props.performanceHMax) return [];
   
@@ -491,11 +505,11 @@ const remainingHeights = computed(() => {
     });
   });
   
-  // 残り標高が大きい順にソート
+  // Sort by remaining height in descending order
   return results.sort((a, b) => b.remaining - a.remaining);
 });
 
-// エネルギーデータを取得
+// Fetch energy data
 async function fetchEnergyData() {
   if (!projectStore.currentProject || !props.designCase) return;
   
@@ -510,36 +524,36 @@ async function fetchEnergyData() {
       match_matrix: response.data.match_matrix
     };
   } catch (error) {
-    console.error('エネルギー計算エラー:', error);
+    console.error('Energy calculation error:', error);
   }
 }
 
-// 性能名を取得（スナップショットから優先的に取得）
+// Get performance name (prioritize from snapshot)
 function getPerformanceName(perfId: string | number): string {
   const perfIdStr = String(perfId);
   
-  // まずスナップショットから探す
+  // First search from snapshot
   if (props.designCase.performance_snapshot) {
     const snapPerf = props.designCase.performance_snapshot.find(p => p.id === perfIdStr);
     if (snapPerf) return snapPerf.name;
   }
   
-  // スナップショットにない場合は現在の性能ツリーから（後方互換性）
+  // If not in snapshot, get from current performance tree (backward compatibility)
   const perf = props.performances.find(p => p.id === perfIdStr);
   return perf ? perf.name : perfIdStr;
 }
 
-// 性能の重要度を取得
+// Get performance importance
 function getPerformanceImportance(perfId: string | number): number {
   const perfIdStr = String(perfId);
-  // performance_weightsは性能ごとの合計票数
+  // performance_weights is total votes per performance
   if (props.designCase.performance_weights && props.designCase.performance_weights[perfIdStr] !== undefined) {
     return props.designCase.performance_weights[perfIdStr];
   }
-  return 0.0; // デフォルト値
+  return 0.0; // Default value
 }
 
-// 性能カードの展開/折りたたみ
+// Expand/collapse performance card
 function togglePerfExpand(perfId: string) {
   if (expandedPerfId.value === perfId) {
     expandedPerfId.value = null;
@@ -548,7 +562,7 @@ function togglePerfExpand(perfId: string) {
   }
 }
 
-// 特定性能のMatch詳細を取得
+// Get Match details for specific performance
 function getMatchDetailsForPerformance(perfId: string): Array<{perfName: string, perfImportance: number, match: number, energy: number}> {
   if (!energyData.value?.match_matrix || !props.designCase.performance_values) {
     return [];
@@ -557,20 +571,20 @@ function getMatchDetailsForPerformance(perfId: string): Array<{perfName: string,
   const matrix = energyData.value.match_matrix;
   const details: Array<{perfName: string, perfImportance: number, match: number, energy: number}> = [];
   
-  // 他の性能とのMatch値を取得
+  // Get Match values with other performances
   const perfIds = Object.keys(props.designCase.performance_values);
   
-  // match_matrixからnode_idを取得するための変換が必要
-  // バックエンドはnode_idで保存しているが、フロントエンドはperformance_idを使用
-  // ここでは簡易的にperformance_idのペアを検索
+  // Need conversion to get node_id from match_matrix
+  // Backend stores with node_id, but frontend uses performance_id
+  // Here we simply search for performance_id pairs
   
   for (const otherPerfId of perfIds) {
-    if (otherPerfId === perfId) continue; // 自分自身は除外
+    if (otherPerfId === perfId) continue; // Exclude self
     
-    // Match値を取得（キーは "perfId1_perfId2" の形式）
+    // Get Match value (key is in "perfId1_perfId2" format)
     let matchValue = 0;
     
-    // 両方の順番を試す（対称行列なので）
+    // Try both orders (since it's a symmetric matrix)
     const key1 = `${perfId}_${otherPerfId}`;
     const key2 = `${otherPerfId}_${perfId}`;
     
@@ -580,14 +594,14 @@ function getMatchDetailsForPerformance(perfId: string): Array<{perfName: string,
       matchValue = matrix[key2];
     }
     
-    // 重要度を取得
+    // Get importance
     const qi = getPerformanceImportance(perfId);
     const qj = getPerformanceImportance(otherPerfId);
     
     // r = √2(1-Match)
     const r = Math.sqrt(2 * (1 - matchValue));
     
-    // 部分部分エネルギー = qi * qj / r / 2 （両方向で計算されるので半分）
+    // Partial energy = qi * qj / r / 2 (half since calculated from both directions)
     const partialEnergy = r > 0 ? (qi * qj) / r / 2 : 0;
     
     details.push({
@@ -598,97 +612,163 @@ function getMatchDetailsForPerformance(perfId: string): Array<{perfName: string,
     });
   }
   
-  // エネルギーの大きい順にソート
+  // Sort by energy in descending order
   return details.sort((a, b) => b.energy - a.energy);
 }
 
+// Download radar chart as image
+function downloadRadarChart() {
+  if (!radarChartRef.value?.chart) {
+    console.error('Radar chart not available');
+    return;
+  }
 
-// 設計案が変更されたらエネルギーを再計算
+  try {
+    const chart = radarChartRef.value.chart;
+    const canvas = chart.canvas;
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.download = `radar-chart-${props.designCase.name}-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch (error) {
+    console.error('Failed to download radar chart:', error);
+    alert('Failed to download radar chart');
+  }
+}
+
+// Recalculate energy when design case changes
 watch(() => props.designCase.id, () => {
   fetchEnergyData();
 });
 
-// 初回ロード時にエネルギーを取得
+// Fetch energy data on initial load
 onMounted(() => {
   fetchEnergyData();
 });
 
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use 'sass:color';
+@import '../../style/color';
+
+// カスタムスクロールバースタイル
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 0.8vw;
+    height: 0.8vw;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: color.adjust($gray, $lightness: 5%);
+    border-radius: 0.4vw;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: color.adjust($main_1, $alpha: -0.5);
+    border-radius: 0.4vw;
+    transition: background 0.3s ease;
+    
+    &:hover {
+      background: color.adjust($main_1, $alpha: -0.3);
+    }
+    
+    &:active {
+      background: $main_1;
+    }
+  }
+  
+  // Firefox
+  scrollbar-width: thin;
+  scrollbar-color: color.adjust($main_1, $alpha: -0.5) color.adjust($gray, $lightness: 5%);
+}
+
 .design-case-detail {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #ffffff;
+  background: lighten($gray, 8%);
 }
 
 .detail-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: clamp(1rem, 2vh, 1.5rem) clamp(1rem, 2vw, 1.5rem);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
+  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
 }
 
 .detail-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: clamp(1.1rem, 1.8vw, 1.3rem);
   font-weight: 600;
+  color: $white;
 }
 
 .close-btn {
-  width: 32px;
-  height: 32px;
+  width: clamp(1.8rem, 3vw, 2rem);
+  height: clamp(1.8rem, 3vw, 2rem);
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 20px;
-  color: #666;
-  border-radius: 4px;
+  font-size: clamp(1.2rem, 2vw, 1.4rem);
+  color: color.adjust($white, $alpha: -0.4);
+  border-radius: 0.3vw;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close-btn:hover {
-  background: #f0f0f0;
-  color: #333;
+  background: color.adjust($gray, $lightness: 15%);
+  color: $white;
 }
 
 .detail-content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: clamp(1rem, 2vh, 1.5rem) clamp(1rem, 2vw, 1.5rem);
+  background: $gray;
+  @include custom-scrollbar;
 }
 
 .detail-section {
-  margin-bottom: 24px;
+  margin-bottom: clamp(1.2rem, 2vh, 1.5rem);
+  background: lighten($gray, 8%);
+  padding: clamp(1rem, 2vh, 1.5rem);
+  border-radius: 0.8vw;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .detail-section h3 {
-  margin: 0 0 16px 0;
-  font-size: 16px;
+  margin: 0 0 clamp(0.8rem, 1.5vh, 1rem) 0;
+  font-size: clamp(0.95rem, 1.3vw, 1.1rem);
   font-weight: 600;
-  color: #333;
+  color: $white;
 }
 
-/* セクションヘッダー */
+/* Section header */
 .section-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.8vw;
   cursor: pointer;
   user-select: none;
   transition: color 0.2s;
-  margin: 0 0 16px 0 !important;
+  margin: 0 0 clamp(0.8rem, 1.5vh, 1rem) 0 !important;
 }
 
 .section-header:hover {
-  color: #667eea;
+  color: $main_1;
 }
 
 .toggle-icon {
-  font-size: 12px;
-  color: #999;
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+  color: color.adjust($white, $alpha: -0.5);
   transition: transform 0.2s;
 }
 
@@ -699,7 +779,7 @@ onMounted(() => {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-4px);
+    transform: translateY(-0.4vh);
   }
   to {
     opacity: 1;
@@ -709,11 +789,11 @@ onMounted(() => {
 
 .divider {
   height: 1px;
-  background: #e0e0e0;
-  margin: 24px 0;
+  background: color.adjust($white, $alpha: -0.95);
+  margin: clamp(1.2rem, 2vh, 1.5rem) 0;
 }
 
-/* 山の座標情報 */
+/* Mountain coordinate information */
 .mountain-info {
   margin-bottom: 0;
 }
@@ -721,204 +801,243 @@ onMounted(() => {
 .mountain-stats {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
+  gap: 1.2vw;
 }
 
 .stat-card {
-  padding: 16px;
-  background: #f5f5f5;
-  border-radius: 8px;
+  padding: clamp(0.8rem, 1.5vh, 1rem);
+  background: color.adjust($gray, $lightness: 15%);
+  border-radius: 0.8vw;
   text-align: center;
 }
 
 .stat-card.primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  color: $white;
   grid-column: 1 / -1;
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
   color: inherit;
   opacity: 0.8;
-  margin-bottom: 8px;
+  margin-bottom: 0.8vh;
 }
 
 .stat-card.primary .stat-label {
-  color: white;
+  color: $white;
 }
 
 .stat-value {
-  font-size: 32px;
+  font-size: clamp(1.6rem, 2.5vw, 2rem);
   font-weight: 700;
-
 }
 
-/* 基本情報 */
+/* Basic information */
 .basic-info-section h3 {
-  margin-bottom: 16px !important;
+  margin-bottom: clamp(0.8rem, 1.5vh, 1rem) !important;
 }
 
 .info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
+  padding: clamp(0.6rem, 1.2vh, 0.8rem) 0;
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.97);
 }
 
 .info-row.highlight {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 16px;
-  margin: -16px -16px 16px -16px;
-  border-radius: 8px;
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  color: $white;
+  padding: clamp(0.8rem, 1.5vh, 1rem);
+  margin: calc(-1 * clamp(0.8rem, 1.5vh, 1rem)) calc(-1 * clamp(0.8rem, 1.5vh, 1rem)) clamp(0.8rem, 1.5vh, 1rem) calc(-1 * clamp(0.8rem, 1.5vh, 1rem));
+  border-radius: 0.8vw;
   border-bottom: none;
 }
 
 .info-row.highlight .info-label {
-  color: white;
+  color: $white;
   opacity: 0.9;
 }
 
 .info-value-large {
-  font-size: 28px;
+  font-size: clamp(1.4rem, 2.2vw, 1.75rem);
   font-weight: 700;
-  color: white;
+  color: $white;
 }
 
 .info-row.vertical {
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 0.8vh;
 }
 
 .info-label {
-  font-size: 13px;
-  color: #999;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.5);
   font-weight: 500;
 }
 
 .info-value {
-  font-size: 14px;
-  color: #333;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  color: $white;
 }
 
 .description-text {
   margin: 0;
-  font-size: 14px;
-  color: #666;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  color: color.adjust($white, $alpha: -0.3);
   line-height: 1.6;
 }
 
-/* 色表示 */
+/* Color display */
 .color-display {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.8vw;
   position: relative;
 }
 
 .color-box {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: 2px solid #e0e0e0;
+  width: clamp(1.8rem, 3vw, 2rem);
+  height: clamp(1.8rem, 3vw, 2rem);
+  border-radius: 0.5vw;
+  border: 2px solid color.adjust($white, $alpha: -0.9);
+  box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.5);
 }
 
 .color-text {
-  font-size: 13px;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
   font-family: monospace;
-  color: #666;
+  color: color.adjust($white, $alpha: -0.4);
 }
 
 
-/* 性能値 */
+/* Performance values */
 .performance-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.8vh;
 }
 
 .performance-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px;
-  background: #f9f9f9;
-  border-radius: 6px;
+  padding: clamp(0.6rem, 1.2vh, 0.8rem);
+  background: $gray;
+  border-radius: 0.5vw;
+  border: 1px solid color.adjust($white, $alpha: -0.97);
+  transition: all 0.2s;
+}
+
+.performance-item:hover {
+  background: lighten($gray, 5%);
+  border-color: color.adjust($white, $alpha: -0.9);
 }
 
 .perf-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.4vh;
 }
 
 .perf-name {
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 500;
-  color: #333;
+  color: $white;
 }
 
 .perf-unit {
-  font-size: 12px;
-  color: #999;
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+  color: color.adjust($white, $alpha: -0.5);
 }
 
 .perf-value {
-  font-size: 16px;
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
   font-weight: 600;
-  color: #4CAF50;
+  color: $sub_4;
 }
 
-/* 効用ベクトル */
+/* Utility vector */
 .utility-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 1.2vh;
 }
 
-/* レーダーチャート */
+/* Radar chart */
 .radar-chart-container {
   width: 100%;
-  height: 400px;
-  margin: 20px auto;
-  padding: 20px;
+  height: clamp(20rem, 40vh, 25rem);
+  margin: clamp(1rem, 2vh, 1.25rem) auto;
+  padding: clamp(1rem, 2vh, 1.25rem);
   display: flex;
   justify-content: center;
   align-items: center;
+  background: white;
+  border-radius: 0.8vw;
+  position: relative;
 }
 
-/* 残り標高リスト */
+.radar-download-btn {
+  position: absolute;
+  top: clamp(0.8rem, 1.5vh, 1rem);
+  right: clamp(0.8rem, 1.5vw, 1rem);
+  background: color.adjust($gray, $lightness: 20%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.5vw;
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.6rem, 1vw, 0.8rem);
+  cursor: pointer;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
+  color: $white;
+  transition: all 0.3s ease;
+  box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.8);
+  z-index: 10;
+
+  &:hover {
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border-color: color.adjust($main_1, $alpha: -0.3);
+    transform: translateY(-0.1vh);
+    box-shadow: 0 0.4vh 1vh color.adjust($main_1, $alpha: -0.5);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 0.2vh 0.5vh color.adjust($main_1, $alpha: -0.6);
+  }
+}
+
+/* Remaining height list */
 .remaining-heights-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.8vh;
 }
 
 .remaining-height-item {
   display: flex;
   flex-direction: column;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid #667eea;
+  background: $gray;
+  border-radius: 0.8vw;
+  border-left: 0.4vw solid $main_1;
   transition: all 0.3s ease;
-  margin-bottom: 12px;
+  margin-bottom: 1.2vh;
 }
 
 .remaining-height-item.expanded {
-  background: #f0f4ff;
+  background: color.adjust($main_1, $alpha: -0.95);
+  box-shadow: 0 0.3vh 1vh color.adjust($main_1, $alpha: -0.8);
 }
 
 .remaining-height-content {
-  padding: 12px;
+  padding: clamp(0.6rem, 1.2vh, 0.8rem);
   cursor: pointer;
   user-select: none;
 }
 
 .remaining-height-content:hover {
-  background: rgba(102, 126, 234, 0.05);
+  background: color.adjust($main_1, $alpha: -0.95);
 }
 
 .remaining-height-header {
@@ -930,37 +1049,37 @@ onMounted(() => {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.8vw;
 }
 
 .expand-indicator {
-  font-size: 12px;
-  color: #667eea;
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+  color: $main_1;
   transition: transform 0.3s ease;
 }
 
 .remaining-height-name {
   font-weight: 600;
-  color: #333;
-  font-size: 15px;
+  color: $white;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
 }
 
 .performance-importance {
-  color: #666;
-  font-size: 12px;
+  color: color.adjust($white, $alpha: -0.4);
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
 }
 
 .remaining-height-values {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  font-size: 13px;
+  gap: 1.2vw;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
 }
 
-/* ホバー時の追加効果 */
+/* Additional effects on hover */
 .remaining-height-content:hover .expand-indicator {
   transform: scale(1.2);
-  color: #5566dd;
+  color: lighten($main_1, 10%);
 }
 
 .remaining-height-item:not(.expanded) .remaining-height-content:hover::after {
@@ -972,183 +1091,190 @@ onMounted(() => {
 }
 
 .remaining-value {
-  color: #667eea;
+  color: $main_1;
   font-weight: 700;
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
 }
 
 .detail-values {
-  color: #666;
-  font-size: 14px;
+  color: color.adjust($white, $alpha: -0.4);
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
 }
 
 .energy-value {
-  color: #667eea;
+  color: $main_1;
   font-weight: 700;
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   margin-left: auto;
 }
 
 .utility-item {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.6vh;
 }
 
 .utility-label {
-  font-size: 13px;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
   font-weight: 500;
-  color: #555;
+  color: color.adjust($white, $alpha: -0.3);
 }
 
 .utility-bar-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.8vw;
 }
 
 .utility-bar {
   flex: 1;
-  height: 8px;
-  background: #e0e0e0;
-  border-radius: 4px;
+  height: 0.8vh;
+  background: color.adjust($gray, $lightness: 15%);
+  border-radius: 0.4vw;
   overflow: hidden;
 }
 
 .utility-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%);
+  background: linear-gradient(90deg, $sub_4 0%, lighten($sub_4, 15%) 100%);
   transition: width 0.3s ease;
 }
 
 .utility-value {
-  font-size: 13px;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
   font-weight: 600;
-  color: #4CAF50;
-  min-width: 40px;
+  color: $sub_4;
+  min-width: clamp(2.5rem, 4vw, 3rem);
   text-align: right;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.8vw;
 }
 
 .stat-label {
-  font-size: 13px;
-  color: #666;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.4);
 }
 
 .stat-value {
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 600;
-  color: white;
+  color: $white;
 }
 
-/* 空状態 */
+/* Empty state */
 .empty-state {
-  padding: 80px 24px;
+  padding: clamp(4rem, 8vh, 5rem) clamp(1.2rem, 2vw, 1.5rem);
   text-align: center;
-  color: #999;
-  font-size: 13px;
+  color: color.adjust($white, $alpha: -0.5);
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
 }
 
-/* フッター */
+/* Footer */
 .detail-footer {
   display: flex;
-  gap: 8px;
-  padding: 16px 20px;
-  border-top: 1px solid #e0e0e0;
-  background: #fafafa;
+  gap: 0.8vw;
+  padding: clamp(0.8rem, 1.5vh, 1rem) clamp(1rem, 2vw, 1.25rem);
+  border-top: 1px solid color.adjust($white, $alpha: -0.95);
+  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
 }
 
 .action-btn {
   flex: 1;
-  padding: 10px;
+  padding: clamp(0.5rem, 1vh, 0.625rem);
   border: none;
-  border-radius: 6px;
+  border-radius: 0.5vw;
   cursor: pointer;
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 500;
   transition: all 0.2s;
 }
 
 .action-btn.edit {
-  background: #2196F3;
-  color: white;
+  background: $sub_6;
+  color: $white;
 }
 
 .action-btn.edit:hover {
-  background: #1976D2;
+  background: darken($sub_6, 10%);
+  transform: translateY(-0.1vh);
+  box-shadow: 0 0.3vh 1vh color.adjust($sub_6, $alpha: -0.5);
 }
 
 .action-btn.copy {
-  background: #FF9800;
-  color: white;
+  background: $sub_3;
+  color: $black;
 }
 
 .action-btn.copy:hover {
-  background: #F57C00;
+  background: darken($sub_3, 10%);
+  transform: translateY(-0.1vh);
+  box-shadow: 0 0.3vh 1vh color.adjust($sub_3, $alpha: -0.5);
 }
 
 .action-btn.delete {
-  background: #f44336;
-  color: white;
+  background: $sub_1;
+  color: $white;
 }
 
 .action-btn.delete:hover {
-  background: #d32f2f;
+  background: darken($sub_1, 10%);
+  transform: translateY(-0.1vh);
+  box-shadow: 0 0.3vh 1vh color.adjust($sub_1, $alpha: -0.5);
 }
 
 .network-viewer-wrapper {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  border-radius: 0.8vw;
   overflow: hidden;
+  background: $gray;
 }
 
 .partial-energies-list h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
+  margin: 0 0 clamp(0.6rem, 1.2vh, 0.75rem) 0;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 600;
-  color: #666;
+  color: color.adjust($white, $alpha: -0.4);
 }
 
 .partial-energy-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px;
-  margin-bottom: 8px;
-  background: #f9f9f9;
-  border-radius: 6px;
-  border-left: 3px solid #667eea;
+  padding: clamp(0.6rem, 1.2vh, 0.75rem);
+  margin-bottom: 0.8vh;
+  background: $gray;
+  border-radius: 0.5vw;
+  border-left: 0.3vw solid $main_1;
 }
 
-/* 構造不一致警告 */
+/* Structure mismatch warning */
 .structure-warning {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px;
-  margin: -4px -4px 16px -4px;
-  background: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeaa7;
-  border-radius: 8px;
-  font-size: 14px;
+  gap: 0.8vw;
+  padding: clamp(0.6rem, 1.2vh, 0.75rem);
+  margin: calc(-0.4vh) calc(-0.4vw) clamp(0.8rem, 1.5vh, 1rem) calc(-0.4vw);
+  background: color.adjust($sub_2, $alpha: -0.9);
+  color: $sub_2;
+  border: 1px solid $sub_2;
+  border-radius: 0.8vw;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
 }
 
 .structure-warning svg {
   flex-shrink: 0;
-  color: #f39c12;
+  color: $sub_2;
 }
 
-/* エネルギー詳細展開部分 */
+/* Energy details expansion part */
 .energy-details {
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.8);
-  border-top: 1px solid rgba(102, 126, 234, 0.2);
+  padding: clamp(0.8rem, 1.5vh, 1rem);
+  background: color.adjust($gray, $lightness: 10%);
+  border-top: 1px solid color.adjust($main_1, $alpha: -0.8);
   animation: slideDown 0.3s ease;
 }
 
@@ -1159,75 +1285,75 @@ onMounted(() => {
   }
   to {
     opacity: 1;
-    max-height: 500px;
+    max-height: 50vh;
   }
 }
 
 .energy-details h5 {
-  margin: 0 0 12px 0;
-  font-size: 13px;
+  margin: 0 0 clamp(0.6rem, 1.2vh, 0.75rem) 0;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
   font-weight: 600;
-  color: #555;
+  color: color.adjust($white, $alpha: -0.3);
 }
 
 .match-details {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.8vh;
 }
 
 .match-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 8px 12px;
-  background: #fff;
-  border-radius: 6px;
-  font-size: 12px;
-  border: 1px solid #e0e0e0;
+  gap: 1.6vw;
+  padding: clamp(0.4rem, 0.8vh, 0.5rem) clamp(0.6rem, 1.2vw, 0.75rem);
+  background: lighten($gray, 5%);
+  border-radius: 0.5vw;
+  font-size: clamp(0.7rem, 0.9vw, 0.75rem);
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .match-perf-name {
   flex: 1;
   font-weight: 500;
-  color: #333;
+  color: $white;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.8vw;
 }
 
 .match-perf-importance {
-  font-size: 11px;
-  color: #666;
+  font-size: clamp(0.65rem, 0.85vw, 0.7rem);
+  color: color.adjust($white, $alpha: -0.4);
   font-weight: 400;
 }
 
 .match-value {
-  color: #666;
+  color: color.adjust($white, $alpha: -0.4);
   font-family: 'Courier New', monospace;
 }
 
 .partial-partial-energy {
-  color: #ff6b6b;
+  color: $sub_1;
   font-weight: 600;
   font-family: 'Courier New', monospace;
 }
 
 .no-matches {
-  font-size: 12px;
-  color: #999;
+  font-size: clamp(0.7rem, 0.9vw, 0.75rem);
+  color: color.adjust($white, $alpha: -0.5);
   text-align: center;
-  padding: 16px;
+  padding: clamp(0.8rem, 1.5vh, 1rem);
   font-style: italic;
 }
 
-/* 性能ネットワークビュー */
+/* Performance network view */
 .perf-network-view {
-  margin-bottom: 20px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  margin-bottom: clamp(1rem, 2vh, 1.25rem);
+  padding: clamp(0.6rem, 1.2vh, 0.75rem);
+  background: $gray;
+  border-radius: 0.8vw;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
   overflow: hidden;
 }
 </style>

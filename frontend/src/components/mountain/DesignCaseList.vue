@@ -1,30 +1,30 @@
 <template>
   <div class="design-case-list">
     <div class="list-header">
-      <h2>設計案一覧</h2>
+      <h2>Design Case List</h2>
       <button class="close-btn" @click="$emit('toggle-panel')">✕</button>
     </div>
 
-    <!-- 頂点標高表示 -->
+    <!-- Peak elevation display -->
     <div v-if="hMax !== null" class="h-max-display">
-      <span class="label">頂点標高 H<sub>max</sub></span>
+      <span class="label">Peak Elevation H<sub>max</sub></span>
       <span class="value">{{ hMax.toFixed(2) }}</span>
     </div>
 
     <div class="actions">
       <button class="create-btn" @click="$emit('create')">
-        + 新規設計案
+        + New Design Case
       </button>
     </div>
 
     <div class="sort-control">
-      <label>並び替え:</label>
+      <label>Sort by:</label>
       <select :value="sortBy" @change="$emit('sort-change', ($event.target as HTMLSelectElement).value)">
-        <option value="height-desc">標高（高→低）</option>
-        <option value="height-asc">標高（低→高）</option>
-        <option value="date-desc">作成日時（新→旧）</option>
-        <option value="date-asc">作成日時（旧→新）</option>
-        <option value="name">名前（A→Z）</option>
+        <option value="height-desc">Elevation (High → Low)</option>
+        <option value="height-asc">Elevation (Low → High)</option>
+        <option value="date-desc">Created Date (New → Old)</option>
+        <option value="date-asc">Created Date (Old → New)</option>
+        <option value="name">Name (A → Z)</option>
       </select>
     </div>
 
@@ -52,28 +52,28 @@
           <button 
             class="action-btn focus-btn" 
             @click="$emit('focus', designCase)"
-            title="山で強調表示"
+            title="Highlight in mountain view"
           >
             <FontAwesomeIcon :icon="['fas', 'eye']" />
           </button>
           <button 
             class="action-btn edit-btn" 
             @click="$emit('edit', designCase)"
-            title="編集"
+            title="Edit"
           >
             <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
           </button>
           <button 
             class="action-btn copy-btn" 
             @click="$emit('copy', designCase)"
-            title="コピー"
+            title="Copy"
           >
             <FontAwesomeIcon :icon="['fas', 'copy']" />
           </button>
           <button 
             class="action-btn delete-btn" 
             @click="$emit('delete', designCase)"
-            title="削除"
+            title="Delete"
           >
             <FontAwesomeIcon :icon="['fas', 'trash']" />
           </button>
@@ -81,8 +81,8 @@
       </div>
 
       <div v-if="designCases.length === 0" class="empty-state">
-        <p>設計案がありません</p>
-        <p class="empty-hint">「+ 新規設計案」から作成してください</p>
+        <p>No design cases</p>
+        <p class="empty-hint">Create one using "+ New Design Case"</p>
       </div>
     </div>
   </div>
@@ -114,154 +114,228 @@ function formatDate(dateString: string): string {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use 'sass:color';
+@import '../../style/color';
+
+// カスタムスクロールバースタイル
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 0.8vw;
+    height: 0.8vw;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: color.adjust($gray, $lightness: 5%);
+    border-radius: 0.4vw;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: color.adjust($main_1, $alpha: -0.5);
+    border-radius: 0.4vw;
+    transition: background 0.3s ease;
+    
+    &:hover {
+      background: color.adjust($main_1, $alpha: -0.3);
+    }
+    
+    &:active {
+      background: $main_1;
+    }
+  }
+  
+  // Firefox
+  scrollbar-width: thin;
+  scrollbar-color: color.adjust($main_1, $alpha: -0.5) color.adjust($gray, $lightness: 5%);
+}
+
 .design-case-list {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  background: lighten($gray, 8%);
 }
 
 .list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: clamp(1rem, 2vh, 1.5rem) clamp(1rem, 2vw, 1.5rem);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .list-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: clamp(1.1rem, 1.8vw, 1.3rem);
   font-weight: 600;
+  color: $white;
 }
 
 .close-btn {
-  width: 32px;
-  height: 32px;
+  width: clamp(1.8rem, 3vw, 2rem);
+  height: clamp(1.8rem, 3vw, 2rem);
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 20px;
-  color: #666;
-  border-radius: 4px;
+  font-size: clamp(1.2rem, 2vw, 1.4rem);
+  color: color.adjust($white, $alpha: -0.4);
+  border-radius: 0.3vw;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close-btn:hover {
-  background: #f0f0f0;
-  color: #333;
+  background: color.adjust($gray, $lightness: 15%);
+  color: $white;
 }
 
-/* 頂点標高表示 */
+/* Peak elevation display */
 .h-max-display {
-  padding: 12px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  padding: clamp(0.75rem, 1.5vh, 1rem) clamp(1rem, 2vw, 1.5rem);
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  color: $white;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 500;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 2px solid color.adjust($white, $alpha: -0.8);
 }
 
 .h-max-display .label {
   font-weight: 600;
+  opacity: 0.9;
 }
 
 .h-max-display .value {
-  font-size: 18px;
+  font-size: clamp(1.1rem, 1.8vw, 1.3rem);
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
 }
 
 .actions {
-  padding: 16px 20px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: clamp(0.8rem, 1.5vh, 1rem) clamp(1rem, 2vw, 1.5rem);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .create-btn {
   width: 100%;
-  padding: 12px;
-  background: #4CAF50;
-  color: white;
+  padding: clamp(0.75rem, 1.5vh, 1rem);
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  color: $white;
   border: none;
-  border-radius: 8px;
+  border-radius: 0.5vw;
   cursor: pointer;
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 500;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 0.3vh 1vh color.adjust($main_1, $alpha: -0.7);
 }
 
 .create-btn:hover {
-  background: #45a049;
-  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+  background: linear-gradient(135deg, lighten($main_1, 10%) 0%, lighten($main_2, 10%) 100%);
+  box-shadow: 0 0.5vh 1.5vh color.adjust($main_1, $alpha: -0.5);
+  transform: translateY(-0.1vh);
 }
 
 .sort-control {
-  padding: 12px 20px;
+  padding: clamp(0.6rem, 1.2vh, 0.8rem) clamp(1rem, 2vw, 1.5rem);
   display: flex;
   align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid #e0e0e0;
-  background: #fafafa;
+  gap: 0.8vw;
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
+  background: color.adjust($gray, $lightness: 5%);
 }
 
 .sort-control label {
-  font-size: 13px;
-  color: #666;
+  font-size: clamp(0.75rem, 1vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.4);
+  white-space: nowrap;
 }
 
 .sort-control select {
   flex: 1;
-  padding: 6px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 13px;
-  background: white;
+  padding: 0.6vh 0.8vw;
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.3vw;
+  font-size: clamp(0.75rem, 1vw, 0.85rem);
+  background: $gray;
+  color: $white;
+  cursor: pointer;
+}
+
+.sort-control select:focus {
+  outline: none;
+  border-color: $main_1;
 }
 
 .case-list {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: clamp(0.6rem, 1.2vh, 0.8rem);
+  @include custom-scrollbar;
 }
 
 .case-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  transition: all 0.2s;
+  gap: 1vw;
+  padding: clamp(0.75rem, 1.5vh, 1rem);
+  background: linear-gradient(145deg, lighten($gray, 12%), lighten($gray, 8%));
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  border-radius: 0.5vw;
+  margin-bottom: 0.8vh;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.case-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, color.adjust($main_1, $alpha: -0.9));
+  transition: width 0.3s ease;
 }
 
 .case-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-color: #ccc;
+  box-shadow: 0 0.5vh 1.5vh color.adjust($black, $alpha: -0.5);
+  border-color: color.adjust($main_1, $alpha: -0.7);
+  transform: translateY(-0.1vh);
+}
+
+.case-card:hover::before {
+  width: 100%;
 }
 
 .case-color {
-  width: 8px;
-  height: 40px;
-  border-radius: 4px;
+  width: 0.5vw;
+  height: clamp(2.5rem, 4vh, 3rem);
+  border-radius: 0.3vw;
   flex-shrink: 0;
+  box-shadow: 0 0 0.5vh rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 1;
 }
 
 .case-info {
   flex: 1;
   min-width: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .case-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 4px;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
+  font-weight: 600;
+  color: $white;
+  margin-bottom: 0.5vh;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -269,56 +343,83 @@ function formatDate(dateString: string): string {
 
 .case-meta {
   display: flex;
-  gap: 12px;
-  font-size: 12px;
-  color: #999;
+  gap: 1vw;
+  font-size: clamp(0.7rem, 0.95vw, 0.8rem);
+  color: color.adjust($white, $alpha: -0.5);
 }
 
 .case-height {
-  color: #4CAF50;
-  font-weight: 500;
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 600;
 }
 
 .case-actions {
   display: flex;
-  gap: 4px;
+  gap: 0.5vw;
+  position: relative;
+  z-index: 1;
 }
 
 .action-btn {
-  width: 32px;
-  height: 32px;
+  width: clamp(1.8rem, 3vw, 2rem);
+  height: clamp(1.8rem, 3vw, 2rem);
   border: none;
-  background: #f5f5f5;
-  border-radius: 6px;
+  background: color.adjust($gray, $lightness: 20%);
+  border-radius: 0.4vw;
   cursor: pointer;
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1.1vw, 0.9rem);
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: color.adjust($white, $alpha: -0.4);
 }
 
 .action-btn:hover {
-  background: #e0e0e0;
-  transform: translateY(-1px);
+  transform: translateY(-0.1vh);
 }
 
-.delete-btn:hover {
-  background: #ffebee;
+.action-btn.focus-btn:hover {
+  color: $white;
+  background: $main_1;
+  box-shadow: 0 0.2vh 0.8vh color.adjust($main_1, $alpha: -0.5);
+}
+
+.action-btn.edit-btn:hover {
+  color: $white;
+  background: $sub_1;
+  box-shadow: 0 0.2vh 0.8vh color.adjust($sub_1, $alpha: -0.5);
+}
+
+.action-btn.copy-btn:hover {
+  color: $white;
+  background: $sub_3;
+  box-shadow: 0 0.2vh 0.8vh color.adjust($sub_3, $alpha: -0.5);
+}
+
+.action-btn.delete-btn:hover {
+  color: $white;
+  background: $sub_1;
+  box-shadow: 0 0.2vh 0.8vh color.adjust($sub_1, $alpha: -0.5);
 }
 
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
-  color: #999;
+  padding: clamp(3rem, 6vh, 4rem) clamp(1rem, 2vw, 1.5rem);
+  color: color.adjust($white, $alpha: -0.5);
 }
 
 .empty-state p {
-  margin: 8px 0;
+  margin: 0.8vh 0;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
 }
 
 .empty-hint {
-  font-size: 13px;
-  color: #bbb;
+  font-size: clamp(0.75rem, 1vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.6);
+  font-style: italic;
 }
 </style>

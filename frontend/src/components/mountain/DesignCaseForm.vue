@@ -1,45 +1,42 @@
 <template>
   <div class="design-case-form">
     <div class="form-header">
-      <h2>{{ isEdit ? '設計案を編集' : '新規設計案を作成' }}</h2>
-      <button class="back-btn" @click="$emit('cancel')">← 戻る</button>
+      <h2>{{ isEdit ? 'Edit Design Case' : 'Create New Design Case' }}</h2>
+      <button class="back-btn" @click="$emit('cancel')">← Back</button>
     </div>
 
     <div class="form-content">
-      <div v-if="isEdit && isEditable" class="section-hint">
-        この設計案は現在の性能ツリーと一致しています。編集可能です。
-      </div>
-      <!-- 性能不一致警告 -->
+      <!-- Performance mismatch warning -->
       <div v-if="isEdit && !isEditable" class="performance-mismatch-warning">
-        <div class="warning-icon">⚠️</div>
+        <div class="warning-icon"><FontAwesomeIcon :icon="['fas', 'triangle-exclamation']" /></div>
         <div class="warning-content">
-          <div class="warning-title">編集不可</div>
+          <div class="warning-title">Cannot Edit</div>
           <div class="warning-message">
-            この設計案の作成後に性能ツリーが変更されているため、編集できません（閲覧のみ）。
+            The performance tree has been modified since this design case was created. Edit is disabled (view only).
           </div>
         </div>
       </div>
 
-      <!-- 基本情報 -->
+      <!-- Basic Information -->
       <section class="form-section">
-        <h3>基本情報</h3>
+        <h3>Basic Information</h3>
         
         <div class="form-group">
-          <label>名前 <span class="required">*</span></label>
+          <label>Name <span class="required">*</span></label>
           <input
             v-model="formData.name"
             type="text"
-            placeholder="例: 設計案1"
+            placeholder="e.g., Design Case 1"
             class="form-input"
             :disabled="isEdit && !isEditable"
           />
         </div>
 
         <div class="form-group">
-          <label>説明</label>
+          <label>Description</label>
           <textarea
             v-model="formData.description"
-            placeholder="この設計案の説明を入力..."
+            placeholder="Enter description for this design case..."
             class="form-textarea"
             rows="3"
             :disabled="isEdit && !isEditable"
@@ -47,7 +44,7 @@
         </div>
 
         <div class="form-group">
-          <label>表示色</label>
+          <label>Display Color</label>
           <div class="color-picker-wrapper">
             <input
               v-model="formData.color"
@@ -60,15 +57,15 @@
         </div>
       </section>
 
-      <!-- 性能値入力 -->
+      <!-- Performance Value Input -->
       <section class="form-section">
-        <h3>性能値を入力</h3>
+        <h3>Enter Performance Values</h3>
 
         <div class="performance-table">
           <div class="table-header">
-            <div class="col-performance">性能</div>
-            <div class="col-unit">単位</div>
-            <div class="col-value">値</div>
+            <div class="col-performance">Performance</div>
+            <div class="col-unit">Unit</div>
+            <div class="col-value">Value</div>
           </div>
 
           <div
@@ -83,14 +80,14 @@
               <span class="unit-text">{{ perf.unit || '-' }}</span>
             </div>
             <div class="col-value">
-              <!-- 離散値の場合: セレクトボックス -->
+              <!-- For discrete values: Select box -->
               <select
                 v-if="isDiscretePerformance(perf.id)"
                 v-model="formData.performance_values[perf.id]"
                 class="value-select"
                 :disabled="isEdit && !isEditable"
               >
-                <option value="" disabled>選択してください</option>
+                <option value="" disabled>Please select</option>
                 <option
                   v-for="option in getDiscreteOptions(perf.id)"
                   :key="option"
@@ -100,14 +97,14 @@
                 </option>
               </select>
               
-              <!-- 連続値の場合: 数値入力 + 単位 -->
+              <!-- For continuous values: Number input + unit -->
               <div v-else class="value-input-wrapper">
                 <input
                   v-model.number="formData.performance_values[perf.id]"
                   type="number"
                   step="any"
                   class="value-input"
-                  :placeholder="'値を入力'"
+                  :placeholder="'Enter value'"
                   :disabled="isEdit && !isEditable"
                 />
                 <span v-if="perf.unit" class="input-unit">{{ perf.unit }}</span>
@@ -116,31 +113,31 @@
           </div>
 
           <div v-if="displayPerformances.length === 0" class="empty-performances">
-            <p>性能が定義されていません</p>
-            <p class="empty-hint">先に「性能管理」タブで性能を作成してください</p>
+            <p>No performances defined</p>
+            <p class="empty-hint">Please create performances in the "Performance Management" tab first</p>
           </div>
         </div>
 
-        <!-- 入力状況 -->
+        <!-- Input Status -->
         <div class="input-status" :class="{ complete: isAllPerformancesFilled }">
           <span v-if="isAllPerformancesFilled" class="status-icon">✓</span>
-          <span v-else class="status-icon">⚠️</span>
-          {{ filledCount }} / {{ displayPerformances.length }} 入力済み
+          <span v-else class="status-icon"><FontAwesomeIcon :icon="['fas', 'triangle-exclamation']" /></span>
+          {{ filledCount }} / {{ displayPerformances.length }} filled
         </div>
       </section>
 
-      <!-- ★ ネットワーク表示セクション -->
+      <!-- ★ Network Display Section -->
       <section class="form-section network-section">
         <div class="section-header-with-action">
           <div>
-            <h3><FontAwesomeIcon :icon="['fas', 'hexagon-nodes']" /> ネットワーク構造</h3>
+            <h3><FontAwesomeIcon :icon="['fas', 'hexagon-nodes']" /> Network Structure</h3>
           </div>
           <button 
             class="edit-network-btn" 
             @click="showNetworkEditor = true"
             :disabled="isEdit && !isEditable"
           >
-            <FontAwesomeIcon :icon="['fas', 'pen-to-square']" /> 編集
+            <FontAwesomeIcon :icon="['fas', 'pen-to-square']" /> Edit
           </button>
         </div>
         
@@ -154,26 +151,26 @@
       </section>
     </div>
 
-    <!-- フッター -->
+    <!-- Footer -->
     <div class="form-footer">
-      <button class="btn-cancel" @click="$emit('cancel')">キャンセル</button>
+      <button class="btn-cancel" @click="$emit('cancel')">Cancel</button>
       <button 
         class="btn-save" 
         @click="handleSave"
         :disabled="!isValid"
       >
-        {{ isEdit ? '更新' : '作成' }}
+        {{ isEdit ? 'Update' : 'Create' }}
       </button>
     </div>
 
-    <!-- ネットワーク編集モーダル -->
+    <!-- Network Edit Modal -->
     <div v-if="showNetworkEditor" class="network-editor-modal" @click.self="showNetworkEditor = false">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>ネットワーク編集</h2>
+          <h2>Edit Network</h2>
           <div class="modal-header-actions">
             <button class="save-network-btn" @click="handleNetworkSave" :disabled="!isValid">
-              <FontAwesomeIcon :icon="['fas', 'floppy-disk']" /> 保存して閉じる
+              <FontAwesomeIcon :icon="['fas', 'floppy-disk']" /> Save and Close
             </button>
             <button class="close-btn" @click="showNetworkEditor = false">✕</button>
           </div>
@@ -196,27 +193,27 @@ import { useProjectStore } from '../../stores/projectStore';
 import { storeToRefs } from 'pinia';
 import NetworkEditor from '../network/NetworkEditor.vue';
 import NetworkViewer from '../network/NetworkViewer.vue';
-import { isDesignCaseEditable, getPerformanceMismatchMessage } from '../../utils/performanceComparison';
+import { isDesignCaseEditable, getPerformanceMismatchMessage, createPerformanceIdMapping, remapNetworkPerformanceIds } from '../../utils/performanceComparison';
 
 const props = defineProps<{
   designCase: DesignCase | null;
-  performances: Performance[];  // 現在の性能ツリー（新規作成時に使用）
+  performances: Performance[];  // Current performance tree (used when creating new)
 }>();
 
 const showNetworkEditor = ref(false);
 
-// ネットワークエディタモーダルの表示/非表示を監視してスクロールを制御
+// Control scroll by monitoring network editor modal show/hide
 watch(showNetworkEditor, (isOpen) => {
   if (isOpen) {
-    // モーダルが開いたときにスクロールを無効化
+    // Disable scroll when modal opens
     document.body.style.overflow = 'hidden';
   } else {
-    // モーダルが閉じたときにスクロールを再有効化
+    // Re-enable scroll when modal closes
     document.body.style.overflow = '';
   }
 });
 
-// コンポーネントがアンマウントされたときにスクロールを再有効化
+// Re-enable scroll when component is unmounted
 onUnmounted(() => {
   document.body.style.overflow = '';
 });
@@ -230,11 +227,11 @@ const { currentProject } = storeToRefs(projectStore);
 
 const isEdit = computed(() => props.designCase !== null);
 
-// ツリー構造の順序で性能をソート（深さ優先探索）
+// Sort performances by tree structure (depth-first search)
 const sortPerformancesByTree = (performances: any[]): any[] => {
   if (!performances || performances.length === 0) return [];
   
-  // 親子関係のマップを作成
+  // Create parent-child relationship map
   const childrenMap = new Map<string | null, any[]>();
   performances.forEach(perf => {
     const parentId = perf.parent_id || null;
@@ -244,12 +241,12 @@ const sortPerformancesByTree = (performances: any[]): any[] => {
     childrenMap.get(parentId)!.push(perf);
   });
   
-  // 各グループを名前順にソート
+  // Sort each group by name
   childrenMap.forEach((children) => {
     children.sort((a, b) => a.name.localeCompare(b.name));
   });
   
-  // 深さ優先探索で順序を構築
+  // Build order with depth-first search
   const result: any[] = [];
   const traverse = (parentId: string | null) => {
     const children = childrenMap.get(parentId) || [];
@@ -259,58 +256,58 @@ const sortPerformancesByTree = (performances: any[]): any[] => {
     });
   };
   
-  traverse(null); // ルートから開始
+  traverse(null); // Start from root
   return result;
 };
 
-// 表示する性能リスト（編集時はスナップショット、新規時は現在の末端性能）
+// Performance list to display (snapshot when editing, current leaf performances when creating)
 const displayPerformances = computed(() => {
   if (isEdit.value && props.designCase?.performance_snapshot) {
-    // 編集時: スナップショットから末端性能のみ抽出（スナップショットは既にソート済み）
+    // Edit mode: Extract only leaf performances from snapshot (snapshot is already sorted)
     return props.designCase.performance_snapshot.filter(p => p.is_leaf);
   } else {
-    // 新規作成時: 現在の末端性能を使用（既にソート済み）
+    // Create mode: Use current leaf performances (already sorted)
     return props.performances;
   }
 });
 
-// 性能ツリーの整合性チェック
+// Performance tree consistency check
 const isEditable = computed(() => {
-  // 新規作成モードは常に編集可能
+  // Create mode is always editable
   if (!isEdit.value) return true;
   
-  // 編集モードの場合、performance_snapshotの整合性をチェック
+  // In edit mode, check performance_snapshot consistency
   const designCase = props.designCase;
   
   if (!designCase || !designCase.performance_snapshot || designCase.performance_snapshot.length === 0) {
-    // スナップショットがない場合は編集可能（後方互換性）
+    // Editable if no snapshot (backward compatibility)
     return true;
   }
   
-  // 全ての性能（葉と親の両方）を取得
+  // Get all performances (both leaf and parent)
   const allCurrentPerformances = currentProject.value?.performances || [];
   
-  // 全ての性能ツリーと保存されたスナップショットを比較
+  // Compare all performance tree with saved snapshot
   const result = isDesignCaseEditable(allCurrentPerformances, designCase.performance_snapshot);
   
   return result;
 });
 
-// 性能不一致の詳細メッセージ
+// Performance mismatch detail message
 const performanceMismatchWarning = computed(() => {
   if (!isEdit.value || isEditable.value) return '';
   
   const designCase = props.designCase;
   if (!designCase || !designCase.performance_snapshot) return '';
   
-  // 全ての性能を使用
+  // Use all performances
   const allCurrentPerformances = currentProject.value?.performances || [];
   
   return getPerformanceMismatchMessage(allCurrentPerformances, designCase.performance_snapshot);
 });
 
 
-// フォームデータ
+// Form data
 const formData = ref<{
   name: string;
   description: string;
@@ -325,7 +322,7 @@ const formData = ref<{
   network: { nodes: [], edges: [] } 
 });
 
-// 性能ごとの効用関数情報を取得
+// Get utility function information for each performance
 const getUtilityFunctions = (performanceId: string): UtilityFunction[] => {
   if (!currentProject.value) return [];
   
@@ -336,13 +333,13 @@ const getUtilityFunctions = (performanceId: string): UtilityFunction[] => {
   return relations.map(r => JSON.parse(r.utility_function_json!));
 };
 
-// 性能が離散値かどうか判定
+// Check if performance is discrete value
 const isDiscretePerformance = (performanceId: string): boolean => {
   const functions = getUtilityFunctions(performanceId);
   return functions.length > 0 && functions.some(f => f.type === 'discrete');
 };
 
-// 離散値の選択肢を取得（複数のニーズからマージ）
+// Get discrete value options (merge from multiple needs)
 const getDiscreteOptions = (performanceId: string): string[] => {
   const functions = getUtilityFunctions(performanceId);
   const labelsSet = new Set<string>();
@@ -356,7 +353,7 @@ const getDiscreteOptions = (performanceId: string): string[] => {
   return Array.from(labelsSet);
 };
 
-// 初期化
+// Initialization
 onMounted(() => {
   initializeForm();
 });
@@ -367,16 +364,46 @@ watch(() => props.designCase, () => {
 
 function initializeForm() {
   if (props.designCase) {
-    // 編集モード
+    // Edit mode
+    const mappedPerformanceValues: { [key: string]: number | string } = {};
+    
+    // If we have a snapshot and it's editable, map old IDs to new IDs
+    if (props.designCase.performance_snapshot && isEditable.value) {
+      const allCurrentPerformances = currentProject.value?.performances || [];
+      const idMapping = createPerformanceIdMapping(allCurrentPerformances, props.designCase.performance_snapshot);
+      
+      // Map old performance values to new IDs
+      Object.entries(props.designCase.performance_values).forEach(([oldId, value]) => {
+        const newId = idMapping.get(oldId);
+        if (newId) {
+          mappedPerformanceValues[newId] = value;
+        } else {
+          // Keep the old ID if no mapping found (backward compatibility)
+          mappedPerformanceValues[oldId] = value;
+        }
+      });
+    } else {
+      // No snapshot or not editable - use values as is
+      Object.assign(mappedPerformanceValues, props.designCase.performance_values);
+    }
+    
+    // Remap network performance IDs if needed
+    let mappedNetwork = props.designCase.network;
+    if (props.designCase.performance_snapshot && isEditable.value) {
+      const allCurrentPerformances = currentProject.value?.performances || [];
+      const idMapping = createPerformanceIdMapping(allCurrentPerformances, props.designCase.performance_snapshot);
+      mappedNetwork = remapNetworkPerformanceIds(props.designCase.network, idMapping);
+    }
+    
     formData.value = {
       name: props.designCase.name,
       description: props.designCase.description || '',
       color: props.designCase.color || '#3357FF',
-      performance_values: { ...props.designCase.performance_values },
-      network: JSON.parse(JSON.stringify(props.designCase.network)) 
+      performance_values: mappedPerformanceValues,
+      network: mappedNetwork
     };
   } else {
-    // 新規作成モード
+    // Create mode
     formData.value = {
       name: '',
       description: '',
@@ -385,94 +412,123 @@ function initializeForm() {
       network: { nodes: [], edges: [] }
     };
     
-    // 性能値を初期化（現在の末端性能に対して）
+    // Initialize performance values (for current leaf performances)
     displayPerformances.value.forEach(perf => {
       if (isDiscretePerformance(perf.id)) {
-        // 離散値の場合は空文字列
+        // Empty string for discrete values
         formData.value.performance_values[perf.id] = '';
       } else {
-        // 連続値の場合は0
+        // 0 for continuous values
         formData.value.performance_values[perf.id] = 0;
       }
     });
   }
 }
 
-// 入力済みの性能数
+// Number of filled performances
 const filledCount = computed(() => {
   return Object.entries(formData.value.performance_values).filter(
     ([key, val]) => {
-      // 離散値の場合: 空文字列でないこと
+      // Discrete values: not empty string
       if (isDiscretePerformance(key)) {
         return val !== '' && val !== undefined && val !== null;
       }
-      // 連続値の場合: 値が存在すること
+      // Continuous values: value exists
       return val !== undefined && val !== null;
     }
   ).length;
 });
 
-// 全ての性能が入力されているか
+// Check if all performances are filled
 const isAllPerformancesFilled = computed(() => {
   return filledCount.value === displayPerformances.value.length && displayPerformances.value.length > 0;
 });
 
-// バリデーション
+// Validation
 const isValid = computed(() => {
+  // 編集モードで編集不可の場合は無効
+  if (isEdit.value && !isEditable.value) return false;
+  
   return (
     formData.value.name.trim() !== '' &&
     isAllPerformancesFilled.value
   );
 });
 
-function handleSave() {
-  if (!isValid.value) {
-    alert('名前と全ての性能値を入力してください');
-    return;
+// Common function to prepare save data with ID remapping
+function prepareSaveData() {
+  let performanceValues = formData.value.performance_values;
+  let networkStructure = formData.value.network;
+  
+  // In edit mode with snapshot, map current IDs back to original IDs
+  if (isEdit.value && props.designCase?.performance_snapshot && isEditable.value) {
+    const allCurrentPerformances = currentProject.value?.performances || [];
+    const idMapping = createPerformanceIdMapping(allCurrentPerformances, props.designCase.performance_snapshot);
+    
+    // Create reverse mapping (current ID -> snapshot ID)
+    const reverseMapping = new Map<string, string>();
+    idMapping.forEach((currentId, snapshotId) => {
+      reverseMapping.set(currentId, snapshotId);
+    });
+    
+    // Map current IDs back to original snapshot IDs
+    const remappedValues: { [key: string]: number | string } = {};
+    Object.entries(performanceValues).forEach(([currentId, value]) => {
+      const originalId = reverseMapping.get(currentId);
+      if (originalId) {
+        remappedValues[originalId] = value;
+      } else {
+        // Keep the current ID if no mapping found
+        remappedValues[currentId] = value;
+      }
+    });
+    performanceValues = remappedValues;
+    
+    // Also remap network performance IDs back to original
+    networkStructure = remapNetworkPerformanceIds(networkStructure, idMapping, true);
   }
-
+  
   const data: any = {
     name: formData.value.name,
     description: formData.value.description || undefined,
     color: formData.value.color,
-    performance_values: formData.value.performance_values,
-    network: formData.value.network
+    performance_values: performanceValues,
+    network: networkStructure
   };
-  const hasNetwork = formData.value.network.nodes.length > 0 || formData.value.network.edges.length > 0;
-  if (!hasNetwork) {
-    alert('ネットワーク構造を設定してください');
-    return;
-  }
-
-  // 新規作成時のみperformance_snapshotを追加
+  
+  // Add performance_snapshot only when creating new
   if (!isEdit.value) {
-    // 全性能をツリー構造順にソートしてからスナップショットとして保存
+    // Sort all performances by tree structure order and save as snapshot
     const allPerfs = currentProject.value?.performances || [];
     data.performance_snapshot = sortPerformancesByTree(allPerfs);
   }
+  
+  return data;
+}
 
+function handleSave() {
+  if (!isValid.value) {
+    alert('Please enter name and all performance values');
+    return;
+  }
+
+  const hasNetwork = formData.value.network.nodes.length > 0 || formData.value.network.edges.length > 0;
+  if (!hasNetwork) {
+    alert('Please configure the network structure');
+    return;
+  }
+
+  const data = prepareSaveData();
   emit('save', data);
 }
 
 function handleNetworkSave() {
   if (!isValid.value) {
-    alert('名前と全ての性能値を入力してください');
+    alert('Please enter name and all performance values');
     return;
   }
 
-  const data: any = {
-    name: formData.value.name,
-    description: formData.value.description || undefined,
-    color: formData.value.color,
-    performance_values: formData.value.performance_values,
-    network: formData.value.network
-  };
-
-  // 新規作成時のみperformance_snapshotを追加
-  if (!isEdit.value) {
-    data.performance_snapshot = currentProject.value?.performances || [];
-  }
-
+  const data = prepareSaveData();
   emit('save', data);
   showNetworkEditor.value = false;
 }
@@ -486,155 +542,229 @@ function getRandomColor(): string {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use 'sass:color';
+@import '../../style/color';
+
+// カスタムスクロールバースタイル
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 0.8vw;
+    height: 0.8vw;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: color.adjust($gray, $lightness: 5%);
+    border-radius: 0.4vw;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: color.adjust($main_1, $alpha: -0.5);
+    border-radius: 0.4vw;
+    transition: background 0.3s ease;
+    
+    &:hover {
+      background: color.adjust($main_1, $alpha: -0.3);
+    }
+    
+    &:active {
+      background: $main_1;
+    }
+  }
+  
+  // Firefox
+  scrollbar-width: thin;
+  scrollbar-color: color.adjust($main_1, $alpha: -0.5) color.adjust($gray, $lightness: 5%);
+}
+
 .design-case-form {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #ffffff;
+  background: lighten($gray, 8%);
 }
 
 .form-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: clamp(1rem, 2vh, 1.5rem) clamp(1rem, 2vw, 1.5rem);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
+  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
 }
 
 .form-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: clamp(1.1rem, 1.8vw, 1.3rem);
   font-weight: 600;
+  color: $white;
 }
 
 .back-btn {
-  padding: 0px 16px;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  padding: 0 clamp(0.8rem, 1.5vw, 1rem);
+  background: color.adjust($gray, $lightness: 20%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.5vw;
   cursor: pointer;
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   transition: all 0.2s;
-  height: 32px;
+  height: clamp(1.8rem, 3vw, 2rem);
+  color: $white;
 }
 
 .back-btn:hover {
-  background: #e0e0e0;
+  background: color.adjust($gray, $lightness: 25%);
+  border-color: color.adjust($white, $alpha: -0.8);
+  transform: translateY(-0.1vh);
 }
 
 .form-content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: clamp(1rem, 2vh, 1.5rem) clamp(1rem, 2vw, 1.5rem);
+  background: $gray;
+  @include custom-scrollbar;
 }
 
 .form-section {
-  margin-bottom: 32px;
+  margin-bottom: clamp(1.5rem, 3vh, 2rem);
+  background: lighten($gray, 8%);
+  padding: clamp(1rem, 2vh, 1.5rem);
+  border-radius: 0.8vw;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .form-section h3 {
-  margin: 0 0 16px 0;
-  font-size: 16px;
+  margin: 0 0 clamp(0.8rem, 1.5vh, 1rem) 0;
+  font-size: clamp(0.95rem, 1.3vw, 1.1rem);
   font-weight: 600;
-  color: #333;
+  color: $white;
+  display: flex;
+  align-items: center;
+  gap: 0.5vw;
 }
 
 .section-hint {
-  margin: -8px 0 16px 0;
-  font-size: 13px;
-  color: #999;
+  margin: clamp(-0.4rem, -0.8vh, -0.5rem) 0 clamp(0.8rem, 1.5vh, 1rem) 0;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.5);
+  padding: clamp(0.6rem, 1vh, 0.8rem) clamp(0.8rem, 1.2vw, 1rem);
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  border-radius: 0.4vw;
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: clamp(0.8rem, 1.5vh, 1rem);
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
+  margin-bottom: clamp(0.3rem, 0.6vh, 0.4rem);
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 500;
-  color: #555;
+  color: color.adjust($white, $alpha: -0.2);
 }
 
 .required {
-  color: #f44336;
+  color: $sub_1;
 }
 
 .form-input {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: clamp(0.5rem, 1vh, 0.75rem) clamp(0.6rem, 1vw, 0.8rem);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.5vw;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   transition: all 0.2s;
+  background: $gray;
+  color: $white;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #4CAF50;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+  border-color: $main_1;
+  box-shadow: 0 0 0 0.3vw color.adjust($main_1, $alpha: -0.8);
+}
+
+.form-input:disabled {
+  background: color.adjust($gray, $lightness: -5%);
+  color: color.adjust($white, $alpha: -0.5);
+  cursor: not-allowed;
 }
 
 .form-textarea {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: clamp(0.5rem, 1vh, 0.75rem) clamp(0.6rem, 1vw, 0.8rem);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.5vw;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-family: inherit;
   resize: vertical;
   transition: all 0.2s;
+  background: $gray;
+  color: $white;
+  @include custom-scrollbar;
 }
 
 .form-textarea:focus {
   outline: none;
-  border-color: #4CAF50;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+  border-color: $main_1;
+  box-shadow: 0 0 0 0.3vw color.adjust($main_1, $alpha: -0.8);
+}
+
+.form-textarea:disabled {
+  background: color.adjust($gray, $lightness: -5%);
+  color: color.adjust($white, $alpha: -0.5);
+  cursor: not-allowed;
 }
 
 .color-picker-wrapper {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 1vw;
 }
 
 .color-input {
-  width: 60px;
-  height: 40px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  width: clamp(3rem, 5vw, 4rem);
+  height: clamp(3rem, 5vh, 4rem);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.5vw;
   cursor: pointer;
 }
 
+.color-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .color-value {
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-family: monospace;
-  color: #666;
+  color: color.adjust($white, $alpha: -0.4);
 }
 
 .performance-table {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  border-radius: 0.8vw;
   overflow: hidden;
+  background: $gray;
 }
 
 .table-header {
   display: flex;
-  background: #f5f5f5;
-  padding: 12px;
+  background: linear-gradient(145deg, lighten($gray, 12%), lighten($gray, 8%));
+  padding: clamp(0.6rem, 1.2vh, 0.8rem) clamp(0.8rem, 1.2vw, 1rem);
   font-weight: 600;
-  font-size: 13px;
-  color: #555;
-  border-bottom: 1px solid #e0e0e0;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.2);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .table-row {
   display: flex;
-  padding: 12px;
-  border-bottom: 1px solid #f0f0f0;
-  transition: background 0.2s;
+  padding: clamp(0.6rem, 1.2vh, 0.8rem) clamp(0.8rem, 1.2vw, 1rem);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.97);
+  transition: all 0.2s;
 }
 
 .table-row:last-child {
@@ -642,7 +772,8 @@ function getRandomColor(): string {
 }
 
 .table-row:hover {
-  background: #fafafa;
+  background: lighten($gray, 5%);
+  box-shadow: inset 0 0 1vh color.adjust($main_1, $alpha: -0.95);
 }
 
 .col-performance {
@@ -655,8 +786,8 @@ function getRandomColor(): string {
   flex: 1;
   display: flex;
   align-items: center;
-  color: #999;
-  font-size: 13px;
+  color: color.adjust($white, $alpha: -0.5);
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
 }
 
 .col-value {
@@ -666,168 +797,187 @@ function getRandomColor(): string {
 }
 
 .perf-name {
-  font-size: 14px;
-  color: #333;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  color: $white;
 }
 
 .unit-text {
-  font-size: 13px;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
 }
 
 .value-input-wrapper {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.5vw;
 }
 
 .value-input {
   flex: 1;
-  padding: 8px 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: clamp(0.4rem, 0.8vh, 0.5rem) clamp(0.5rem, 0.8vw, 0.6rem);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.4vw;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   transition: all 0.2s;
+  background: lighten($gray, 3%);
+  color: $white;
 }
 
 .value-input:focus {
   outline: none;
-  border-color: #4CAF50;
+  border-color: $main_1;
+}
+
+.value-input:disabled {
+  background: color.adjust($gray, $lightness: -5%);
+  color: color.adjust($white, $alpha: -0.5);
+  cursor: not-allowed;
 }
 
 .input-unit {
-  font-size: 13px;
-  color: #666;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.4);
   white-space: nowrap;
   min-width: fit-content;
 }
 
 .value-select {
   width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  background: white;
+  padding: clamp(0.4rem, 0.8vh, 0.5rem) clamp(0.5rem, 0.8vw, 0.6rem);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.4vw;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  background: lighten($gray, 3%);
+  color: $white;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .value-select:focus {
   outline: none;
-  border-color: #4CAF50;
+  border-color: $main_1;
+}
+
+.value-select:disabled {
+  background: color.adjust($gray, $lightness: -5%);
+  color: color.adjust($white, $alpha: -0.5);
+  cursor: not-allowed;
 }
 
 .empty-performances {
-  padding: 40px 20px;
+  padding: clamp(2rem, 4vh, 2.5rem) clamp(1rem, 2vw, 1.5rem);
   text-align: center;
-  color: #999;
+  color: color.adjust($white, $alpha: -0.5);
 }
 
 .empty-performances p {
-  margin: 8px 0;
+  margin: 0.8vh 0;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
 }
 
 .empty-hint {
-  font-size: 13px;
-  color: #bbb;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.6);
 }
 
 .input-status {
-  margin-top: 16px;
-  padding: 12px;
-  background: #fff3e0;
-  border: 1px solid #ffe0b2;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #f57c00;
+  margin-top: clamp(0.8rem, 1.5vh, 1rem);
+  padding: clamp(0.6rem, 1.2vh, 0.8rem) clamp(0.8rem, 1.2vw, 1rem);
+  background: color.adjust($sub_2, $alpha: -0.85);
+  border: 1px solid color.adjust($sub_2, $alpha: -0.5);
+  border-radius: 0.5vw;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  color: $sub_2;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.8vw;
 }
 
 .input-status.complete {
-  background: #e8f5e9;
-  border-color: #c8e6c9;
-  color: #2e7d32;
+  background: color.adjust($sub_4, $alpha: -0.85);
+  border-color: color.adjust($sub_4, $alpha: -0.5);
+  color: $sub_4;
 }
 
 .status-icon {
-  font-size: 16px;
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
 }
 
 .form-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 20px;
-  border-top: 1px solid #e0e0e0;
-  background: #fafafa;
+  gap: 1vw;
+  padding: clamp(0.8rem, 1.5vh, 1rem) clamp(1rem, 2vw, 1.5rem);
+  border-top: 1px solid color.adjust($white, $alpha: -0.95);
+  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
 }
 
 .btn-cancel {
-  padding: 10px 24px;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  padding: clamp(0.5rem, 1vh, 0.75rem) clamp(1.2rem, 2vw, 1.5rem);
+  background: color.adjust($gray, $lightness: 20%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.5vw;
   cursor: pointer;
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 500;
   transition: all 0.2s;
+  color: $white;
 }
 
 .btn-cancel:hover {
-  background: #f5f5f5;
+  background: color.adjust($gray, $lightness: 25%);
+  transform: translateY(-0.1vh);
 }
 
 .btn-save {
-  padding: 10px 24px;
-  background: #4CAF50;
-  color: white;
+  padding: clamp(0.5rem, 1vh, 0.75rem) clamp(1.2rem, 2vw, 1.5rem);
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  color: $white;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.5vw;
   cursor: pointer;
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 500;
   transition: all 0.2s;
 }
 
 .btn-save:hover:not(:disabled) {
-  background: #45a049;
-  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+  background: linear-gradient(135deg, lighten($main_1, 10%) 0%, lighten($main_2, 10%) 100%);
+  box-shadow: 0 0.3vh 1vh color.adjust($main_1, $alpha: -0.7);
+  transform: translateY(-0.1vh);
 }
 
 .btn-save:disabled {
-  background: #ccc;
+  background: color.adjust($gray, $lightness: 15%);
   cursor: not-allowed;
 }
 
 .network-section {
-  margin-bottom: 32px;
+  margin-bottom: clamp(1.5rem, 3vh, 2rem);
 }
 
 .network-editor-wrapper {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  border-radius: 0.8vw;
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: clamp(0.8rem, 1.5vh, 1rem);
 }
 
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.8vw;
 }
 
 .stat-label {
-  font-size: 13px;
-  color: #666;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.4);
 }
 
 .stat-value {
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 600;
-  color: #333;
+  color: $white;
 }
 
 .section-header-with-action {
@@ -835,7 +985,7 @@ function getRandomColor(): string {
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 16px;
+  margin-bottom: clamp(0.8rem, 1.5vh, 1rem);
 }
 
 .section-header-with-action h3 {
@@ -843,134 +993,159 @@ function getRandomColor(): string {
 }
 
 .edit-network-btn {
-  padding: 8px 16px;
-  background: #1976D2;
-  color: white;
+  padding: clamp(0.4rem, 0.8vh, 0.5rem) clamp(0.8rem, 1.5vw, 1rem);
+  background: $sub_6;
+  color: $white;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.5vw;
   cursor: pointer;
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition: background 0.2s;
+  gap: 0.5vw;
+  transition: all 0.2s;
   flex-shrink: 0;
 }
 
-.edit-network-btn:hover {
-  background: #1565C0;
+.edit-network-btn:hover:not(:disabled) {
+  background: lighten($sub_6, 10%);
+  transform: translateY(-0.1vh);
+  box-shadow: 0 0.2vh 0.8vh color.adjust($sub_6, $alpha: -0.5);
+}
+
+.edit-network-btn:disabled {
+  background: color.adjust($gray, $lightness: 15%);
+  cursor: not-allowed;
+  color: color.adjust($white, $alpha: -0.5);
 }
 
 .network-viewer-wrapper {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  border-radius: 0.8vw;
   overflow: hidden;
+  background: $gray;
 }
 
-/* ネットワーク編集モーダル */
+/* Network edit modal */
 .network-editor-modal {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: color.adjust($black, $alpha: -0.3);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
   overflow: hidden;
+  backdrop-filter: blur(0.5vw);
 }
 
 .network-editor-modal .modal-content {
-  background: white;
-  width: 95%;
-  height: 95%;
-  border-radius: 12px;
+  background: lighten($gray, 8%);
+  width: 90vw;
+  height: 85vh;
+  max-height: 85vh;
+  border-radius: 1.2vw;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1vh 4vh color.adjust($black, $alpha: -0.5);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  margin: 5vh auto; // 上下に余白を確保
 }
 
 .network-editor-modal .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: clamp(1rem, 2vh, 1.5rem) clamp(1.2rem, 2vw, 1.8rem);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
+  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  border-radius: 1.2vw 1.2vw 0 0;
 }
 
 .network-editor-modal .modal-header h2 {
   margin: 0;
-  font-size: 20px;
-  color: #333;
+  font-size: clamp(1.1rem, 1.8vw, 1.3rem);
+  color: $white;
 }
 
 .network-editor-modal .modal-header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 1vw;
 }
 
 .network-editor-modal .save-network-btn {
-  padding: 10px 20px;
-  background: #4CAF50;
-  color: white;
+  padding: clamp(0.5rem, 1vh, 0.75rem) clamp(1rem, 1.8vw, 1.2rem);
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  color: $white;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.5vw;
   cursor: pointer;
-  font-size: 15px;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
   font-weight: 500;
   transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.8vw;
 }
 
 .network-editor-modal .save-network-btn:hover:not(:disabled) {
-  background: #45a049;
-  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+  background: linear-gradient(135deg, lighten($main_1, 10%) 0%, lighten($main_2, 10%) 100%);
+  box-shadow: 0 0.3vh 1vh color.adjust($main_1, $alpha: -0.7);
+  transform: translateY(-0.1vh);
 }
 
 .network-editor-modal .save-network-btn:disabled {
-  background: #ccc;
+  background: color.adjust($gray, $lightness: 15%);
   cursor: not-allowed;
 }
 
 .network-editor-modal .modal-body {
   flex: 1;
-  overflow: hidden;
+  overflow: auto;
   padding: 0;
+  background: $gray;
+  @include custom-scrollbar;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; // flexboxで適切に縮小できるように
+  border-radius: 0 0 1.2vw 1.2vw;
 }
 
 .network-editor-modal .close-btn {
-  padding: 8px 12px;
-  background: #f5f5f5;
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.6rem, 1vw, 0.8rem);
+  background: color.adjust($gray, $lightness: 20%);
   border: none;
-  border-radius: 6px;
+  border-radius: 0.5vw;
   cursor: pointer;
-  font-size: 18px;
-  transition: background 0.2s;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  transition: all 0.2s;
+  color: color.adjust($white, $alpha: -0.4);
 }
 
 .network-editor-modal .close-btn:hover {
-  background: #e0e0e0;
+  background: color.adjust($gray, $lightness: 25%);
+  color: $white;
 }
 
-/* 性能不一致警告 */
+/* Performance mismatch warning */
 .performance-mismatch-warning {
   display: flex;
-  gap: 12px;
-  padding: 16px;
-  background: #FFF9E6;
-  border: 2px solid #FFD54F;
-  border-radius: 8px;
-  margin-bottom: 24px;
+  gap: 1vw;
+  padding: clamp(0.8rem, 1.5vh, 1rem) clamp(1rem, 1.8vw, 1.2rem);
+  background: color.adjust($sub_2, $alpha: -0.9);
+  border: 2px solid $sub_2;
+  border-radius: 0.8vw;
+  margin-bottom: clamp(1.2rem, 2vh, 1.5rem);
 }
 
 .performance-mismatch-warning .warning-icon {
-  font-size: 24px;
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
   flex-shrink: 0;
+  color: $sub_2;
 }
 
 .performance-mismatch-warning .warning-content {
@@ -979,16 +1154,16 @@ function getRandomColor(): string {
 
 .performance-mismatch-warning .warning-title {
   font-weight: 600;
-  color: #F57C00;
-  margin-bottom: 6px;
-  font-size: 15px;
+  color: $sub_2;
+  margin-bottom: 0.5vh;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
 }
 
 .performance-mismatch-warning .warning-message {
-  color: #666;
-  font-size: 14px;
+  color: color.adjust($white, $alpha: -0.3);
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   line-height: 1.5;
-  margin-bottom: 8px;
+  margin-bottom: 0.8vh;
 }
 
 </style>

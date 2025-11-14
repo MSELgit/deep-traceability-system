@@ -1,9 +1,9 @@
 <template>
   <div class="network-viewer-wrapper">
-      <!-- ツールバー -->
+      <!-- Toolbar -->
       <div class="viewer-toolbar">
         <div class="tool-group">
-          <label v-if="!hideToolbar" class="zoom-label">ズーム</label>
+          <label v-if="!hideToolbar" class="zoom-label">Zoom</label>
           <input  v-if="!hideToolbar"
             type="range" 
             v-model.number="zoom" 
@@ -13,16 +13,13 @@
             class="zoom-slider"
           />
           <span v-if="!hideToolbar" class="zoom-value">{{ Math.round(zoom * 100) }}%</span>
-          <button v-if="!hideToolbar" class="tool-btn" @click="resetView" title="全体表示">
+          <button v-if="!hideToolbar" class="tool-btn" @click="resetView" title="Fit">
             <span class="tool-icon"><FontAwesomeIcon :icon="['fas', 'expand']" /></span>
-            全体表示
+            Fit
           </button>
-          <button class="tool-btn" @click="downloadAsImage" title="ダウンロード">
-            <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M10.5 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
-              <path d="M2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2zm.5 2a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm9 2.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/>
-            </svg>
-            画像ダウンロード
+          <button class="tool-btn" @click="downloadAsImage" title="Download">
+            <span class="tool-icon"><FontAwesomeIcon :icon="['fas', 'camera']" /></span>
+            Download
           </button>
         </div>
       </div>
@@ -53,7 +50,7 @@
           />
         </pattern>
         
-        <!-- 矢印マーカー定義（ハイライト用） -->
+        <!-- Arrow marker definition (for highlighting) -->
         <marker
           id="arrow-highlight-active"
           markerWidth="10"
@@ -69,7 +66,7 @@
           />
         </marker>
         
-        <!-- 矢印マーカー定義（各色用） -->
+        <!-- Arrow marker definition (for each color) -->
         <marker
           v-for="(color, weight) in edgeWeightColors"
           :key="`arrow-${weight}`"
@@ -88,9 +85,9 @@
         </marker>
       </defs>
 
-      <!-- メインコンテンツグループ（ズーム適用） - すべての要素を含む -->
+      <!-- Main content group (zoom applied) - contains all elements -->
       <g :transform="`scale(${zoom})`">
-        <!-- グリッド背景 -->
+        <!-- Grid background -->
         <rect 
           :x="0" 
           :y="0" 
@@ -99,9 +96,9 @@
           fill="url(#grid-viewer)" 
         />
 
-        <!-- レイヤー背景（4段分割） -->
+        <!-- Layer backgrounds (4 divisions) -->
         <g class="layer-backgrounds">
-          <!-- 性能レイヤー（1段目: Y=0-200） -->
+          <!-- Performance layer (Level 1: Y=0-200) -->
           <rect 
             :x="0" 
             :y="0" 
@@ -110,7 +107,7 @@
             :fill="layers[0].color"
             opacity="0.1"
           />
-          <!-- 特性レイヤー（2段目: Y=200-400） -->
+          <!-- Property layer (Level 2: Y=200-400) -->
           <rect 
             :x="0" 
             :y="200" 
@@ -119,7 +116,7 @@
             :fill="layers[1].color"
             opacity="0.1"
           />
-          <!-- 変数レイヤー（3段目: Y=400-600） -->
+          <!-- Variable layer (Level 3: Y=400-600) -->
           <rect 
             :x="0" 
             :y="400" 
@@ -128,7 +125,7 @@
             :fill="layers[2].color"
             opacity="0.1"
           />
-          <!-- モノ・環境レイヤー（4段目: Y=600-800） -->
+          <!-- Object/Environment layer (Level 4: Y=600-800) -->
           <rect 
             :x="0" 
             :y="600" 
@@ -139,7 +136,7 @@
           />
         </g>
 
-      <!-- エッジ -->
+      <!-- Edges -->
       <g class="edges-layer">
         <line
           v-for="edge in network.edges"
@@ -156,14 +153,14 @@
         />
       </g>
 
-      <!-- ノード -->
+      <!-- Nodes -->
       <g class="nodes-layer">
         <g
           v-for="node in network.nodes"
           :key="node.id"
           class="node"
         >
-          <!-- レイヤー1: 性能（円） -->
+          <!-- Layer 1: Performance (circle) -->
           <circle
             v-if="node.layer === 1"
             :cx="node.x"
@@ -175,7 +172,7 @@
             :opacity="isNodeHighlighted(node) ? 1 : (highlightedPerfId ? 0.3 : 1)"
           />
           
-          <!-- レイヤー2: 特性（正三角形、高さ36px） -->
+          <!-- Layer 2: Property (equilateral triangle, height 36px) -->
           <polygon
             v-else-if="node.layer === 2"
             :points="getTrianglePoints(node.x, node.y, isPropertyHighlighted(node))"
@@ -185,7 +182,7 @@
             :opacity="isPropertyHighlighted(node) ? 1 : (highlightedPerfId ? 0.3 : 1)"
           />
           
-          <!-- レイヤー3: 変数（横長ダイヤ、高さ36px、幅54px） -->
+          <!-- Layer 3: Variable (horizontal diamond, height 36px, width 54px) -->
           <polygon
             v-else-if="node.layer === 3"
             :points="getDiamondPoints(node.x, node.y)"
@@ -195,7 +192,7 @@
             :opacity="highlightedPerfId ? 0.3 : 1"
           />
           
-          <!-- レイヤー4: モノ（縦1:横2の長方形、高さ36px、幅72px） -->
+          <!-- Layer 4: Object (1:2 rectangle, height 36px, width 72px) -->
           <rect
             v-else-if="node.layer === 4 && node.type === 'object'"
             :x="node.x - 36"
@@ -209,7 +206,7 @@
             :opacity="highlightedPerfId ? 0.3 : 1"
           />
           
-          <!-- レイヤー4: 環境（正方形、36px × 36px） -->
+          <!-- Layer 4: Environment (square, 36px × 36px) -->
           <rect
             v-else-if="node.layer === 4 && node.type === 'environment'"
             :x="node.x - 18"
@@ -223,7 +220,7 @@
             :opacity="highlightedPerfId ? 0.3 : 1"
           />
           
-          <!-- フォールバック: レイヤー4でtypeが不明な場合（円） -->
+          <!-- Fallback: Layer 4 with unknown type (circle) -->
           <circle
             v-else-if="node.layer === 4"
             :cx="node.x"
@@ -247,10 +244,10 @@
           </text>
         </g>
       </g>
-      </g> <!-- メインコンテンツグループ終了 -->
+      </g> <!-- End main content group -->
     </svg>
-    </div> <!-- canvas-container終了 -->
-    </div> <!-- network-viewer終了 -->
+    </div> <!-- End canvas-container -->
+    </div> <!-- End network-viewer -->
 
     <!-- レイヤーガイド（ネットワーク表示エリアの外） -->
     <div class="layer-legend">
@@ -286,7 +283,7 @@ const props = defineProps<{
 const canvasWidth = ref(1200);
 const canvasHeight = ref(800);
 
-// ズーム・パン状態
+// Zoom/pan state
 const zoom = ref(1);
 const minZoom = ref(0.3);
 const panX = ref(0);
@@ -298,33 +295,33 @@ const svgCanvas = ref<SVGSVGElement>();
 const viewerContainer = ref<HTMLDivElement>();
 
 const layers = [
-  { id: 1, label: '性能', color: '#4CAF50' },
-  { id: 2, label: '特性', color: '#2196F3' },
-  { id: 3, label: '変数', color: '#FFC107' },
-  { id: 4, label: 'モノ・環境', color: '#9C27B0' }
+  { id: 1, label: 'Performance', color: '#4CAF50' },
+  { id: 2, label: 'Property', color: '#2196F3' },
+  { id: 3, label: 'Variable', color: '#FFC107' },
+  { id: 4, label: 'Object/Environment', color: '#9C27B0' }
 ];
 
-// エッジの重みと色の対応
+// Edge weight and color mapping
 const edgeWeightColors = {
-  3: '#004563',      // 強い正の因果関係
-  1: '#588da2',      // 中程度の正の因果関係
-  0.33: '#c3dde2',   // 弱い正の因果関係
-  0: 'silver',       // 無相関
-  [-0.33]: '#e9c1c9', // 弱い負の因果関係
-  [-1]: '#c94c62',   // 中程度の負の因果関係
-  [-3]: '#9f1e35'    // 強い負の因果関係
+  3: '#004563',      // Strong positive causality
+  1: '#588da2',      // Moderate positive causality
+  0.33: '#c3dde2',   // Weak positive causality
+  0: 'silver',       // No correlation
+  [-0.33]: '#e9c1c9', // Weak negative causality
+  [-1]: '#c94c62',   // Moderate negative causality
+  [-3]: '#9f1e35'    // Strong negative causality
 };
 
-// ノードがハイライトされているかチェック
+// Check if node is highlighted
 function isNodeHighlighted(node: NetworkNode): boolean {
   return !!(node.layer === 1 && node.performance_id === props.highlightedPerfId);
 }
 
-// 特性ノードがハイライトされているかチェック（ハイライトされた性能に接続されている）
+// Check if property node is highlighted (connected to highlighted performance)
 function isPropertyHighlighted(node: NetworkNode): boolean {
   if (!props.highlightedPerfId || node.layer !== 2) return false;
   
-  // この特性に接続された性能があるかチェック
+  // Check if there's a performance connected to this property
   const connectedEdges = props.network.edges.filter(
     edge => edge.source_id === node.id || edge.target_id === node.id
   );
@@ -340,25 +337,25 @@ function isPropertyHighlighted(node: NetworkNode): boolean {
   return false;
 }
 
-// エッジがハイライトされているかチェック
+// Check if edge is highlighted
 function isEdgeHighlighted(edge: any): boolean {
   if (!props.highlightedPerfId) return false;
   
   const sourceNode = getNodeById(edge.source_id);
   const targetNode = getNodeById(edge.target_id);
   
-  // 両方のノードが存在しない場合はfalse
+  // Return false if both nodes don't exist
   if (!sourceNode || !targetNode) return false;
   
-  // 性能-特性間のエッジのみハイライト対象
-  // 性能ノード（レイヤー1）と特性ノード（レイヤー2）の接続のみ
+  // Only highlight edges between performance and property
+  // Only connections between performance nodes (layer 1) and property nodes (layer 2)
   const isPerformanceToProperty = 
     (sourceNode.layer === 1 && targetNode.layer === 2) ||
     (sourceNode.layer === 2 && targetNode.layer === 1);
   
   if (!isPerformanceToProperty) return false;
   
-  // ハイライトされた性能に関連するエッジかチェック
+  // Check if edge is related to highlighted performance
   return (sourceNode.layer === 1 && isNodeHighlighted(sourceNode)) ||
          (targetNode.layer === 1 && isNodeHighlighted(targetNode)) ||
          (sourceNode.layer === 2 && isPropertyHighlighted(sourceNode)) ||
@@ -596,12 +593,47 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use 'sass:color';
+@import '../../style/color';
+
+// カスタムスクロールバースタイル
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 0.8vw;
+    height: 0.8vw;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: color.adjust($gray, $lightness: 5%);
+    border-radius: 0.4vw;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: color.adjust($main_1, $alpha: -0.5);
+    border-radius: 0.4vw;
+    transition: background 0.3s ease;
+    
+    &:hover {
+      background: color.adjust($main_1, $alpha: -0.3);
+    }
+    
+    &:active {
+      background: $main_1;
+    }
+  }
+  
+  // Firefox
+  scrollbar-width: thin;
+  scrollbar-color: color.adjust($main_1, $alpha: -0.5) color.adjust($gray, $lightness: 5%);
+}
+
 .network-viewer-wrapper {
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
+  background: $gray;
 }
 
 .network-viewer {
@@ -625,58 +657,137 @@ onUnmounted(() => {
 .viewer-toolbar {
   display: flex;
   align-items: center;
-  padding: 8px 12px;
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
-  gap: 12px;
+  padding: clamp(0.5rem, 1vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem);
+  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
+  gap: clamp(0.75rem, 1.5vw, 1rem);
   flex-shrink: 0;
+  box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.7);
 }
 
 .tool-group {
   display: flex;
-  gap: 6px;
+  gap: clamp(0.4rem, 0.8vw, 0.6rem);
   align-items: center;
 }
 
 .zoom-label {
-  font-size: 12px;
-  color: #666;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.3);
   font-weight: 500;
 }
 
 .zoom-slider {
-  width: 100px;
-  height: 6px;
+  width: clamp(6rem, 10vw, 8rem);
+  height: clamp(0.4rem, 0.6vh, 0.5rem);
   cursor: pointer;
+  background: color.adjust($gray, $lightness: -10%);
+  border-radius: 0.3vw;
+  outline: none;
+  
+  // Track styling
+  &::-webkit-slider-track {
+    background: linear-gradient(90deg, 
+      color.adjust($gray, $lightness: -15%) 0%, 
+      color.adjust($main_1, $alpha: -0.7) 50%, 
+      color.adjust($main_2, $alpha: -0.7) 100%);
+    border-radius: 0.3vw;
+    height: 100%;
+  }
+  
+  &::-moz-range-track {
+    background: linear-gradient(90deg, 
+      color.adjust($gray, $lightness: -15%) 0%, 
+      color.adjust($main_1, $alpha: -0.7) 50%, 
+      color.adjust($main_2, $alpha: -0.7) 100%);
+    border-radius: 0.3vw;
+    height: 100%;
+    border: none;
+  }
+  
+  // Thumb styling
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: clamp(1rem, 1.5vw, 1.2rem);
+    height: clamp(1rem, 1.5vw, 1.2rem);
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.5), 
+                0 0 0 0.1vw color.adjust($white, $alpha: -0.8);
+    transition: all 0.2s ease;
+    
+    &:hover {
+      transform: scale(1.1);
+      background: linear-gradient(135deg, lighten($main_1, 15%) 0%, lighten($main_2, 15%) 100%);
+      box-shadow: 0 0.3vh 0.8vh color.adjust($main_1, $alpha: -0.4),
+                  0 0 0 0.15vw color.adjust($white, $alpha: -0.6),
+                  0 0 1vh color.adjust($main_1, $alpha: -0.3);
+    }
+    
+    &:active {
+      transform: scale(0.95);
+      box-shadow: 0 0.1vh 0.3vh color.adjust($black, $alpha: -0.3);
+    }
+  }
+  
+  &::-moz-range-thumb {
+    width: clamp(1rem, 1.5vw, 1.2rem);
+    height: clamp(1rem, 1.5vw, 1.2rem);
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border: 0.1vw solid color.adjust($white, $alpha: -0.8);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.5);
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: linear-gradient(135deg, lighten($main_1, 15%) 0%, lighten($main_2, 15%) 100%);
+      border-color: color.adjust($white, $alpha: -0.6);
+    }
+  }
 }
 
 .zoom-value {
-  font-size: 11px;
-  color: #666;
-  min-width: 40px;
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+  color: color.adjust($white, $alpha: -0.4);
+  min-width: clamp(2.5rem, 4vw, 3rem);
   text-align: right;
+  font-weight: 500;
+  font-family: monospace;
 }
 
 .tool-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  background: white;
-  border: 2px solid #ddd;
-  border-radius: 4px;
+  gap: clamp(0.3rem, 0.5vw, 0.4rem);
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.6rem, 1vw, 0.8rem);
+  background: color.adjust($gray, $lightness: 20%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.5vw;
   cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  font-weight: 500;
+  color: $white;
+  transition: all 0.3s ease;
+  box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.8);
 }
 
 .tool-btn:hover {
-  background: #f5f5f5;
-  border-color: #999;
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  border-color: color.adjust($main_1, $alpha: -0.3);
+  color: $white;
+  transform: translateY(-0.1vh);
+  box-shadow: 0 0.4vh 1vh color.adjust($main_1, $alpha: -0.5);
+}
+
+.tool-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 0.2vh 0.5vh color.adjust($main_1, $alpha: -0.6);
 }
 
 .tool-icon {
-  font-size: 14px;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
 }
 
 .spacer {
@@ -689,8 +800,8 @@ onUnmounted(() => {
 }
 
 .info-text {
-  font-size: 12px;
-  color: #666;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.4);
 }
 
 .network-canvas {
@@ -717,10 +828,10 @@ onUnmounted(() => {
 
 .layer-legend {
   display: flex;
-  gap: 16px;
-  padding: 8px 16px;
-  background: white;
-  border-top: 1px solid #e0e0e0;
+  gap: 1.6vw;
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.8rem, 1.5vw, 1rem);
+  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  border-top: 1px solid color.adjust($white, $alpha: -0.95);
   justify-content: center;
   flex-shrink: 0;
 }
@@ -728,17 +839,18 @@ onUnmounted(() => {
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 0.6vw;
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
 }
 
 .legend-color {
-  width: 12px;
-  height: 12px;
+  width: clamp(0.7rem, 1.2vw, 0.8rem);
+  height: clamp(0.7rem, 1.2vw, 0.8rem);
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .legend-label {
-  color: #666;
+  color: color.adjust($white, $alpha: -0.3);
 }
 </style>

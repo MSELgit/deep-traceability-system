@@ -41,6 +41,7 @@ const showAnalysis = computed(() => {
 </script>
 
 <style scoped lang="scss">
+@use 'sass:color';
 @import '../../style/color';
 
 .decomposition-analysis {
@@ -48,8 +49,8 @@ const showAnalysis = computed(() => {
   padding: 2.5vh 2.5vw;
   background: linear-gradient(145deg, lighten($gray, 8%), lighten($gray, 3%));
   border-radius: 1vw;
-  border: 1px solid transparentize($white, 0.9);
-  box-shadow: 0 0.5vh 2vh transparentize($black, 0.5);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  box-shadow: 0 0.5vh 2vh color.adjust($black, $alpha: -0.5);
   position: relative;
   overflow: hidden;
 }
@@ -79,17 +80,17 @@ const showAnalysis = computed(() => {
 .analysis-item {
   margin-bottom: 1.8vh;
   padding: 1.5vh 1.5vw;
-  background: transparentize($black, 0.6);
+  background: color.adjust($black, $alpha: -0.6);
   border-radius: 0.5vw;
-  border: 1px solid transparentize($white, 0.92);
+  border: 1px solid color.adjust($white, $alpha: -0.92);
   position: relative;
   transition: all 0.3s ease;
 }
 
 .analysis-item:hover {
   transform: translateX(0.3vw);
-  border-color: transparentize($main_1, 0.7);
-  background: transparentize($black, 0.5);
+  border-color: color.adjust($main_1, $alpha: -0.7);
+  background: color.adjust($black, $alpha: -0.5);
 }
 
 .analysis-item::before {
@@ -104,7 +105,7 @@ const showAnalysis = computed(() => {
 }
 
 .analysis-item strong {
-  color: transparentize($white, 0.3);
+  color: color.adjust($white, $alpha: -0.3);
   font-weight: 500;
   display: block;
   margin-bottom: 0.8vh;
@@ -142,6 +143,6 @@ const showAnalysis = computed(() => {
 }
 
 .decompose-button:hover {
-  box-shadow: 0 0.5vh 2vh transparentize($main_2, 0.6);
+  box-shadow: 0 0.5vh 2vh color.adjust($main_2, $alpha: -0.6);
 }
 </style>
