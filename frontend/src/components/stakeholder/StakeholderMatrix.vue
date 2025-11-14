@@ -1,9 +1,5 @@
 <template>
   <div class="stakeholder-matrix">
-    <div class="section-header">
-      <h2>Stakeholder Analysis</h2>
-    </div>
-
     <div class="actions">
       <button class="action-btn stakeholder-btn" @click="showStakeholderDialog = true">
         <FontAwesomeIcon :icon="['fas', 'plus']" />
@@ -432,22 +428,6 @@ function downloadMatrixAsExcel() {
 @import '../../style/color';
 .stakeholder-matrix {
   padding: 2vh;
-}
-
-.section-header {
-  margin-bottom: 3vh;
-}
-
-.section-header h2 {
-  font-size: clamp(1.5rem, 2vw, 1.8rem);
-  color: $white;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.section-description {
-  color: transparentize($white, 0.4);
-  font-size: clamp(0.85rem, 1vw, 0.95rem);
 }
 
 .actions {

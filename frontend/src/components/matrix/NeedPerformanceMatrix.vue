@@ -1,10 +1,5 @@
 <template>
   <div class="need-performance-matrix">
-    <div class="section-header">
-      <h2>統合マトリクス</h2>
-    </div>
-
-    <!-- ツールバー -->
     <div class="matrix-toolbar">
       <button class="toolbar-button template-download-button" @click="downloadTemplateFile">
         <svg width="20" height="20" viewBox="0 0 48 48" class="excel-icon">
@@ -27,14 +22,14 @@
           <path d="M43.167 4H29v10h16V5.833A1.833 1.833 0 0 0 43.167 4z" fill="#33c481"/>
           <path fill="#107c41" d="M29 24h16v10H29z"/>
         </svg>
-        <span>効用関数のテンプレートファイルをダウンロード</span>
+        <span>Download Utility Function Template File</span>
       </button>
       
       <div class="toolbar-divider"></div>
       
       <button class="toolbar-button matrix-image-button" @click="downloadMatrixAsImageVertical">
         <FontAwesomeIcon :icon="['fas', 'camera']" />
-        <span>マトリクスを画像ダウンロード</span>
+        <span>Download Matrix as Image</span>
       </button>
       
       <button class="toolbar-button matrix-excel-button" @click="downloadMatrixAsExcel">
@@ -58,32 +53,32 @@
           <path d="M43.167 4H29v10h16V5.833A1.833 1.833 0 0 0 43.167 4z" fill="#33c481"/>
           <path fill="#107c41" d="M29 24h16v10H29z"/>
         </svg>
-        <span>マトリクスをExcelダウンロード</span>
+        <span>Download Matrix as Excel</span>
       </button>
     </div>
 
-    <!-- 統合マトリクステーブル -->
+    
     <div v-if="needs.length > 0 && (stakeholders.length > 0 || performances.length > 0)" class="matrix-container">
       <table class="matrix-table">
-        <!-- ヘッダー: 階層的な性能列 -->
+        
         <thead>
-          <!-- 第1行: グループヘッダー -->
+          
           <tr>
-            <th :rowspan="maxPerformanceLevel + 1" class="corner-cell">ニーズ</th>
+            <th :rowspan="maxPerformanceLevel + 1" class="corner-cell">Needs</th>
             <th :colspan="stakeholders.length" class="group-header stakeholder-group">
-              ステークホルダー
+              Stakeholders
             </th>
             <th :rowspan="maxPerformanceLevel + 1" class="group-header total-votes-header">
-              合計票数
+              Total Votes
             </th>
             <th :colspan="getAllPerformanceColumns().length" class="group-header performance-group">
-              性能（階層表示）
+              Performance (Hierarchical View)
             </th>
           </tr>
           
-          <!-- 第2行以降: 階層的な性能ヘッダー -->
+          
           <tr v-for="level in maxPerformanceLevel" :key="`level-${level}`">
-            <!-- ステークホルダーヘッダー（最初の行のみ） -->
+            
             <template v-if="level === 1">
               <th 
                 v-for="stakeholder in stakeholders" 
@@ -93,12 +88,12 @@
               >
                 <div class="stakeholder-header-content">
                   <div class="stakeholder-name-vertical">{{ stakeholder.name }}</div>
-                  <div class="stakeholder-votes-horizontal">{{ stakeholder.votes }}票</div>
+                  <div class="stakeholder-votes-horizontal">{{ stakeholder.votes }}</div>
                 </div>
               </th>
             </template>
             
-            <!-- 性能ヘッダー（各レベル） -->
+            
             <th
               v-for="cell in getMatrixCellsAtLevel(level)"
               :key="cell.performance.id"
@@ -119,10 +114,10 @@
           </tr>
         </thead>
 
-        <!-- ボディ: ニーズ行 -->
+        
         <tbody>
           <tr v-for="need in needs" :key="need.id">
-            <!-- ニーズ名 -->
+            
             <td class="need-header">
               <div class="need-info">
                 {{ need.name }}
@@ -132,7 +127,7 @@
               </div>
             </td>
 
-            <!-- ステークホルダー×ニーズセル -->
+            
             <td
               v-for="stakeholder in stakeholders"
               :key="`sh-${stakeholder.id}`"
@@ -147,14 +142,14 @@
               </div>
             </td>
 
-            <!-- 合計票数セル -->
+            
             <td class="matrix-cell total-votes-cell">
               <div class="cell-content total-votes-value">
                 {{ getTotalVotesForNeed(need.id).toFixed(1) }}
               </div>
             </td>
 
-            <!-- 性能×ニーズセル（末端のみクリック可能） -->
+            
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`perf-${perf.id}`"
@@ -170,13 +165,13 @@
             >
               <div class="cell-content">
                 <template v-if="perf.is_leaf">
-                  <!-- 効用関数ボタン -->
+                  
                   <button
                     v-if="getUtilityButtonType(need.id, perf.id) !== 'none'"
                     class="utility-button"
                     :class="`utility-button-${getUtilityButtonType(need.id, perf.id)}`"
                     @click="openUtilityModal(need.id, perf.id, $event)"
-                    :title="getUtilityButtonType(need.id, perf.id) === 'warning' ? '効用関数の確認が必要です' : '効用関数を設定'"
+                    :title="getUtilityButtonType(need.id, perf.id) === 'warning' ? 'Utility function needs review' : 'Set utility function'"
                   >
                     <span v-if="getUtilityButtonType(need.id, perf.id) === 'add'">+</span>
                     <span v-else-if="getUtilityButtonType(need.id, perf.id) === 'check'">✓</span>
@@ -195,10 +190,10 @@
             </td>
           </tr>
 
-          <!-- 集計行: ↑票数 -->
+          
           <tr class="summary-row">
             <td :colspan="stakeholders.length + 1" class="summary-empty"></td>
-            <td class="summary-label-cell">↑票数</td>
+            <td class="summary-label-cell">↑Votes</td>
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`up-${perf.id}`"
@@ -208,10 +203,10 @@
             </td>
           </tr>
 
-          <!-- 集計行: ↓票数 -->
+          
           <tr class="summary-row">
             <td :colspan="stakeholders.length + 1" class="summary-empty"></td>
-            <td class="summary-label-cell">↓票数</td>
+            <td class="summary-label-cell">↓Votes</td>
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`down-${perf.id}`"
@@ -221,10 +216,10 @@
             </td>
           </tr>
 
-          <!-- 集計行: 有効投票数 -->
+          
           <tr class="summary-row effective-votes-row">
             <td :colspan="stakeholders.length + 1" class="summary-empty effective-votes-empty"></td>
-            <td class="summary-label-cell effective-votes-label">有効投票数</td>
+            <td class="summary-label-cell effective-votes-label">Valid Votes</td>
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`effective-${perf.id}`"
@@ -234,7 +229,7 @@
             </td>
           </tr>
 
-          <!-- 集計行: 大項目ごとの有効投票数 -->
+          
           <tr class="summary-row root-summary-row">
             <td :colspan="stakeholders.length + 1" class="summary-empty root-summary-empty"></td>
             <td class="summary-label-cell root-summary-label">V</td>
@@ -248,7 +243,7 @@
             </td>
           </tr>
 
-          <!-- 集計行: p値 (有効投票数 / V) -->
+          
           <tr class="summary-row p-value-row">
             <td :colspan="stakeholders.length + 1" class="summary-empty p-value-empty"></td>
             <td class="summary-label-cell p-value-label">p= Σv_i / V</td>
@@ -261,7 +256,7 @@
             </td>
           </tr>
 
-          <!-- 集計行: p² -->
+          
           <tr class="summary-row p-squared-row">
             <td :colspan="stakeholders.length + 1" class="summary-empty p-squared-empty"></td>
             <td class="summary-label-cell p-squared-label">p²</td>
@@ -275,7 +270,7 @@
             </td>
           </tr>
 
-          <!-- 集計行: HHI (大項目ごとのΣp²) -->
+          
           <tr class="summary-row hhi-row">
             <td :colspan="stakeholders.length + 1" class="summary-empty hhi-empty"></td>
             <td class="summary-label-cell hhi-label">HHI = Σp²</td>
@@ -293,7 +288,7 @@
       </table>
     </div>
 
-    <!-- 分解不足の性能分析（マトリクスの外） -->
+    
     <DecompositionAnalysis
       :analysis="insufficientDecompositionAnalysis"
       :needsCount="needs.length"
@@ -301,59 +296,59 @@
       @navigate-to-performance="navigateToPerformanceManagement"
     />
 
-    <!-- 効用関数設定モーダル -->
+    
     <div v-if="showUtilityModal && currentUtilityEdit" class="modal-overlay" @click="closeUtilityModal">
       <div class="modal-content utility-modal" @click.stop>
-        <h3>効用関数設定</h3>
+        <h3>Utility Function Settings</h3>
         
         <div class="modal-info">
           <div class="info-row">
-            <strong>性能:</strong>
+            <strong>Performance:</strong>
             <span>{{ performances.find(p => p.id === currentUtilityEdit!.performanceId)?.name }}</span>
           </div>
           <div class="info-row">
-            <strong>ニーズ:</strong>
+            <strong>Needs:</strong>
             <span>{{ needs.find(n => n.id === currentUtilityEdit!.needId)?.name }}</span>
           </div>
           <div class="info-row">
-            <strong>方向:</strong>
+            <strong>Direction:</strong>
             <span class="direction-badge">
               {{ getPerformanceRelationSymbol(currentUtilityEdit!.needId, currentUtilityEdit!.performanceId) }}
-              {{ getPerformanceRelation(currentUtilityEdit!.needId, currentUtilityEdit!.performanceId)?.direction === 'up' ? '向上' : '抑制' }}
+              {{ getPerformanceRelation(currentUtilityEdit!.needId, currentUtilityEdit!.performanceId)?.direction === 'up' ? 'Increase' : 'Decrease' }}
             </span>
           </div>
         </div>
 
         <div class="graph-section">
           <div class="graph-container">
-            <!-- インフォと設定ボタン -->
+            
             <div class="graph-controls">
-              <!-- インポートボタン: 常に表示 -->
+              
               <button 
                 class="graph-control-button import-button" 
                 @click.stop="handleImportExcel"
-                title="Excelから効用関数をインポート"
+                title="Import utility function from Excel"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
                   <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
                 </svg>
               </button>
-              <!-- カメラボタン: 効用関数が登録されている場合のみ表示 -->
+              
               <button 
                 v-if="hasUtilityFunction()"
                 class="graph-control-button camera-button" 
                 @click.stop="handleDownloadGraph"
-                title="グラフを画像でダウンロード"
+                title="Download graph as image"
               >
                 <FontAwesomeIcon :icon="['fas', 'camera']" />
               </button>
-              <!-- エクセルボタン: 効用関数が登録されている場合のみ表示 -->
+              
               <button 
                 v-if="hasUtilityFunction()"
                 class="graph-control-button excel-button" 
                 @click.stop="handleDownloadExcel"
-                title="効用関数をExcelでダウンロード"
+                title="Download utility function as Excel"
               >
                 <svg width="16" height="16" viewBox="0 0 48 48">
                   <defs>
@@ -376,95 +371,95 @@
                   <path fill="#107c41" d="M29 24h16v10H29z"/>
                 </svg>
               </button>
-              <!-- コピーボタン: 効用関数が登録されている場合のみ表示 -->
+              
               <button 
                 v-if="hasUtilityFunction()"
                 class="graph-control-button copy-button" 
                 @click.stop="handleCopyUtilityFunction"
-                title="効用関数をコピー"
+                title="Copy utility function"
               >
                 <FontAwesomeIcon :icon="['fas', 'copy']" />
               </button>
-              <!-- ペーストボタン: 同じ性能にコピーしたデータがある場合のみ表示 -->
+              
               <button 
                 v-if="canPasteUtilityFunction()"
                 class="graph-control-button paste-button" 
                 @click.stop="handlePasteUtilityFunction"
-                title="効用関数を貼り付け"
+                title="Paste utility function"
               >
                 <FontAwesomeIcon :icon="['fas', 'paste']" />
               </button>
               <button 
                 class="graph-control-button info-button" 
                 @click.stop="toggleInfoPopup"
-                title="使い方"
+                title="How to use"
               >
                 <FontAwesomeIcon :icon="['fas', 'info-circle']" />
               </button>
               <button 
                 class="graph-control-button settings-button" 
                 @click.stop="toggleSettingsPopup"
-                title="設定"
+                title="Settings"
               >
                 <FontAwesomeIcon :icon="['fas', 'gear']" />
               </button>
               
-              <!-- インフォポップアップ -->
+              
               <div v-if="showInfoPopup" class="graph-popup info-popup" @click.stop>
                 <div class="popup-header">
-                  <h4>グラフの使い方</h4>
+                  <h4>How to Use the Graph</h4>
                   <button class="popup-close" @click="showInfoPopup = false">×</button>
                 </div>
                 <div class="popup-content">
-                  <p class="info-section-title">【連続関数】</p>
+                  <p class="info-section-title">[Continuous Function]</p>
                   <ul class="info-list">
-                    <li><strong>点をプロット:</strong> グラフ内をクリック</li>
-                    <li><strong>点を削除:</strong> プロットした点をクリック</li>
-                    <li><strong>線の表示:</strong> 2点以上で自動的に結ばれます</li>
-                    <li><strong>座標確認:</strong> 点にマウスオーバー</li>
-                    <li><strong>軸範囲:</strong> 下のスライダーで調整可能</li>
+                    <li><strong>Plot points:</strong> Click inside the graph</li>
+                    <li><strong>Delete points:</strong> Click on plotted points</li>
+                    <li><strong>Line display:</strong> Automatically connects with 2+ points</li>
+                    <li><strong>Check coordinates:</strong> Hover over points</li>
+                    <li><strong>Axis range:</strong> Adjustable with slider below</li>
                   </ul>
-                  <p class="info-section-title">【離散関数】</p>
+                  <p class="info-section-title">[Discrete Function]</p>
                   <ul class="info-list">
-                    <li><strong>点をプロット:</strong> グラフ内クリックで最寄りの点の効用値を更新</li>
-                    <li><strong>点を削除:</strong> 緑の点をクリック（またはマトリクスで行削除）</li>
-                    <li><strong>座標確認:</strong> 点にマウスオーバー</li>
+                    <li><strong>Plot points:</strong> Click in graph to update nearest point's utility value</li>
+                    <li><strong>Delete points:</strong> Click green points (or delete row in matrix)</li>
+                    <li><strong>Check coordinates:</strong> Hover over points</li>
                   </ul>
-                  <p class="info-section-title">【コピー&ペースト】</p>
+                  <p class="info-section-title">[Copy & Paste]</p>
                   <ul class="info-list">
-                    <li><strong>コピー:</strong> 効用関数が登録されている場合、<FontAwesomeIcon :icon="['fas', 'copy']" />ボタンが表示されます</li>
-                    <li><strong>ペースト:</strong> 同じ性能の別のニーズにのみ貼り付け可能です</li>
+                    <li><strong>Copy:</strong> <FontAwesomeIcon :icon="['fas', 'copy']" /> button appears when utility function is registered</li>
+                    <li><strong>Paste:</strong> Only available for different Needs with the same Performance</li>
                   </ul>
                 </div>
               </div>
               
-              <!-- 設定ポップアップ -->
+              
               <div v-if="showSettingsPopup" class="graph-popup settings-popup" @click.stop>
                 <div class="popup-header">
-                  <h4>線の補完設定</h4>
+                  <h4>Line Interpolation Settings</h4>
                   <button class="popup-close" @click="showSettingsPopup = false">×</button>
                 </div>
                 <div class="popup-content">
                   <div class="setting-item">
-                    <label class="setting-label">補完方法 (連続関数のみ):</label>
+                    <label class="setting-label">Interpolation Method (Continuous Function Only):</label>
                     <select v-model="interpolationType" class="setting-select" :disabled="currentUtilityEdit?.type === 'discrete'">
-                      <option value="linear">線形補完</option>
-                      <option value="step">ステップ補完</option>
-                      <option value="smooth">スムーズ補完</option>
+                      <option value="linear">Linear Interpolation</option>
+                      <option value="step">Step Interpolation</option>
+                      <option value="smooth">Smooth Interpolation</option>
                     </select>
                   </div>
                   <div class="setting-description">
                     <template v-if="currentUtilityEdit?.type === 'discrete'">
-                      ⚠️ 離散関数では線は表示されません。各離散値は独立した点として表示されます。
+                      Lines are not displayed for discrete functions. Each discrete value is shown as an independent point.
                     </template>
                     <template v-else-if="interpolationType === 'linear'">
-                      点と点を直線で結びます（デフォルト）
+                      Connects points with straight lines (default)
                     </template>
                     <template v-else-if="interpolationType === 'step'">
-                      階段状に補完します（段階的な変化）
+                      Interpolates with step-like transitions (stepwise changes)
                     </template>
                     <template v-else-if="interpolationType === 'smooth'">
-                      曲線で滑らかに補完します
+                      Interpolates smoothly with curves
                     </template>
                   </div>
                 </div>
@@ -472,36 +467,36 @@
             </div>
             
             <svg class="utility-graph" viewBox="0 0 420 330" preserveAspectRatio="xMidYMid meet" @click="handleGraphClick">
-              <!-- 背景 -->
+              
               <rect x="50" y="20" width="330" height="260" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
               
-              <!-- グリッド線（縦） -->
+              
               <line v-for="i in 10" :key="`v-${i}`" 
                 :x1="50 + i * 33" :y1="20" 
                 :x2="50 + i * 33" :y2="280" 
                 stroke="#e9ecef" stroke-width="1"/>
               
-              <!-- グリッド線（横） -->
+              
               <line v-for="i in 10" :key="`h-${i}`" 
                 :x1="50" :y1="20 + i * 26" 
                 :x2="380" :y2="20 + i * 26" 
                 stroke="#e9ecef" stroke-width="1"/>
               
-              <!-- 基準線: y=0.5 (黄色) -->
+              
               <line x1="50" :y1="20 + 260 * 0.5" x2="380" :y2="20 + 260 * 0.5" 
                 stroke="#fbbf24" stroke-width="2" stroke-dasharray="5,5" opacity="0.7"/>
               
-              <!-- 基準線: y=0.8 (赤) -->
+              
               <line x1="50" :y1="20 + 260 * 0.2" x2="380" :y2="20 + 260 * 0.2" 
                 stroke="#ef4444" stroke-width="2" stroke-dasharray="5,5" opacity="0.7"/>
               
-              <!-- Y軸 -->
+              
               <line x1="50" y1="20" x2="50" y2="280" stroke="#495057" stroke-width="2"/>
               
-              <!-- X軸 -->
+              
               <line x1="50" y1="280" x2="380" y2="280" stroke="#495057" stroke-width="2"/>
               
-              <!-- プロットされた点（連続関数） -->
+              
               <g v-if="currentUtilityEdit?.type === 'continuous'" v-for="(point, index) in utilityPoints" :key="`point-${index}`">
                 <circle 
                   :cx="point.x" 
@@ -518,7 +513,7 @@
                 />
               </g>
               
-              <!-- プロットされた点（離散関数） -->
+              
               <g v-if="currentUtilityEdit?.type === 'discrete'" v-for="(point, index) in discreteGraphPoints" :key="`discrete-${index}`">
                 <circle 
                   :cx="point.x" 
@@ -535,7 +530,7 @@
                 />
               </g>
               
-              <!-- カスタムツールチップ -->
+              
               <g v-if="tooltip.visible" class="custom-tooltip">
                 <rect 
                   :x="tooltip.x - 60" 
@@ -558,7 +553,7 @@
                 </text>
               </g>
               
-              <!-- プロット点を結ぶ線（連続関数） -->
+              
               <polyline 
                 v-if="currentUtilityEdit?.type === 'continuous' && utilityPoints.length > 1 && interpolationType !== 'smooth'"
                 :points="getPolylinePoints()"
@@ -569,7 +564,7 @@
                 :key="`polyline-${utilityPoints.length}-${interpolationType}`"
               />
               
-              <!-- スムーズ補完用のパス（連続関数） -->
+              
               <path
                 v-if="currentUtilityEdit?.type === 'continuous' && utilityPoints.length > 1 && interpolationType === 'smooth'"
                 :d="getSmoothPath()"
@@ -580,30 +575,30 @@
                 :key="`path-${utilityPoints.length}-${interpolationType}`"
               />
               
-              <!-- Y軸ラベル -->
-              <text x="25" y="25" font-size="12" fill="#495057" font-weight="600">1.0</text>
-              <text x="25" y="153" font-size="12" fill="#495057" font-weight="600">0.5</text>
-              <text x="25" y="283" font-size="12" fill="#495057" font-weight="600">0.0</text>
               
-              <!-- Y軸タイトル -->
-              <text x="15" y="150" font-size="14" fill="#495057" font-weight="600" 
-                transform="rotate(-90, 15, 150)">効用値</text>
+              <text x="25" y="25" font-size="12" fill="#f3f3f3" font-weight="600">1.0</text>
+              <text x="25" y="153" font-size="12" fill="#f3f3f3" font-weight="600">0.5</text>
+              <text x="25" y="283" font-size="12" fill="#f3f3f3" font-weight="600">0.0</text>
               
-              <!-- X軸ラベル（連続関数の場合） -->
+              
+              <text x="15" y="150" font-size="14" fill="#f3f3f3" font-weight="600" 
+                transform="rotate(-90, 15, 150)">Utility Value</text>
+              
+              
               <template v-if="currentUtilityEdit?.type === 'continuous'">
-                <text x="50" y="295" font-size="11" fill="#495057" text-anchor="middle">{{ axisRange.min }}</text>
-                <text x="215" y="295" font-size="11" fill="#495057" text-anchor="middle">{{ ((axisRange.min + axisRange.max) / 2).toFixed(2) }}</text>
-                <text x="380" y="295" font-size="11" fill="#495057" text-anchor="middle">{{ axisRange.max }}</text>
+                <text x="50" y="295" font-size="11" fill="#f3f3f3" text-anchor="middle">{{ axisRange.min }}</text>
+                <text x="215" y="295" font-size="11" fill="#f3f3f3" text-anchor="middle">{{ ((axisRange.min + axisRange.max) / 2).toFixed(2) }}</text>
+                <text x="380" y="295" font-size="11" fill="#f3f3f3" text-anchor="middle">{{ axisRange.max }}</text>
               </template>
               
-              <!-- X軸ラベル（離散関数の場合） -->
+              
               <template v-if="currentUtilityEdit?.type === 'discrete'">
                 <g v-for="(row, index) in discreteRows" :key="`label-${index}`">
                   <text 
                     :x="getDiscreteXPosition(index)" 
                     y="295" 
                     font-size="10" 
-                    fill="#495057" 
+                    fill="#f3f3f3" 
                     text-anchor="middle"
                   >
                     {{ row.label || `#${index + 1}` }}
@@ -611,28 +606,28 @@
                 </g>
               </template>
               
-              <!-- X軸タイトル -->
-              <text x="215" y="310" font-size="14" fill="#495057" font-weight="600" 
+              
+              <text x="215" y="310" font-size="14" fill="#f3f3f3" font-weight="600" 
                 text-anchor="middle">
                 {{ getCurrentPerformanceUnit() ? `${performances.find(p => p.id === currentUtilityEdit!.performanceId)?.name} (${getCurrentPerformanceUnit()})` : `${performances.find(p => p.id === currentUtilityEdit!.performanceId)?.name}` }}
               </text>
               
-              <!-- 基準線のラベル -->
+              
               <text x="385" :y="20 + 260 * 0.5 + 5" font-size="11" fill="#f59e0b" font-weight="600">0.5</text>
               <text x="385" :y="20 + 260 * 0.2 + 5" font-size="11" fill="#dc2626" font-weight="600">0.8</text>
             </svg>
           </div>
           
-          <!-- タイプ切り替え -->
+          
           <div class="type-switcher">
-            <span class="type-label">タイプ:</span>
+            <span class="type-label">Type:</span>
             <button 
               class="type-button" 
               :class="{ active: currentUtilityEdit?.type === 'continuous' }"
               @click="switchToType('continuous')"
             >
               <span class="type-icon">{{ currentUtilityEdit?.type === 'continuous' ? '●' : '○' }}</span>
-              連続
+              Continuous
             </button>
             <button 
               class="type-button" 
@@ -640,15 +635,14 @@
               @click="switchToType('discrete')"
             >
               <span class="type-icon">{{ currentUtilityEdit?.type === 'discrete' ? '●' : '○' }}</span>
-              離散
+              Discrete
             </button>
           </div>
           
-          <!-- 横軸範囲設定（連続関数の場合のみ） -->
+          
           <div v-if="currentUtilityEdit?.type === 'continuous'" class="axis-range-control">
             <div class="range-header">
-              <span class="range-label">横軸範囲:</span>
-              <span class="range-tip">0付近は細かく調整可能</span>
+              <span class="range-label">X-Axis Range:</span>
             </div>
             
             <div class="range-single-row">
@@ -658,7 +652,7 @@
                 @input="updateRangeFromInput"
                 step="any"
                 class="range-input"
-                placeholder="下限"
+                placeholder="Min"
               />
               
               <div ref="rangeSliderElement" class="nouislider-container"></div>
@@ -669,17 +663,17 @@
                 @input="updateRangeFromInput"
                 step="any"
                 class="range-input"
-                placeholder="上限"
+                placeholder="Max"
               />
             </div>
           </div>
           
-          <!-- 離散関数用のマトリクス入力 -->
+          
           <div v-if="currentUtilityEdit?.type === 'discrete'" class="discrete-matrix-control">
             <div class="matrix-header">
-              <span class="matrix-label">離散値マトリクス:</span>
+              <span class="matrix-label">Discrete Value Matrix:</span>
               <button class="add-row-button" @click="addDiscreteRow">
-                ＋ 行を追加
+                + Add Row
               </button>
             </div>
             
@@ -687,8 +681,8 @@
               <table class="discrete-table">
                 <thead>
                   <tr>
-                    <th class="label-column">性能値ラベル</th>
-                    <th class="value-column">効用値 (0-1)</th>
+                    <th class="label-column">Performance Value Label</th>
+                    <th class="value-column">Utility Value (0-1)</th>
                     <th class="action-column"></th>
                   </tr>
                 </thead>
@@ -699,7 +693,7 @@
                         type="text" 
                         v-model="row.label"
                         class="discrete-input label-input"
-                        placeholder="例: 小さい"
+                        placeholder="e.g. Small"
                       />
                     </td>
                     <td class="value-cell">
@@ -728,7 +722,7 @@
             </div>
             
             <div class="matrix-hint">
-              💡 効用値は手入力せず、上のグラフで点をプロットすることでも設定できます
+              You can also set utility values by plotting points on the graph above
             </div>
           </div>
         </div>
@@ -739,22 +733,22 @@
             class="danger" 
             @click="resetUtilityFunction"
           >
-            初期化
+            Reset
           </button>
           <div class="spacer"></div>
           <button class="secondary" @click="closeUtilityModal">
-            保存せずに終了
+            Exit Without Saving
           </button>
           <button class="primary" @click="saveUtilityFunction">
-            保存
+            Save
           </button>
         </div>
       </div>
     </div>
 
-    <!-- 空状態 -->
+    
     <div v-else-if="!(needs.length > 0 && (stakeholders.length > 0 || performances.length > 0))" class="empty-matrix">
-      <p>ステークホルダー、ニーズ、性能を登録してください</p>
+      <p>Please register Stakeholders, Needs, and Performance</p>
     </div>
   </div>
 </template>
@@ -775,19 +769,18 @@ const emit = defineEmits<{
   navigateToPerformance: []
 }>()
 
-// 効用関数データ構造
 interface UtilityFunction {
   need_id: string
   performance_id: string
   direction: 'up' | 'down'
-  type: 'continuous' | 'discrete' // 連続 or 離散
-  axisMin?: number // 横軸の下限（連続関数用）
-  axisMax?: number // 横軸の上限（連続関数用）
-  points?: UtilityPoint[] // プロットされた点
-  discreteRows?: DiscreteRow[] // 離散関数のマトリクスデータ
-  saved: boolean // 保存済みフラグ
-  warning: boolean // 警告状態フラグ
-  archived: boolean // アーカイブ状態フラグ
+  type: 'continuous' | 'discrete'
+  axisMin?: number 
+  axisMax?: number 
+  points?: UtilityPoint[] 
+  discreteRows?: DiscreteRow[]
+  saved: boolean 
+  warning: boolean 
+  archived: boolean
 }
 
 const projectStore = useProjectStore()
@@ -800,10 +793,8 @@ const {
   needPerformanceRelations
 } = storeToRefs(projectStore)
 
-// 効用関数のローカルストレージ
 const utilityFunctions = ref<UtilityFunction[]>([])
 
-// ポップアップ表示状態
 const showUtilityModal = ref(false)
 const currentUtilityEdit = ref<{
   needId: string
@@ -811,58 +802,47 @@ const currentUtilityEdit = ref<{
   type: 'continuous' | 'discrete'
 } | null>(null)
 
-// 横軸範囲の設定（連続関数用）
 const axisRange = ref({
   min: 0,
   max: 100
 })
 
-// noUiSlider用のref
 const rangeSliderElement = ref<HTMLElement | null>(null)
 let rangeSliderInstance: any = null
 
-// プロットされた点のデータ構造
 interface UtilityPoint {
-  x: number // SVG座標
-  y: number // SVG座標
-  valueX: number // 実際のX値（性能値）
-  valueY: number // 実際のY値（効用値 0-1）
+  x: number 
+  y: number 
+  valueX: number 
+  valueY: number 
 }
 
-// 現在編集中の効用関数の点
 const utilityPoints = ref<UtilityPoint[]>([])
 
-// 離散関数用のデータ構造
 interface DiscreteRow {
-  label: string // 性能値のラベル（例: 「小さい」）
-  value: number // 効用値 (0-1)
+  label: string 
+  value: number 
 }
 
-// 離散関数の行データ
 const discreteRows = ref<DiscreteRow[]>([
   { label: '', value: 0 }
 ])
 
-// 離散関数の行を追加
 function addDiscreteRow() {
   discreteRows.value.push({ label: '', value: 0 })
 }
 
-// 離散関数の行を削除
 function removeDiscreteRow(index: number) {
   if (discreteRows.value.length > 1) {
     discreteRows.value.splice(index, 1)
   }
 }
 
-// ポップアップ表示状態
 const showInfoPopup = ref(false)
 const showSettingsPopup = ref(false)
 
-// 線の補完タイプ
 const interpolationType = ref<'linear' | 'step' | 'smooth'>('linear')
 
-// コピーした効用関数データ
 const copiedUtilityFunction = ref<{
   performanceId: string
   type: 'continuous' | 'discrete'
@@ -872,7 +852,6 @@ const copiedUtilityFunction = ref<{
   interpolationType: 'linear' | 'step' | 'smooth'
 } | null>(null)
 
-// ツールチップ表示用
 const tooltip = ref<{
   visible: boolean
   x: number
@@ -885,7 +864,6 @@ const tooltip = ref<{
   content: ''
 })
 
-// ポップアップトグル関数
 function toggleInfoPopup() {
   showInfoPopup.value = !showInfoPopup.value
   if (showInfoPopup.value) {
@@ -903,7 +881,6 @@ function toggleSettingsPopup() {
 function handleCopyUtilityFunction() {
   if (!currentUtilityEdit.value) return
   
-  // 現在の効用関数データをコピー
   copiedUtilityFunction.value = {
     performanceId: currentUtilityEdit.value.performanceId,
     type: currentUtilityEdit.value.type,
@@ -918,18 +895,37 @@ function handleCopyUtilityFunction() {
 function handleDownloadGraph() {
   if (!currentUtilityEdit.value) return
   
-  // SVG要素を取得
   const svgElement = document.querySelector('.utility-graph') as SVGElement
   if (!svgElement) return
   
-  // SVGのクローンを作成
   const svgClone = svgElement.cloneNode(true) as SVGElement
   
-  // SVGを文字列に変換
+  // Change all text elements to black color for better visibility on white background
+  const textElements = svgClone.querySelectorAll('text')
+  textElements.forEach(text => {
+    text.setAttribute('fill', '#000000')
+  })
+  
+  // Change grid lines to darker color for better visibility
+  const lines = svgClone.querySelectorAll('line')
+  lines.forEach(line => {
+    const stroke = line.getAttribute('stroke')
+    if (stroke === '#e9ecef') {
+      line.setAttribute('stroke', '#dee2e6')
+    } else if (stroke === '#495057') {
+      line.setAttribute('stroke', '#000000')
+    }
+  })
+  
+  // Change background to white
+  const bgRect = svgClone.querySelector('rect[fill="#f8f9fa"]')
+  if (bgRect) {
+    bgRect.setAttribute('fill', '#ffffff')
+  }
+  
   const svgData = new XMLSerializer().serializeToString(svgClone)
   const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
   
-  // Canvasを作成してSVGを描画
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
   if (!ctx) return
@@ -938,24 +934,20 @@ function handleDownloadGraph() {
   const url = URL.createObjectURL(svgBlob)
   
   img.onload = () => {
-    // 高解像度で描画
-    canvas.width = 1260 // 420 * 3
-    canvas.height = 990 // 330 * 3
+    canvas.width = 1260
+    canvas.height = 990
     
-    // 白背景を描画
     ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     
-    // SVGを描画
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
     
-    // PNGとしてダウンロード
     canvas.toBlob((blob) => {
       if (!blob) return
       
       const performance = performances.value.find(p => p.id === currentUtilityEdit.value!.performanceId)
       const need = needs.value.find(n => n.id === currentUtilityEdit.value!.needId)
-      const filename = `効用関数_${performance?.name || 'performance'}_${need?.name || 'need'}.png`
+      const filename = `utility_function_${performance?.name || 'performance'}_${need?.name || 'need'}.png`
       
       const link = document.createElement('a')
       link.href = URL.createObjectURL(blob)
@@ -977,23 +969,19 @@ function handleDownloadExcel() {
   const need = needs.value.find(n => n.id === currentUtilityEdit.value!.needId)
   const relation = getPerformanceRelation(currentUtilityEdit.value.needId, currentUtilityEdit.value.performanceId)
   
-  // ワークブックを作成
   const wb = XLSX.utils.book_new()
   
-  // 【データシート】を作成
   if (currentUtilityEdit.value.type === 'continuous') {
-    // 連続関数の場合
     const dataRows: (string | number)[][] = [
-      ['連続関数データ'],
+      ['Continuous Function Data'],
       [''],
-      ['補完方法', interpolationType.value === 'linear' ? '線形' : interpolationType.value === 'step' ? 'ステップ' : 'スムーズ', '「線形」「ステップ」「スムーズ」のいずれかを入力してください'],
-      ['軸範囲（最小）', axisRange.value.min, ''],
-      ['軸範囲（最大）', axisRange.value.max, ''],
+      ['Interpolation Method', interpolationType.value === 'linear' ? 'Linear' : interpolationType.value === 'step' ? 'Step' : 'Smooth', 'Please enter either "Linear", "Step", or "Smooth"'],
+      ['Axis Range (Min)', axisRange.value.min, ''],
+      ['Axis Range (Max)', axisRange.value.max, ''],
       [''],
-      ['性能値', '効用値']
+      ['Performance Value', 'Utility Value']
     ]
     
-    // ポイントをX値でソート
     const sortedPoints = [...utilityPoints.value].sort((a, b) => a.valueX - b.valueX)
     
     sortedPoints.forEach(point => {
@@ -1002,20 +990,18 @@ function handleDownloadExcel() {
     
     const ws_data = XLSX.utils.aoa_to_sheet(dataRows)
     
-    // 列幅を設定
     ws_data['!cols'] = [
       { wch: 20 },
       { wch: 15 },
       { wch: 40 }
     ]
     
-    XLSX.utils.book_append_sheet(wb, ws_data, '連続関数データ')
+    XLSX.utils.book_append_sheet(wb, ws_data, 'Continuous Function Data')
   } else {
-    // 離散関数の場合
     const dataRows: (string | number)[][] = [
-      ['離散関数データ'],
+      ['Discrete Function Data'],
       [''],
-      ['ラベル', '効用値']
+      ['Label', 'Utility Value']
     ]
     
     discreteRows.value.forEach(row => {
@@ -1026,22 +1012,19 @@ function handleDownloadExcel() {
     
     const ws_data = XLSX.utils.aoa_to_sheet(dataRows)
     
-    // 列幅を設定
     ws_data['!cols'] = [
       { wch: 20 },
       { wch: 15 }
     ]
     
-    XLSX.utils.book_append_sheet(wb, ws_data, '離散関数データ')
+    XLSX.utils.book_append_sheet(wb, ws_data, 'Discrete Function Data')
   }
   
-  // ファイルをダウンロード
-  const filename = `効用関数_${performance?.name || 'performance'}_${need?.name || 'need'}.xlsx`
+  const filename = `utility_function_${performance?.name || 'performance'}_${need?.name || 'need'}.xlsx`
   XLSX.writeFile(wb, filename)
 }
 
 function handleImportExcel() {
-  // ファイル選択ダイアログを表示
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = '.xlsx,.xls'
@@ -1057,50 +1040,42 @@ function handleImportExcel() {
         const data = new Uint8Array(event.target?.result as ArrayBuffer)
         const workbook = XLSX.read(data, { type: 'array' })
         
-        // シート名から関数タイプを判定
         let functionType: 'continuous' | 'discrete' | null = null
         
-        if (workbook.Sheets['連続関数データ']) {
+        if (workbook.Sheets['Continuous Function Data']) {
           functionType = 'continuous'
-        } else if (workbook.Sheets['離散関数データ']) {
+        } else if (workbook.Sheets['Discrete Function Data']) {
           functionType = 'discrete'
         } else {
-          alert('エラー: 「連続関数データ」または「離散関数データ」シートが見つかりません')
+          alert('Error: "Continuous Function Data" or "Discrete Function Data" sheet not found')
           return
         }
         
-        // データシートを読み込み
         if (functionType === 'continuous') {
-          const dataSheet = workbook.Sheets['連続関数データ']
+          const dataSheet = workbook.Sheets['Continuous Function Data']
           if (!dataSheet) {
-            alert('エラー: 「連続関数データ」シートが見つかりません')
+            alert('Error: "Continuous Function Data" sheet not found')
             return
           }
           
           const dataJson = XLSX.utils.sheet_to_json(dataSheet, { header: 1 }) as any[][]
           
-          // 補完方法を取得（B3セル = インデックス[2][1]）
           const interpolationValue = dataJson[2]?.[1]
           
           let newInterpolationType: 'linear' | 'step' | 'smooth' = 'linear'
           if (typeof interpolationValue === 'string') {
             const normalizedValue = interpolationValue.trim()
-            if (normalizedValue === '線形' || normalizedValue === 'linear') {
+            if (normalizedValue === 'Linear' || normalizedValue === 'linear') {
               newInterpolationType = 'linear'
-            } else if (normalizedValue === 'ステップ' || normalizedValue === 'step') {
+            } else if (normalizedValue === 'Step' || normalizedValue === 'step') {
               newInterpolationType = 'step'
-            } else if (normalizedValue === 'スムーズ' || normalizedValue === 'smooth') {
+            } else if (normalizedValue === 'Smooth' || normalizedValue === 'smooth') {
               newInterpolationType = 'smooth'
             }
           }
-          
-          
-          // 軸範囲を取得
           const minValue = Number(dataJson[3]?.[1])
           const maxValue = Number(dataJson[4]?.[1])
           
-          // データポイントを取得（8行目以降 = インデックス7以降）
-          // ヘッダー行「性能値, 効用値」をスキップ
           const points: Array<{ x: number; y: number; valueX: number; valueY: number }> = []
           for (let i = 7; i < dataJson.length; i++) {
             const row = dataJson[i]
@@ -1108,9 +1083,7 @@ function handleImportExcel() {
               const valueX = Number(row[0])
               const valueY = Number(row[1])
               
-              // 数値であることを確認（ヘッダー行を除外）
               if (!isNaN(valueX) && !isNaN(valueY)) {
-                // SVG座標に変換
                 const x = 50 + ((valueX - minValue) / (maxValue - minValue)) * 330
                 const y = 20 + (1 - valueY) * 260
                 
@@ -1119,41 +1092,33 @@ function handleImportExcel() {
             }
           }
           
-          // データを適用（順序が重要）
           currentUtilityEdit.value!.type = 'continuous'
           axisRange.value = { min: minValue, max: maxValue }
           interpolationType.value = newInterpolationType
           utilityPoints.value = points
-          
-          
-          // 次のティックでスライダーを再初期化し、グラフを強制再描画
           nextTick(() => {
             initRangeSlider()
-            // 強制的に再描画をトリガー
             if (utilityPoints.value.length > 0) {
               const temp = [...utilityPoints.value]
               utilityPoints.value = temp
             }
           })
           
-          alert(`連続関数データをインポートしました（補完方法: ${newInterpolationType === 'linear' ? '線形' : newInterpolationType === 'step' ? 'ステップ' : 'スムーズ'}）`)
+          alert(`Continuous function data imported (Interpolation method: ${newInterpolationType === 'linear' ? 'Linear' : newInterpolationType === 'step' ? 'Step' : 'Smooth'})`)
         } else {
-          const dataSheet = workbook.Sheets['離散関数データ']
+          const dataSheet = workbook.Sheets['Discrete Function Data']
           if (!dataSheet) {
-            alert('エラー: 「離散関数データ」シートが見つかりません')
+            alert('Error: "Discrete Function Data" sheet not found')
             return
           }
           
           const dataJson = XLSX.utils.sheet_to_json(dataSheet, { header: 1 }) as any[][]
           
-          // データポイントを取得（4行目以降 = インデックス3以降）
-          // ヘッダー行「ラベル, 効用値」をスキップ
           const rows: Array<{ label: string; value: number }> = []
           for (let i = 3; i < dataJson.length; i++) {
             const row = dataJson[i]
             if (row && row[0] !== undefined && row[1] !== undefined) {
               const value = Number(row[1])
-              // 効用値が数値であることを確認（ヘッダー行を除外）
               if (!isNaN(value)) {
                 rows.push({
                   label: String(row[0]),
@@ -1163,16 +1128,15 @@ function handleImportExcel() {
             }
           }
           
-          // データを適用
           currentUtilityEdit.value!.type = 'discrete'
           discreteRows.value = rows.length > 0 ? rows : [{ label: '', value: 0 }]
           
-          alert('離散関数データをインポートしました')
+          alert('Discrete function data imported')
         }
         
       } catch (error) {
-        console.error('Excel読み込みエラー:', error)
-        alert('エラー: Excelファイルの読み込みに失敗しました')
+        console.error('Excel loading error:', error)
+        alert('Error: Failed to load Excel file')
       }
     }
     
@@ -1182,104 +1146,30 @@ function handleImportExcel() {
   input.click()
 }
 
-// テンプレートファイルをダウンロード
 function downloadTemplateFile() {
-  // ワークブックを作成
-  const wb = XLSX.utils.book_new()
-  
-  // 【説明シート】を作成
-  const instructionsData: (string | number)[][] = [
-    ['効用関数テンプレートファイル'],
-    [''],
-    ['このファイルは、効用関数データをインポートするためのテンプレートです。'],
-    ['以下の手順で使用してください：'],
-    [''],
-    ['【使い方】'],
-    ['1. 効用関数設定モーダルを開く（マトリクスの性能×ニーズセルで効用関数ボタンをクリック）'],
-    ['2. モーダルで「インポート」ボタンをクリック'],
-    ['3. 使用したいシート（「連続関数データ」または「離散関数データ」）を編集'],
-    ['4. このファイルを選択してアップロード'],
-    [''],
-    ['【注意事項】'],
-    ['・インポートするデータの種類（連続/離散）は、使用するシート名で自動判定されます'],
-    ['・「連続関数データ」シートを使う場合: 連続関数としてインポートされます'],
-    ['・「離散関数データ」シートを使う場合: 離散関数としてインポートされます'],
-    ['・連続関数の補完方法は「線形」「ステップ」「スムーズ」のいずれかで入力してください'],
-    ['・シート名は変更しないでください'],
-    ['・両方のシートがある場合、連続関数データが優先されます'],
-  ]
-  
-  const ws_instructions = XLSX.utils.aoa_to_sheet(instructionsData)
-  ws_instructions['!cols'] = [{ wch: 90 }]
-  XLSX.utils.book_append_sheet(wb, ws_instructions, '説明')
-  
-  // 【連続関数データシート（見本）】を作成
-  const continuousData: (string | number)[][] = [
-    ['連続関数データ'],
-    [''],
-    ['補完方法', '線形', '「線形」「ステップ」「スムーズ」のいずれかを入力してください'],
-    ['軸範囲（最小）', 0, '性能値の最小値を入力'],
-    ['軸範囲（最大）', 100, '性能値の最大値を入力'],
-    [''],
-    ['性能値', '効用値'],
-    [0, 0],
-    [25, 0.3],
-    [50, 0.6],
-    [75, 0.85],
-    [100, 1.0],
-    [''],
-    ['※ 上記は見本データです。実際のデータに置き換えてください。'],
-    ['※ 性能値と効用値は数値で入力してください。'],
-    ['※ 効用値は0〜1の範囲で入力してください。'],
-  ]
-  
-  const ws_continuous = XLSX.utils.aoa_to_sheet(continuousData)
-  ws_continuous['!cols'] = [{ wch: 20 }, { wch: 15 }, { wch: 50 }]
-  
-  XLSX.utils.book_append_sheet(wb, ws_continuous, '連続関数データ')
-  
-  // 【離散関数データシート（見本）】を作成
-  const discreteData: (string | number)[][] = [
-    ['離散関数データ'],
-    [''],
-    ['ラベル', '効用値'],
-    ['とても小さい', 0.2],
-    ['小さい', 0.4],
-    ['普通', 0.6],
-    ['大きい', 0.8],
-    ['とても大きい', 1.0],
-    [''],
-    ['※ 上記は見本データです。実際のデータに置き換えてください。'],
-    ['※ ラベルは任意の文字列、効用値は0〜1の範囲の数値で入力してください。'],
-  ]
-  
-  const ws_discrete = XLSX.utils.aoa_to_sheet(discreteData)
-  ws_discrete['!cols'] = [{ wch: 20 }, { wch: 15 }]
-  XLSX.utils.book_append_sheet(wb, ws_discrete, '離散関数データ')
-  
-  // ファイルをダウンロード
-  const filename = '効用関数テンプレート.xlsx'
-  XLSX.writeFile(wb, filename)
+  // Works in both Vite dev and production environments
+  const link = document.createElement('a')
+  link.href = '/templates/utility_function_template.xlsx'
+  link.download = 'utility_function_template.xlsx'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
-// マトリクスを画像としてダウンロード（縦書き対応版）
 async function downloadMatrixAsImageVertical() {
   try {
     const button = document.querySelector('.matrix-image-button span')
     if (button) {
-      button.textContent = '画像生成中...'
+      button.textContent = 'Generating image...'
     }
     
-    // 複数の候補からテーブル要素を取得
     let targetElement: HTMLElement | null = null
     
-    // 候補1: matrix-table を直接取得
     const matrixTable = document.querySelector('.matrix-table') as HTMLElement
     if (matrixTable && matrixTable.offsetWidth > 0) {
       targetElement = matrixTable
     }
     
-    // 候補2: matrix-container を取得
     if (!targetElement) {
       const matrixContainer = document.querySelector('.matrix-container') as HTMLElement
       if (matrixContainer && matrixContainer.offsetWidth > 0) {
@@ -1287,7 +1177,6 @@ async function downloadMatrixAsImageVertical() {
       }
     }
     
-    // 候補3: table要素を直接取得
     if (!targetElement) {
       const tables = document.querySelectorAll('table')
       for (const table of tables) {
@@ -1301,12 +1190,11 @@ async function downloadMatrixAsImageVertical() {
     
     if (!targetElement) {
       console.error('No valid element found')
-      alert('マトリクステーブルが見つかりません')
-      if (button) button.textContent = 'マトリクスを画像ダウンロード'
+      alert('Matrix table not found')
+      if (button) button.textContent = 'Download Matrix as Image'
       return
     }
     
-    // 縦書き要素を取得して一時的に非表示にする
     const verticalElements = targetElement.querySelectorAll('.performance-header')
     const originalVisibility: { element: HTMLElement; visibility: string; color: string }[] = []
 
@@ -1318,11 +1206,9 @@ async function downloadMatrixAsImageVertical() {
         visibility: computedStyle.visibility,
         color: computedStyle.color
       })
-      // テキストを透明にする（レイアウトは保持）
       htmlEl.style.color = 'transparent'
     })
     
-    // html2canvasで画像化（縦書きテキストは透明）
     const html2canvas = (await import('html2canvas')).default as any
     const baseCanvas = await html2canvas(targetElement, {
       scale: 2,
@@ -1335,35 +1221,29 @@ async function downloadMatrixAsImageVertical() {
       }
     })
     
-    // スタイルを元に戻す
     originalVisibility.forEach(({ element, visibility, color }) => {
       element.style.visibility = visibility
       element.style.color = color
     })
-    
-    
     if (baseCanvas.width === 0 || baseCanvas.height === 0) {
-      alert('画像生成に失敗しました（サイズが0です）')
-      if (button) button.textContent = 'マトリクスを画像ダウンロード'
+      alert('Failed to generate image (size is 0)')
+      if (button) button.textContent = 'Download Matrix as Image'
       return
     }
     
-    // 新しいキャンバスを作成して縦書きテキストを描画
     const finalCanvas = document.createElement('canvas')
     finalCanvas.width = baseCanvas.width
     finalCanvas.height = baseCanvas.height
     const ctx = finalCanvas.getContext('2d')
     
     if (!ctx) {
-      alert('キャンバスコンテキストの取得に失敗しました')
-      if (button) button.textContent = 'マトリクスを画像ダウンロード'
+      alert('Failed to get canvas context')
+      if (button) button.textContent = 'Download Matrix as Image'
       return
     }
     
-    // ベース画像を描画
     ctx.drawImage(baseCanvas, 0, 0)
     
-    // 性能ヘッダーのテキストを縦書きで再描画
     const tableRect = targetElement.getBoundingClientRect()
     const scrollLeft = targetElement.scrollLeft || 0
     const scrollTop = targetElement.scrollTop || 0
@@ -1373,24 +1253,18 @@ async function downloadMatrixAsImageVertical() {
       const rect = htmlEl.getBoundingClientRect()
       const computedStyle = window.getComputedStyle(htmlEl)
       
-      // テーブル内の相対位置を計算（scale考慮、スクロール補正）
       const x = (rect.left - tableRect.left + scrollLeft) * 2
       const y = (rect.top - tableRect.top + scrollTop) * 2
       const width = rect.width * 2
       const height = rect.height * 2
-      
-      
-      // 元の背景色を取得して描画
       const bgColor = computedStyle.backgroundColor
       ctx.fillStyle = bgColor
       ctx.fillRect(x, y, width, height)
       
-      // セルの境界線を再描画（通常の境界線）
       ctx.strokeStyle = '#dee2e6'
       ctx.lineWidth = 1
       ctx.strokeRect(x, y, width, height)
       
-      // 末端性能（is-leaf）の場合は太い色付き境界線を追加
       if (htmlEl.classList.contains('is-leaf')) {
         const borderColor = computedStyle.borderTopColor || computedStyle.borderColor
         ctx.strokeStyle = borderColor
@@ -1398,46 +1272,41 @@ async function downloadMatrixAsImageVertical() {
         ctx.strokeRect(x + 2, y + 2, width - 4, height - 4)
       }
       
-      // 縦書きテキストを描画
       const text = htmlEl.textContent?.trim() || ''
       if (text) {
         drawVerticalText(ctx, text, x, y, width, height)
       }
     })
-    
-    
-    // ダウンロード
     finalCanvas.toBlob((blob: Blob | null) => {
       if (!blob) {
-        alert('画像データの作成に失敗しました')
+        alert('Failed to create image data')
         return
       }
       
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `統合マトリクス_${new Date().toISOString().slice(0, 10)}.png`
+      link.download = `Integrated_Matrix_${new Date().toISOString().slice(0, 10)}.png`
       link.click()
       URL.revokeObjectURL(url)
       
     }, 'image/png', 0.95)
     
     if (button) {
-      button.textContent = 'マトリクスを画像ダウンロード'
+      button.textContent = 'Download Matrix as Image'
     }
     
   } catch (error) {
-    console.error('画像生成エラー:', error)
-    alert(`画像の生成に失敗しました: ${error}`)
+    console.error('Image generation error:', error)
+    alert(`Failed to generate image: ${error}`)
     
     const button = document.querySelector('.matrix-image-button span')
     if (button) {
-      button.textContent = 'マトリクスを画像ダウンロード'
+      button.textContent = 'Download Matrix as Image'
     }
   }
 }
 
-// 縦書きテキストを描画するヘルパー関数
 function drawVerticalText(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -1446,21 +1315,17 @@ function drawVerticalText(
   width: number,
   height: number
 ) {
-  // セルのサイズに応じてフォントサイズを調整
   const maxFontSize = 28
   const minFontSize = 16
   const size = Math.max(minFontSize, Math.min(maxFontSize, width * 0.6))
-  const kerning = 0.7 // 文字間隔
+  const kerning = 0.7
   
-  // サブキャンバスを作成
   const subCanvas = document.createElement('canvas')
   const subCtx = subCanvas.getContext('2d')
   if (!subCtx) return
   
-  // テキストの実際の高さを計算
   const textHeight = size * kerning * text.length + (size * (1 - kerning))
   
-  // テキストをセル内に中央配置
   const startX = x + (width - size) / 2
   const startY = y + Math.max(8, (height - textHeight) / 2)
   
@@ -1472,7 +1337,6 @@ function drawVerticalText(
     subCtx.font = `bold ${size}px sans-serif`
     subCtx.fillStyle = '#495057'
     
-    // 「ー」は90度回転
     if (char === 'ー') {
       subCtx.translate(size, size)
       subCtx.rotate(90 * Math.PI / 180)
@@ -1481,52 +1345,42 @@ function drawVerticalText(
     
     subCtx.fillText(char, size, size)
     
-    // 回転を戻す
     if (char === 'ー') {
       subCtx.translate(size, size)
       subCtx.rotate(-90 * Math.PI / 180)
       subCtx.translate(-size, -size)
     }
     
-    // メインキャンバスに描画
     ctx.drawImage(subCanvas, startX, startY + size * kerning * i, size, size)
   })
 }
 
-// マトリクスをExcelとしてダウンロード
 function downloadMatrixAsExcel() {
-  // ワークブックを作成
   const wb = XLSX.utils.book_new()
   
-  // マトリクスデータを配列に変換
   const matrixData: (string | number)[][] = []
   
-  // 階層的な性能ヘッダーを作成
   const perfColumns = getAllPerformanceColumns()
   
-  // 第1行: グループヘッダー
-  const headerRow1: (string | number)[] = ['ニーズ']
+  const headerRow1: (string | number)[] = ['Needs']
   stakeholders.value.forEach(() => headerRow1.push(''))
-  headerRow1.push('合計票数')
+  headerRow1.push('Total Votes')
   perfColumns.forEach(() => headerRow1.push(''))
   matrixData.push(headerRow1)
   
-  // 第2行以降: 階層的な性能ヘッダー（マトリクスと同じ構造）
   for (let level = 1; level <= maxPerformanceLevel.value; level++) {
     const levelRow: (string | number)[] = []
     
-    // 最初の列（ニーズ列）とステークホルダー列は空
     if (level === 1) {
-      levelRow.push('') // ニーズ列
-      stakeholders.value.forEach(sh => levelRow.push(`${sh.name} (${sh.votes}票)`))
-      levelRow.push('') // 合計票数列
+      levelRow.push('') 
+      stakeholders.value.forEach(sh => levelRow.push(`${sh.name} (${sh.votes})`))
+      levelRow.push('') 
     } else {
       levelRow.push('')
       stakeholders.value.forEach(() => levelRow.push(''))
       levelRow.push('')
     }
     
-    // 性能の階層ヘッダー
     const cellsAtLevel = getMatrixCellsAtLevel(level)
     cellsAtLevel.forEach(cell => {
       const displayName = cell.performance.unit 
@@ -1534,7 +1388,6 @@ function downloadMatrixAsExcel() {
         : cell.performance.name
       levelRow.push(displayName)
       
-      // colspanがある場合は空セルを追加
       for (let i = 1; i < cell.colspan; i++) {
         levelRow.push('')
       }
@@ -1543,20 +1396,16 @@ function downloadMatrixAsExcel() {
     matrixData.push(levelRow)
   }
   
-  // データ行: 各ニーズ
   needs.value.forEach(need => {
     const row: (string | number)[] = [need.name]
     
-    // ステークホルダー×ニーズ
     stakeholders.value.forEach(sh => {
       const votes = getStakeholderVotesForNeed(sh.id, need.id)
       row.push(hasStakeholderRelation(sh.id, need.id) ? votes.toFixed(1) : '')
     })
     
-    // 合計票数
     row.push(getTotalVotesForNeed(need.id).toFixed(1))
     
-    // 性能×ニーズ
     perfColumns.forEach(perf => {
       if (perf.is_leaf) {
         const symbol = getPerformanceRelationSymbol(need.id, perf.id)
@@ -1570,8 +1419,7 @@ function downloadMatrixAsExcel() {
     matrixData.push(row)
   })
   
-  // 集計行: ↑票数
-  const upVotesRow: (string | number)[] = ['↑票数']
+  const upVotesRow: (string | number)[] = ['↑Votes']
   stakeholders.value.forEach(() => upVotesRow.push(''))
   upVotesRow.push('')
   perfColumns.forEach(perf => {
@@ -1579,8 +1427,7 @@ function downloadMatrixAsExcel() {
   })
   matrixData.push(upVotesRow)
   
-  // 集計行: ↓票数
-  const downVotesRow: (string | number)[] = ['↓票数']
+  const downVotesRow: (string | number)[] = ['↓Votes']
   stakeholders.value.forEach(() => downVotesRow.push(''))
   downVotesRow.push('')
   perfColumns.forEach(perf => {
@@ -1588,8 +1435,7 @@ function downloadMatrixAsExcel() {
   })
   matrixData.push(downVotesRow)
   
-  // 集計行: 有効投票数
-  const effectiveVotesRow: (string | number)[] = ['有効投票数']
+  const effectiveVotesRow: (string | number)[] = ['Valid Votes']
   stakeholders.value.forEach(() => effectiveVotesRow.push(''))
   effectiveVotesRow.push('')
   perfColumns.forEach(perf => {
@@ -1597,7 +1443,6 @@ function downloadMatrixAsExcel() {
   })
   matrixData.push(effectiveVotesRow)
   
-  // 集計行: p値
   const pValueRow: (string | number)[] = ['p= Σv_i / V']
   stakeholders.value.forEach(() => pValueRow.push(''))
   pValueRow.push('')
@@ -1606,7 +1451,6 @@ function downloadMatrixAsExcel() {
   })
   matrixData.push(pValueRow)
   
-  // 集計行: p²
   const pSquaredRow: (string | number)[] = ['p²']
   stakeholders.value.forEach(() => pSquaredRow.push(''))
   pSquaredRow.push('')
@@ -1615,10 +1459,8 @@ function downloadMatrixAsExcel() {
   })
   matrixData.push(pSquaredRow)
   
-  // ワークシートを作成
   const ws = XLSX.utils.aoa_to_sheet(matrixData)
   
-  // 列幅を自動調整
   const columnWidths = matrixData[0].map((_, colIndex) => {
     const maxLength = Math.max(
       ...matrixData.map(row => {
@@ -1630,31 +1472,25 @@ function downloadMatrixAsExcel() {
   })
   ws['!cols'] = columnWidths
   
-  XLSX.utils.book_append_sheet(wb, ws, '統合マトリクス')
+  XLSX.utils.book_append_sheet(wb, ws, 'Integrated Matrix')
   
-  // ファイルをダウンロード
-  const filename = `統合マトリクス_${new Date().toISOString().slice(0, 10)}.xlsx`
+  const filename = `Integrated_Matrix_${new Date().toISOString().slice(0, 10)}.xlsx`
   XLSX.writeFile(wb, filename)
 }
-
-
 function handlePasteUtilityFunction() {
   if (!currentUtilityEdit.value || !copiedUtilityFunction.value) return
   
-  // 同じ性能かチェック
   if (currentUtilityEdit.value.performanceId !== copiedUtilityFunction.value.performanceId) {
-    console.warn('異なる性能には貼り付けできません')
+    console.warn('Cannot paste to different performance')
     return
   }
   
-  // コピーしたデータを貼り付け
   currentUtilityEdit.value.type = copiedUtilityFunction.value.type
   utilityPoints.value = copiedUtilityFunction.value.points.map(p => ({ ...p }))
   discreteRows.value = copiedUtilityFunction.value.discreteMapping.map(row => ({ ...row }))
   axisRange.value = { ...copiedUtilityFunction.value.axisRange }
   interpolationType.value = copiedUtilityFunction.value.interpolationType
   
-  // 連続関数の場合はスライダーを再初期化
   if (currentUtilityEdit.value.type === 'continuous') {
     nextTick(() => {
       initRangeSlider()
@@ -1663,7 +1499,6 @@ function handlePasteUtilityFunction() {
   
 }
 
-// 効用関数が登録されているかチェック
 function hasUtilityFunction(): boolean {
   if (!currentUtilityEdit.value) return false
   
@@ -1674,43 +1509,35 @@ function hasUtilityFunction(): boolean {
   }
 }
 
-// ペースト可能かチェック
 function canPasteUtilityFunction(): boolean {
   if (!currentUtilityEdit.value || !copiedUtilityFunction.value) return false
   return currentUtilityEdit.value.performanceId === copiedUtilityFunction.value.performanceId
 }
 
-// グラフクリックイベントハンドラー
 function handleGraphClick(event: MouseEvent) {
   const svg = event.currentTarget as SVGElement
   const rect = svg.getBoundingClientRect()
   
-  // SVG座標系に変換
   const svgX = ((event.clientX - rect.left) / rect.width) * 420
   const svgY = ((event.clientY - rect.top) / rect.height) * 330
   
-  // グラフエリア内かチェック（x: 50-380, y: 20-280）
   if (svgX < 50 || svgX > 380 || svgY < 20 || svgY > 280) {
     return
   }
   
   if (currentUtilityEdit.value?.type === 'continuous') {
-    // 連続関数の場合
     const valueX = ((svgX - 50) / 330) * (axisRange.value.max - axisRange.value.min) + axisRange.value.min
-    const valueY = 1 - ((svgY - 20) / 260) // Y軸は上が1、下が0
+    const valueY = 1 - ((svgY - 20) / 260)
     
-    // 点を追加（X値でソート）
     utilityPoints.value.push({
       x: svgX,
       y: svgY,
       valueX: valueX,
-      valueY: Math.max(0, Math.min(1, valueY)) // 0-1にクランプ
+      valueY: Math.max(0, Math.min(1, valueY))
     })
     
-    // X値でソート
     utilityPoints.value.sort((a, b) => a.valueX - b.valueX)
   } else {
-    // 離散関数の場合は最も近い離散値を特定
     if (discreteRows.value.length === 0) return
     
     let closestIndex = 0
@@ -1725,22 +1552,19 @@ function handleGraphClick(event: MouseEvent) {
       }
     }
     
-    // 効用値を更新
     const valueY = 1 - ((svgY - 20) / 260)
     discreteRows.value[closestIndex].value = Math.max(0, Math.min(1, valueY))
   }
 }
 
-// 離散関数用: インデックスからX座標を計算
 function getDiscreteXPosition(index: number): number {
   if (discreteRows.value.length <= 1) {
-    return 215 // 中央
+    return 215 
   }
   const spacing = 330 / (discreteRows.value.length - 1)
   return 50 + index * spacing
 }
 
-// 離散関数の点をグラフ用に変換
 const discreteGraphPoints = computed(() => {
   if (currentUtilityEdit.value?.type !== 'discrete') return []
   
@@ -1753,12 +1577,10 @@ const discreteGraphPoints = computed(() => {
   }))
 })
 
-// 点を削除
 function removePoint(index: number) {
   utilityPoints.value.splice(index, 1)
 }
 
-// ツールチップ表示
 function showTooltip(point: UtilityPoint, event: MouseEvent) {
   const target = event.currentTarget as SVGElement
   const svg = target.closest('svg')
@@ -1774,7 +1596,6 @@ function showTooltip(point: UtilityPoint, event: MouseEvent) {
   }
 }
 
-// 離散関数用ツールチップ表示
 function showDiscreteTooltip(point: any, index: number, event: MouseEvent) {
   const target = event.currentTarget as SVGElement
   const svg = target.closest('svg')
@@ -1790,20 +1611,16 @@ function showDiscreteTooltip(point: any, index: number, event: MouseEvent) {
   }
 }
 
-// ツールチップ非表示
 function hideTooltip() {
   tooltip.value.visible = false
 }
 
-// ポリラインのポイント文字列を取得
 function getPolylinePoints(): string {
   if (utilityPoints.value.length < 2) return ''
   
   if (interpolationType.value === 'linear') {
-    // 線形補完: 単純に点を結ぶ
     return utilityPoints.value.map(p => `${p.x},${p.y}`).join(' ')
   } else if (interpolationType.value === 'step') {
-    // ステップ補完: 階段状に
     const points: string[] = []
     for (let i = 0; i < utilityPoints.value.length; i++) {
       const current = utilityPoints.value[i]
@@ -1811,28 +1628,23 @@ function getPolylinePoints(): string {
       
       if (i < utilityPoints.value.length - 1) {
         const next = utilityPoints.value[i + 1]
-        // 水平線を追加
         points.push(`${next.x},${current.y}`)
       }
     }
     return points.join(' ')
   } else {
-    // smooth: 線形でいったん返す（後でpathに変更予定）
     return utilityPoints.value.map(p => `${p.x},${p.y}`).join(' ')
   }
 }
 
-// スムーズ補完用のパスを生成（Catmull-Rom スプライン）
 function getSmoothPath(): string {
   if (utilityPoints.value.length < 2) return ''
   
   const points = utilityPoints.value
   if (points.length === 2) {
-    // 2点の場合は直線
     return `M ${points[0].x},${points[0].y} L ${points[1].x},${points[1].y}`
   }
   
-  // Catmull-Romスプラインで滑らかな曲線を生成
   let path = `M ${points[0].x},${points[0].y}`
   
   for (let i = 0; i < points.length - 1; i++) {
@@ -1841,7 +1653,6 @@ function getSmoothPath(): string {
     const p2 = points[i + 1]
     const p3 = points[Math.min(points.length - 1, i + 2)]
     
-    // 制御点を計算
     const cp1x = p1.x + (p2.x - p0.x) / 6
     const cp1y = p1.y + (p2.y - p0.y) / 6
     const cp2x = p2.x - (p3.x - p1.x) / 6
@@ -1853,17 +1664,15 @@ function getSmoothPath(): string {
   return path
 }
 
-// 対数的スケールの変換関数
 function sliderToValue(sliderPos: number): number {
-  // sliderPos: -100 ~ 100
   const absPos = Math.abs(sliderPos)
   const sign = sliderPos >= 0 ? 1 : -1
   
-  if (absPos <= 20) return sign * absPos * 0.1 // 0-20: 0.1刻み
-  if (absPos <= 40) return sign * (2 + (absPos - 20)) // 21-40: 1刻み
-  if (absPos <= 60) return sign * (22 + (absPos - 40) * 5) // 41-60: 5刻み
-  if (absPos <= 80) return sign * (122 + (absPos - 60) * 50) // 61-80: 50刻み
-  return sign * (1122 + (absPos - 80) * 500) // 81-100: 500刻み
+  if (absPos <= 20) return sign * absPos * 0.1 
+  if (absPos <= 40) return sign * (2 + (absPos - 20)) 
+  if (absPos <= 60) return sign * (22 + (absPos - 40) * 5) 
+  if (absPos <= 80) return sign * (122 + (absPos - 60) * 50) 
+  return sign * (1122 + (absPos - 80) * 500) 
 }
 
 function valueToSlider(value: number): number {
@@ -1877,14 +1686,12 @@ function valueToSlider(value: number): number {
   return sign * (80 + Math.round((absValue - 1122) / 500))
 }
 
-// noUiSliderの初期化
 function initRangeSlider() {
   if (!rangeSliderElement.value) {
     console.warn('rangeSliderElement is not available')
     return
   }
   
-  // 既存のスライダーがあれば破棄
   if (rangeSliderInstance) {
     try {
       rangeSliderInstance.destroy()
@@ -1912,7 +1719,6 @@ function initRangeSlider() {
       ]
     })
     
-    // スライダー変更時のイベント
     rangeSliderInstance.on('update', (values: any) => {
       const [minPos, maxPos] = values.map(Number)
       axisRange.value.min = sliderToValue(minPos)
@@ -1924,13 +1730,12 @@ function initRangeSlider() {
   }
 }
 
-// 軸範囲が変わったときにポイントのSVG座標を更新
 function updatePointCoordinates() {
   utilityPoints.value = utilityPoints.value.map(p => {
     const x = 50 + ((p.valueX - axisRange.value.min) / (axisRange.value.max - axisRange.value.min)) * 330
     const y = 20 + (1 - p.valueY) * 260
     return {
-      x: Math.max(50, Math.min(380, x)), // グラフ範囲内にクランプ
+      x: Math.max(50, Math.min(380, x)), 
       y,
       valueX: p.valueX,
       valueY: p.valueY
@@ -1938,31 +1743,25 @@ function updatePointCoordinates() {
   })
 }
 
-// 直接入力時の処理
 function updateRangeFromInput() {
-  // 下限が上限を超えないようにする
   if (axisRange.value.min >= axisRange.value.max) {
     axisRange.value.min = axisRange.value.max - 0.01
   }
   
-  // スライダーの位置を更新
   if (rangeSliderInstance) {
     const minSliderPos = valueToSlider(axisRange.value.min)
     const maxSliderPos = valueToSlider(axisRange.value.max)
     rangeSliderInstance.set([minSliderPos, maxSliderPos])
   }
   
-  // ポイントの座標も更新
   updatePointCoordinates()
 }
 
-// タイプ切り替え時の処理
 function switchToType(type: 'continuous' | 'discrete') {
   if (!currentUtilityEdit.value) return
   
   currentUtilityEdit.value.type = type
   
-  // 連続関数に切り替えた場合、スライダーを再初期化
   if (type === 'continuous') {
     nextTick(() => {
       initRangeSlider()
@@ -1970,33 +1769,27 @@ function switchToType(type: 'continuous' | 'discrete') {
   }
 }
 
-// 有効な性能IDのセット
 const validPerformanceIds = computed(() => {
   return new Set(performances.value.map(p => p.id))
 })
 
-// 存在する性能への関係のみをフィルタリング
 const validNeedPerformanceRelations = computed(() => {
   return needPerformanceRelations.value.filter(r => 
     validPerformanceIds.value.has(r.performance_id)
   )
 })
 
-// 最大階層レベルを計算
 const maxPerformanceLevel = computed(() => {
   if (performances.value.length === 0) return 0
   return Math.max(...performances.value.map(p => p.level)) + 1
 })
 
-// チェックが1つもついていないニーズ（行）を判定
 const uncheckedNeedIds = computed(() => {
-  // 末端性能のIDセットを作成
   const leafPerformanceIds = new Set(
     performances.value.filter(p => p.is_leaf).map(p => p.id)
   )
   
   const checkedNeedIds = new Set<string>()
-  // 末端性能への関係のみをカウント
   validNeedPerformanceRelations.value.forEach(r => {
     if (leafPerformanceIds.has(r.performance_id)) {
       checkedNeedIds.add(r.need_id)
@@ -2006,15 +1799,12 @@ const uncheckedNeedIds = computed(() => {
   return new Set(needs.value.filter(n => !checkedNeedIds.has(n.id)).map(n => n.id))
 })
 
-// チェックが1つもついていない性能（列）を判定
 const uncheckedPerformanceIds = computed(() => {
-  // 末端性能のIDセットを作成
   const leafPerformanceIds = new Set(
     performances.value.filter(p => p.is_leaf).map(p => p.id)
   )
   
   const checkedPerformanceIds = new Set<string>()
-  // 末端性能への関係のみをカウント
   validNeedPerformanceRelations.value.forEach(r => {
     if (leafPerformanceIds.has(r.performance_id)) {
       checkedPerformanceIds.add(r.performance_id)
@@ -2028,27 +1818,23 @@ const uncheckedPerformanceIds = computed(() => {
   )
 })
 
-// マトリクスセル情報
 interface MatrixCell {
   performance: Performance
   colspan: number
   rowspan: number
-  isVisible: boolean  // このセルを表示するか（colspanで吸収される場合はfalse）
+  isVisible: boolean
 }
 
-// マトリクス用の2次元配列を生成
 const performanceMatrix = computed(() => {
   if (performances.value.length === 0) return []
   
   const maxLevel = maxPerformanceLevel.value
   const matrix: MatrixCell[][] = []
   
-  // 各レベルの行を初期化
   for (let i = 0; i < maxLevel; i++) {
     matrix.push([])
   }
   
-  // 末端性能の列数を計算
   function countLeafColumns(perf: Performance): number {
     if (perf.is_leaf) return 1
     const children = performances.value.filter(p => p.parent_id === perf.id)
@@ -2056,15 +1842,12 @@ const performanceMatrix = computed(() => {
     return children.reduce((sum, child) => sum + countLeafColumns(child), 0)
   }
   
-  // 深さ優先探索でマトリクスを構築
   function buildMatrix(perf: Performance, level: number) {
     const leafCount = countLeafColumns(perf)
     const children = performances.value.filter(p => p.parent_id === perf.id)
     
-    // 末端性能の場合は、残りの階層分rowspanを設定
     const rowspan = perf.is_leaf ? (maxLevel - level) : 1
     
-    // このセルを現在の行に追加
     matrix[level].push({
       performance: perf,
       colspan: leafCount,
@@ -2072,57 +1855,46 @@ const performanceMatrix = computed(() => {
       isVisible: true
     })
     
-    // 子要素がある場合は再帰的に処理
     if (children.length > 0) {
       children.forEach(child => buildMatrix(child, level + 1))
     }
   }
   
-  // ルートレベルから開始
   const roots = performances.value.filter(p => !p.parent_id || p.parent_id === null)
   roots.forEach(root => buildMatrix(root, 0))
   
   return matrix
 })
 
-// 指定レベルのマトリクスセルを取得
 function getMatrixCellsAtLevel(level: number): MatrixCell[] {
   if (level < 1 || level > performanceMatrix.value.length) return []
   return performanceMatrix.value[level - 1]
 }
 
-// 全性能を列の順番で取得（末端のみ、左から右の順序）
 function getAllPerformanceColumns(): Performance[] {
   const result: Performance[] = []
   
-  // 深さ優先探索で末端性能を左から右の順に収集（配列順序を保持）
   function collectLeaves(parentId: string | null | undefined) {
-    // 配列順序を保持するため、filterした順序そのまま
     const children = performances.value.filter(p => p.parent_id === parentId)
     
     for (const child of children) {
       if (child.is_leaf) {
         result.push(child)
       } else {
-        // 親性能の場合は子を探索
         collectLeaves(child.id)
       }
     }
   }
   
-  // ルートレベルから開始
   collectLeaves(null)
   collectLeaves(undefined)
   
   return result
 }
 
-// 性能が属する大項目(ルート)のインデックスを取得
 function getRootIndexForPerformance(performanceId: string): number {
-  // ルート性能のリストを取得
   const roots = performances.value.filter(p => !p.parent_id || p.parent_id === null)
   
-  // この性能のルートを見つける
   function findRoot(perf: Performance): Performance {
     if (!perf.parent_id) return perf
     const parent = performances.value.find(p => p.id === perf.parent_id)
@@ -2138,7 +1910,6 @@ function getRootIndexForPerformance(performanceId: string): number {
   return index >= 0 ? index : 0
 }
 
-// 大項目ごとのグループ情報を取得
 interface RootGroup {
   rootIndex: number
   rootPerformance: Performance
@@ -2151,7 +1922,6 @@ const rootGroups = computed((): RootGroup[] => {
   const allLeafPerformances = getAllPerformanceColumns()
   
   return roots.map((root, index) => {
-    // このルートに属する末端性能をフィルタリング
     const leafPerformances = allLeafPerformances.filter(
       leaf => getRootIndexForPerformance(leaf.id) === index
     )
@@ -2165,7 +1935,6 @@ const rootGroups = computed((): RootGroup[] => {
   })
 })
 
-// 大項目ごとの有効投票数を計算
 function getEffectiveVotesForRoot(rootIndex: number): number {
   const group = rootGroups.value.find(g => g.rootIndex === rootIndex)
   if (!group) return 0
@@ -2178,7 +1947,6 @@ function getEffectiveVotesForRoot(rootIndex: number): number {
   return total
 }
 
-// p値を計算: 性能の有効投票数 / 大項目の有効投票数(V)
 function getPValueForPerformance(performanceId: string): number {
   const rootIndex = getRootIndexForPerformance(performanceId)
   const V = getEffectiveVotesForRoot(rootIndex)
@@ -2189,13 +1957,11 @@ function getPValueForPerformance(performanceId: string): number {
   return effectiveVotes / V
 }
 
-// p²を計算
 function getPSquaredForPerformance(performanceId: string): number {
   const p = getPValueForPerformance(performanceId)
   return p * p
 }
 
-// HHI (Herfindahl-Hirschman Index) を計算: 大項目ごとのΣp²
 function getHHIForRoot(rootIndex: number): number {
   const group = rootGroups.value.find(g => g.rootIndex === rootIndex)
   if (!group) return 0
@@ -2208,7 +1974,6 @@ function getHHIForRoot(rootIndex: number): number {
   return sum
 }
 
-// p²行の全値を取得してカラースケール用の範囲を計算
 const pSquaredValues = computed(() => {
   return getAllPerformanceColumns().map(perf => getPSquaredForPerformance(perf.id))
 })
@@ -2216,7 +1981,6 @@ const pSquaredValues = computed(() => {
 const pSquaredMin = computed(() => Math.min(...pSquaredValues.value.filter(v => v > 0)))
 const pSquaredMax = computed(() => Math.max(...pSquaredValues.value))
 
-// HHI行の全値を取得してカラースケール用の範囲を計算
 const hhiValues = computed(() => {
   return rootGroups.value.map(group => getHHIForRoot(group.rootIndex))
 })
@@ -2224,94 +1988,53 @@ const hhiValues = computed(() => {
 const hhiMin = computed(() => Math.min(...hhiValues.value.filter(v => v > 0)))
 const hhiMax = computed(() => Math.max(...hhiValues.value))
 
-// V行の全値を取得してカラースケール用の範囲を計算
-const vMin = computed(() => Math.min(...hhiValues.value.filter(v => v > 0)))
-const vMax = computed(() => Math.max(...hhiValues.value))
-
-// カラースケール: 淡い青から淡いピンク (p²とHHI用)
-function getColorScale(value: number, min: number, max: number): string {
-  if (value === 0 || max === min) return 'rgb(255, 255, 255)'
-  
-  const normalized = (value - min) / (max - min)
-  
-  // 淡い青(173, 216, 230) から 白(255, 255, 255) を経由して 淡いピンク(255, 182, 193) へ
-  let r, g, b
-  if (normalized > 0.5) {
-    // 0.5-1.0: 白から淡いピンク
-    const t = (normalized - 0.5) * 2
-    r = 255
-    g = Math.round(255 - 73 * t)  // 255 → 182
-    b = Math.round(255 - 62 * t)  // 255 → 193
-  } else {
-    // 0.0-0.5: 淡い青から白
-    const t = normalized * 2
-    r = Math.round(173 + 82 * t)  // 173 → 255
-    g = Math.round(216 + 39 * t)  // 216 → 255
-    b = Math.round(230 + 25 * t)  // 230 → 255
-  }
-  
-  return `rgb(${r}, ${g}, ${b})`
-}
-
-// カラースケール: 緑から黄を経由して赤 (V行用)
 function getColorScaleGreenYellowRed(value: number, min: number, max: number): string {
   if (value === 0 || max === min) return 'rgb(255, 255, 255)'
   
   const normalized = (value - min) / (max - min)
   
-  // 緑(99, 190, 123) から 黄(255, 235, 59) を経由して 赤(231, 114, 111) へ
   let r, g, b
   if (normalized > 0.5) {
-    // 0.5-1.0: 黄から赤
     const t = (normalized - 0.5) * 2
-    r = Math.round(255 - 24 * t)   // 255 → 231
-    g = Math.round(235 - 121 * t)  // 235 → 114
-    b = Math.round(59 - 52 * (1 - t) * t + 52)  // 59 → 111
+    r = Math.round(255 - 24 * t) 
+    g = Math.round(235 - 121 * t) 
+    b = Math.round(59 - 52 * (1 - t) * t + 52)
   } else {
-    // 0.0-0.5: 緑から黄
     const t = normalized * 2
-    r = Math.round(99 + 156 * t)   // 99 → 255
-    g = Math.round(190 + 45 * t)   // 190 → 235
-    b = Math.round(123 - 64 * t)   // 123 → 59
+    r = Math.round(99 + 156 * t)
+    g = Math.round(190 + 45 * t) 
+    b = Math.round(123 - 64 * t) 
   }
   
   return `rgb(${r}, ${g}, ${b})`
 }
 
-// ステークホルダー×ニーズ関係
 function hasStakeholderRelation(stakeholderId: string, needId: string): boolean {
   return stakeholderNeedRelations.value.some(
     r => r.stakeholder_id === stakeholderId && r.need_id === needId
   )
 }
 
-// ステークホルダーがそのニーズに対して持つ票数を計算
 function getStakeholderVotesForNeed(stakeholderId: string, needId: string): number {
-  // 関係がない場合は0
   if (!hasStakeholderRelation(stakeholderId, needId)) {
     return 0
   }
   
-  // このステークホルダーの総票数を取得
   const stakeholder = stakeholders.value.find(s => s.id === stakeholderId)
   if (!stakeholder) return 0
   
-  // このステークホルダーが関心を持つニーズの数を計算
   const relatedNeedsCount = stakeholderNeedRelations.value.filter(
     r => r.stakeholder_id === stakeholderId
   ).length
   
   if (relatedNeedsCount === 0) return 0
   
-  // 総票数を関心のあるニーズ数で按分
   return stakeholder.votes / relatedNeedsCount
 }
 
-// ニーズごとの合計票数を計算
 function getTotalVotesForNeed(needId: string): number {
   let total = 0
   
-  // 全ステークホルダーについて、このニーズへの票数を合計
   stakeholders.value.forEach(stakeholder => {
     total += getStakeholderVotesForNeed(stakeholder.id, needId)
   })
@@ -2319,17 +2042,13 @@ function getTotalVotesForNeed(needId: string): number {
   return total
 }
 
-// ニーズに対する性能の按分票数を計算
 function getPerformanceVotesForNeed(needId: string, performanceId: string): number {
-  // この性能とニーズの関係がない場合は0
   const relation = getPerformanceRelation(needId, performanceId)
   if (!relation) return 0
   
-  // このニーズの合計票数
   const totalVotes = getTotalVotesForNeed(needId)
   if (totalVotes === 0) return 0
   
-  // このニーズに関連する末端性能（↑と↓のみ、空白は除く）の数をカウント
   const leafPerformanceIds = new Set(performances.value.filter(p => p.is_leaf).map(p => p.id))
   const relatedPerformancesCount = validNeedPerformanceRelations.value.filter(
     r => r.need_id === needId && leafPerformanceIds.has(r.performance_id)
@@ -2337,11 +2056,9 @@ function getPerformanceVotesForNeed(needId: string, performanceId: string): numb
   
   if (relatedPerformancesCount === 0) return 0
   
-  // 合計票数を関連性能数で按分
   return totalVotes / relatedPerformancesCount
 }
 
-// 性能列ごとの↑票数を集計
 function getUpVotesForPerformance(performanceId: string): number {
   let total = 0
   
@@ -2354,7 +2071,6 @@ function getUpVotesForPerformance(performanceId: string): number {
   return total
 }
 
-// 性能列ごとの↓票数を集計
 function getDownVotesForPerformance(performanceId: string): number {
   let total = 0
   
@@ -2367,13 +2083,11 @@ function getDownVotesForPerformance(performanceId: string): number {
   return total
 }
 
-// Shannon エントロピーを計算
 function calculateEntropy(x: number): number {
   if (x === 0 || x === 1) return 0
   return -x * Math.log2(x) - (1 - x) * Math.log2(1 - x)
 }
 
-// 有効投票数を計算: I(a,b) = (a+b) * {1 + H(x)} where x = a/(a+b)
 function getEffectiveVotesForPerformance(performanceId: string): number {
   const upVotes = getUpVotesForPerformance(performanceId)
   const downVotes = getDownVotesForPerformance(performanceId)
@@ -2395,7 +2109,6 @@ async function toggleStakeholderRelation(stakeholderId: string, needId: string) 
   }
 }
 
-// 性能×ニーズ関係（存在する性能のみ）
 function getPerformanceRelation(needId: string, performanceId: string) {
   return validNeedPerformanceRelations.value.find(
     r => r.need_id === needId && r.performance_id === performanceId
@@ -2415,7 +2128,6 @@ function getPerformanceRelationClass(needId: string, performanceId: string): str
 }
 
 function isUncheckedCell(needId: string, performanceId: string): boolean {
-  // その行(ニーズ)OR 列(性能)のどちらかに1つもチェックがない場合に黄色
   return uncheckedNeedIds.value.has(needId) || uncheckedPerformanceIds.value.has(performanceId)
 }
 
@@ -2424,10 +2136,8 @@ async function cyclePerformanceRelation(needId: string, performanceId: string) {
   const utility = getUtilityFunction(needId, performanceId)
   
   if (!relation) {
-    // 関係がない → ↑を追加
     await projectStore.addNeedPerformanceRelation(needId, performanceId, 'up')
     
-    // アーカイブされた効用データがあれば警告状態で復元
     const archived = utilityFunctions.value.find(
       u => u.need_id === needId && u.performance_id === performanceId && u.archived
     )
@@ -2437,19 +2147,15 @@ async function cyclePerformanceRelation(needId: string, performanceId: string) {
       archived.direction = 'up'
     }
   } else if (relation.direction === 'up') {
-    // ↑ → ↓に更新
     await projectStore.updateNeedPerformanceRelation(needId, performanceId, 'down')
     
-    // 保存済みの効用データがある場合は警告状態に
     if (utility && utility.saved) {
       utility.warning = true
       utility.direction = 'down'
     }
   } else {
-    // ↓ → 削除
     await projectStore.removeNeedPerformanceRelation(needId, performanceId)
     
-    // 保存済みの効用データがある場合はアーカイブ
     if (utility && utility.saved) {
       utility.archived = true
       utility.warning = false
@@ -2461,21 +2167,11 @@ function navigateToPerformanceManagement() {
   emit('navigateToPerformance')
 }
 
-// 効用関数管理
 function getUtilityFunction(needId: string, performanceId: string): UtilityFunction | undefined {
   const result = utilityFunctions.value.find(
     u => u.need_id === needId && u.performance_id === performanceId && !u.archived
   )
   
-  // デバッグログは削除（正常に動作することが確認できたため）
-  // if (!result && utilityFunctions.value.length > 0) {
-  //   // [NeedPerformanceMatrix] 効用関数が見つかりません: {
-  //     探しているneed_id: needId,
-  //     探しているperformance_id: performanceId,
-  //     利用可能な効用関数数: utilityFunctions.value.length,
-  //     最初の効用関数: utilityFunctions.value[0]
-  //   })
-  // }
   
   return result
 }
@@ -2493,37 +2189,31 @@ function getUtilityButtonType(needId: string, performanceId: string): 'none' | '
 }
 
 async function openUtilityModal(needId: string, performanceId: string, event: Event) {
-  event.stopPropagation() // セルのクリックイベントを止める
+  event.stopPropagation()
   
   const buttonType = getUtilityButtonType(needId, performanceId)
   if (buttonType === 'none') return
   
-  // 同じ性能列の他のセルに既に設定があるか確認（列基準を取得）
   const sameColumnFunctions = utilityFunctions.value.filter(
     u => u.performance_id === performanceId && u.saved
   )
   
-  // 列基準となる効用関数（最初に見つかったもの）
   const columnStandard = sameColumnFunctions.length > 0 ? sameColumnFunctions[0] : null
   
-  // まずローカルのデータを試す
   let utility = getUtilityFunction(needId, performanceId)
   
-  // ローカルにない場合はバックエンドからロード
   if (!utility) {
     try {
       const loadedUtility = await projectStore.getUtilityFunction(needId, performanceId)
       if (loadedUtility) {
         utility = loadedUtility
-        // ローカルにも追加
         utilityFunctions.value.push(loadedUtility)
       }
     } catch (error) {
-      console.error('効用関数の読み込みに失敗しました:', error)
+      console.error('Failed to load utility function:', error)
     }
   }
   
-  // 列基準がある場合は、type/軸範囲/離散値を強制的に合わせる
   const effectiveType = columnStandard?.type || utility?.type || 'continuous'
   
   currentUtilityEdit.value = {
@@ -2532,10 +2222,8 @@ async function openUtilityModal(needId: string, performanceId: string, event: Ev
     type: effectiveType
   }
   
-  // 横軸範囲の初期化
   if (effectiveType === 'continuous') {
     if (columnStandard?.axisMin !== undefined && columnStandard?.axisMax !== undefined) {
-      // 列基準がある場合はそれを使用
       axisRange.value = {
         min: columnStandard.axisMin,
         max: columnStandard.axisMax
@@ -2553,7 +2241,6 @@ async function openUtilityModal(needId: string, performanceId: string, event: Ev
     }
   }
   
-  // 既存の点をロード（points自体は個別だが、軸範囲は統一）
   if (utility?.points && utility.points.length > 0) {
     utilityPoints.value = utility.points.map(p => {
       const x = 50 + ((p.valueX - axisRange.value.min) / (axisRange.value.max - axisRange.value.min)) * 330
@@ -2569,14 +2256,11 @@ async function openUtilityModal(needId: string, performanceId: string, event: Ev
     utilityPoints.value = []
   }
   
-  // 離散関数の行データをロード
   if (effectiveType === 'discrete') {
     if (columnStandard?.discreteRows && columnStandard.discreteRows.length > 0) {
-      // 列基準がある場合はそれを使用（選択肢は統一、値は個別）
       const standardLabels = columnStandard.discreteRows.map(r => r.label)
       
       if (utility?.discreteRows && utility.discreteRows.length > 0) {
-        // 既存データがある場合、ラベルは列基準に合わせ、値は既存のものを使用
         discreteRows.value = standardLabels.map(label => {
           const existing = utility.discreteRows?.find(r => r.label === label)
           return {
@@ -2585,7 +2269,6 @@ async function openUtilityModal(needId: string, performanceId: string, event: Ev
           }
         })
       } else {
-        // 既存データがない場合、列基準のラベルで値0で初期化
         discreteRows.value = standardLabels.map(label => ({
           label,
           value: 0
@@ -2600,10 +2283,8 @@ async function openUtilityModal(needId: string, performanceId: string, event: Ev
   
   showUtilityModal.value = true
   
-  // 背景のスクロールを無効化
   document.body.style.overflow = 'hidden'
   
-  // モーダルがDOMに追加された後にスライダーを初期化
   nextTick(() => {
     if (currentUtilityEdit.value?.type === 'continuous') {
       initRangeSlider()
@@ -2617,7 +2298,6 @@ function closeUtilityModal() {
   utilityPoints.value = []
   discreteRows.value = [{ label: '', value: 0 }]
   
-  // 背景のスクロールを再有効化
   document.body.style.overflow = ''
 }
 
@@ -2628,12 +2308,10 @@ async function saveUtilityFunction() {
   const relation = getPerformanceRelation(needId, performanceId)
   if (!relation) return
   
-  // 同じ性能列の全ての関係を取得
   const sameColumnRelations = currentProject.value?.need_performance_relations.filter(
     r => r.performance_id === performanceId
   ) || []
   
-  // 保存する効用関数データを作成
   const utilityData: UtilityFunction = {
     need_id: needId,
     performance_id: performanceId,
@@ -2649,10 +2327,8 @@ async function saveUtilityFunction() {
   }
   
   try {
-    // 現在のセルの効用関数を保存
     await projectStore.saveUtilityFunction(needId, performanceId, utilityData)
     
-    // ローカルの状態を更新
     const existingIndex = utilityFunctions.value.findIndex(
       u => u.need_id === needId && u.performance_id === performanceId
     )
@@ -2663,27 +2339,22 @@ async function saveUtilityFunction() {
       utilityFunctions.value.push(utilityData)
     }
     
-    // 同じ列（同じ性能）の他のセルには、軸の範囲（axisMin, axisMax）のみを同期
     for (const rel of sameColumnRelations) {
-      if (rel.need_id === needId) continue; // 現在のセルはスキップ
+      if (rel.need_id === needId) continue;
       
-      // 既存の効用関数を取得
       const existingFunc = utilityFunctions.value.find(
         u => u.need_id === rel.need_id && u.performance_id === performanceId
       )
       
       if (existingFunc) {
-        // 既存の効用関数がある場合、軸の範囲のみ更新
         const updatedData: UtilityFunction = {
           ...existingFunc,
           axisMin: utilityData.axisMin,
           axisMax: utilityData.axisMax
-          // points, discreteRowsはそのまま保持
         }
         
         await projectStore.saveUtilityFunction(rel.need_id, performanceId, updatedData)
         
-        // ローカルの状態も更新
         const idx = utilityFunctions.value.findIndex(
           u => u.need_id === rel.need_id && u.performance_id === performanceId
         )
@@ -2691,30 +2362,28 @@ async function saveUtilityFunction() {
           utilityFunctions.value[idx] = updatedData
         }
       }
-      // 効用関数が未設定のセルには何もしない
     }
     
     closeUtilityModal()
   } catch (error) {
-    console.error('効用関数の保存に失敗しました:', error)
-    alert('効用関数の保存に失敗しました。')
+    console.error('Failed to save utility function:', error)
+    alert('Failed to save utility function.')
   }
 }
 
 async function resetUtilityFunction() {
   if (!currentUtilityEdit.value) return
   
-  if (!confirm('効用関数データを初期化しますか？この操作は取り消せません。')) {
+  if (!confirm('Reset utility function data? This operation cannot be undone.')) {
     return
   }
   
   const { needId, performanceId } = currentUtilityEdit.value
   
   try {
-    // バックエンドから削除（DELETEメソッドを使用）
     const projectId = projectStore.currentProject?.id
     if (!projectId) {
-      throw new Error('プロジェクトIDが取得できません')
+      throw new Error('Cannot get project ID')
     }
     
     const response = await fetch(
@@ -2728,10 +2397,9 @@ async function resetUtilityFunction() {
     )
     
     if (!response.ok) {
-      throw new Error('削除に失敗しました')
+      throw new Error('Failed to delete')
     }
     
-    // ローカルからも削除
     const index = utilityFunctions.value.findIndex(
       u => u.need_id === needId && u.performance_id === performanceId
     )
@@ -2742,8 +2410,8 @@ async function resetUtilityFunction() {
     
     closeUtilityModal()
   } catch (error) {
-    console.error('効用関数の削除に失敗しました:', error)
-    alert('効用関数の削除に失敗しました。')
+    console.error('Failed to delete utility function:', error)
+    alert('Failed to delete utility function.')
   }
 }
 
@@ -2757,7 +2425,6 @@ function getCurrentPerformanceUnit(): string | undefined {
   return performance?.unit
 }
 
-// プロジェクトの効用関数を全てロード
 async function loadAllUtilityFunctions() {
   if (!currentProject.value?.id) return
   
@@ -2765,18 +2432,15 @@ async function loadAllUtilityFunctions() {
     const loadedFunctions = await projectStore.loadUtilityFunctions()
     utilityFunctions.value = loadedFunctions
     
-    // 読み込み後、同じ列のデータを統一
     await normalizeUtilityFunctionsByColumn()
   } catch (error) {
-    console.error('効用関数のロードに失敗しました:', error)
+    console.error('Failed to load utility functions:', error)
   }
 }
 
-// 同じ性能列の効用関数を統一する（既存データの修正）
 async function normalizeUtilityFunctionsByColumn() {
   if (!currentProject.value) return
   
-  // 性能IDごとにグループ化
   const performanceGroups = new Map<string, typeof utilityFunctions.value>()
   
   utilityFunctions.value.forEach(uf => {
@@ -2788,19 +2452,15 @@ async function normalizeUtilityFunctionsByColumn() {
   
   let totalNormalized = 0
   
-  // 各性能列ごとに処理
   for (const [performanceId, functions] of performanceGroups.entries()) {
     if (functions.length <= 1) continue
     
-    // 最初に見つかった設定を基準とする
     const standard = functions[0]
     
-    // 基準と異なる設定を持つものを修正
     for (let i = 1; i < functions.length; i++) {
       const func = functions[i]
       let needsUpdate = false
       
-      // 連続値の場合: 軸範囲を統一
       if (standard.type === 'continuous' && func.type === 'continuous') {
         if (func.axisMin !== standard.axisMin || func.axisMax !== standard.axisMax) {
           func.axisMin = standard.axisMin
@@ -2809,14 +2469,12 @@ async function normalizeUtilityFunctionsByColumn() {
         }
       }
       
-      // 離散値の場合: 選択肢（label）を統一、値は保持
       if (standard.type === 'discrete' && func.type === 'discrete') {
         if (standard.discreteRows && func.discreteRows) {
           const standardLabels = standard.discreteRows.map(r => r.label).sort()
           const funcLabels = func.discreteRows.map(r => r.label).sort()
           
           if (JSON.stringify(standardLabels) !== JSON.stringify(funcLabels)) {
-            // ラベルを統一、既存の値は保持
             const newRows = standard.discreteRows.map(sr => {
               const existing = func.discreteRows?.find(fr => fr.label === sr.label)
               return {
@@ -2830,7 +2488,6 @@ async function normalizeUtilityFunctionsByColumn() {
         }
       }
       
-      // typeが異なる場合も統一
       if (func.type !== standard.type) {
         func.type = standard.type
         func.axisMin = standard.axisMin
@@ -2844,7 +2501,7 @@ async function normalizeUtilityFunctionsByColumn() {
           await projectStore.saveUtilityFunction(func.need_id, func.performance_id, func)
           totalNormalized++
         } catch (error) {
-          console.error(`効用関数の統一に失敗: ${func.need_id} x ${func.performance_id}`, error)
+          console.error(`Failed to unify utility function: ${func.need_id} x ${func.performance_id}`, error)
         }
       }
     }
@@ -2854,43 +2511,36 @@ async function normalizeUtilityFunctionsByColumn() {
   }
 }
 
-// プロジェクトが変更されたら効用関数を自動ロード
 watch(
   () => currentProject.value?.id,
   (newProjectId) => {
     if (newProjectId) {
       loadAllUtilityFunctions()
     } else {
-      // プロジェクトがクリアされたらローカルもクリア
       utilityFunctions.value = []
     }
   },
   { immediate: true }
 )
 
-// 分解不足の性能分析
 const insufficientDecompositionAnalysis = computed(() => {
   const result = {
     rootLevel: [] as string[],
     leafLevel: [] as string[]
   }
   
-  // HHI値を持つ大項目を分析（閾値以上のものを抽出）
   const rootAnalysis = rootGroups.value.map(group => ({
     name: group.rootPerformance.name,
     hhi: getHHIForRoot(group.rootIndex),
     isLeaf: group.rootPerformance.is_leaf
   })).filter(item => item.hhi > 0)
   
-  // HHIが高い順にソート
   rootAnalysis.sort((a, b) => b.hhi - a.hhi)
   
-  // 平均値を計算
   const avgHHI = rootAnalysis.length > 0 
     ? rootAnalysis.reduce((sum, item) => sum + item.hhi, 0) / rootAnalysis.length 
     : 0
   
-  // 平均以上、かつ上位50%を抽出（最大5件）
   const threshold = avgHHI
   const topCount = Math.max(1, Math.ceil(rootAnalysis.length * 0.5))
   result.rootLevel = rootAnalysis
@@ -2898,7 +2548,6 @@ const insufficientDecompositionAnalysis = computed(() => {
     .slice(0, Math.min(topCount, 5))
     .map(item => item.name)
   
-  // 末端性能のp²値を分析
   const leafAnalysis = getAllPerformanceColumns()
     .filter(perf => perf.is_leaf)
     .map(perf => ({
@@ -2907,15 +2556,12 @@ const insufficientDecompositionAnalysis = computed(() => {
     }))
     .filter(item => item.pSquared > 0)
   
-  // p²が高い順にソート
   leafAnalysis.sort((a, b) => b.pSquared - a.pSquared)
   
-  // 平均値を計算
   const avgPSquared = leafAnalysis.length > 0
     ? leafAnalysis.reduce((sum, item) => sum + item.pSquared, 0) / leafAnalysis.length
     : 0
   
-  // 平均以上、かつ上位50%を抽出（最大5件）
   const pSquaredThreshold = avgPSquared
   const leafTopCount = Math.max(1, Math.ceil(leafAnalysis.length * 0.5))
   result.leafLevel = leafAnalysis
@@ -2928,52 +2574,43 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 </script>
 
-<style scoped>
-.section-header {
-  margin-bottom: 20px;
+<style scoped lang="scss">
+@import '../../style/color';
+.need-performance-matrix {
+  padding: 2vh;
 }
-
-.section-header h2 {
-  font-size: 24px;
-  margin-bottom: 8px;
-}
-
-.section-description {
-  color: #666;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-/* ツールバー */
+/* Toolbar */
 .matrix-toolbar {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
+  gap: 1vw;
+  margin-bottom: 3vh;
+  padding: 1.5vh 1.5vw;
+  background: lighten($gray, 5%);
+  border: 1px solid transparentize($white, 0.9);
+  border-radius: 0.8vw;
+  box-shadow: 0 0.3vh 1vh transparentize($black, 0.5);
 }
 
 .toolbar-button {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: white;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
+  gap: 0.5vw;
+  padding: 1.5vh 1.5vw;
+  background: transparentize($gray, 0.3);
+  border: 1px solid transparentize($white, 0.8);
+  border-radius: 0.5vw;
   cursor: pointer;
-  font-size: 14px;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
   font-weight: 500;
-  color: #495057;
-  transition: all 0.2s ease;
+  color: $white;
+  transition: all 0.3s ease;
 }
 
 .toolbar-button:hover {
-  background: #e7f1ff;
-  border-color: #107c41;
-  color: #107c41;
+  background: transparentize($gray, 0.1);
+  border-color: transparentize($white, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 0.3vh 1vh transparentize($main_1, 0.6);
 }
 
 .toolbar-button .excel-icon {
@@ -2986,35 +2623,42 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .toolbar-divider {
   width: 1px;
-  height: 43px;
-  background: #dee2e6;
-  margin: 0 8px;
+  align-self: stretch;
+  background: transparentize($white, 0.85);
+  margin: 0 0.5vw;
+}
+
+.template-download-button {
+  background: linear-gradient(135deg, $sub_4, darken($sub_4, 10%));
+  border: none;
 }
 
 .template-download-button:hover {
-  box-shadow: 0 2px 6px rgba(16, 124, 65, 0.2);
+  background: linear-gradient(135deg, lighten($sub_4, 5%), $sub_4);
+  transform: translateY(-2px);
+  box-shadow: 0 0.5vh 2vh transparentize($sub_4, 0.6);
 }
 
 .matrix-image-button {
-  color: #6f42c1;
+  background: linear-gradient(135deg, $sub_6, darken($sub_6, 10%));
+  border: none;
 }
 
 .matrix-image-button:hover {
-  background: #f3e8ff;
-  border-color: #6f42c1;
-  color: #6f42c1;
-  box-shadow: 0 2px 6px rgba(111, 66, 193, 0.2);
+  background: linear-gradient(135deg, lighten($sub_6, 5%), $sub_6);
+  transform: translateY(-2px);
+  box-shadow: 0 0.5vh 2vh transparentize($sub_6, 0.6);
 }
 
 .matrix-excel-button {
-  color: #107c41;
+  background: linear-gradient(135deg, #20744A, darken(#20744A, 10%));
+  border: none;
 }
 
 .matrix-excel-button:hover {
-  background: #d1f4e0;
-  border-color: #107c41;
-  color: #107c41;
-  box-shadow: 0 2px 6px rgba(16, 124, 65, 0.2);
+  background: linear-gradient(135deg, lighten(#20744A, 5%), #20744A);
+  transform: translateY(-2px);
+  box-shadow: 0 0.5vh 2vh transparentize(#20744A, 0.6);
 }
 
 .matrix-container {
@@ -3119,7 +2763,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   text-orientation: upright;
 }
 
-/* 大項目0: 赤系統 */
+/* Root Category 0: Red Series */
 .performance-header.root-0.level-1 {
   background: #ef9a9a;
 }
@@ -3132,7 +2776,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   background: #ffebee;
 }
 
-/* 大項目1: 青系統 */
+/* Root Category 1: Blue Series */
 .performance-header.root-1.level-1 {
   background: #90caf9;
 }
@@ -3145,7 +2789,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   background: #e3f2fd;
 }
 
-/* 大項目2: 緑系統 */
+/* Root Category 2: Green Series */
 .performance-header.root-2.level-1 {
   background: #a5d6a7;
 }
@@ -3158,7 +2802,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   background: #e8f5e9;
 }
 
-/* 大項目3: 黄系統 */
+/* Root Category 3: Yellow Series */
 .performance-header.root-3.level-1 {
   background: #fff59d;
 }
@@ -3171,7 +2815,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   background: #fffde7;
 }
 
-/* 大項目4: 紫系統 */
+/* Root Category 4: Purple Series */
 .performance-header.root-4.level-1 {
   background: #e1bee7;
 }
@@ -3184,7 +2828,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   background: #f8f5fa;
 }
 
-/* 大項目5: オレンジ系統 */
+/* Root Category 5: Orange Series */
 .performance-header.root-5.level-1 {
   background: #ffcc80;
 }
@@ -3197,7 +2841,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   background: #fff3e0;
 }
 
-/* 大項目6: シアン系統 */
+/* Root Category 6: Cyan Series */
 .performance-header.root-6.level-1 {
   background: #80deea;
 }
@@ -3210,7 +2854,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   background: #e0f7fa;
 }
 
-/* 大項目7: ピンク系統 */
+/* Root Category 7: Pink Series */
 .performance-header.root-7.level-1 {
   background: #f48fb1;
 }
@@ -3223,7 +2867,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   background: #fce4ec;
 }
 
-/* フォールバック（それ以上の大項目） */
+/* Fallback (for additional root categories) */
 .performance-header.level-1 {
   background: #b0bec5;
 }
@@ -3236,13 +2880,13 @@ const insufficientDecompositionAnalysis = computed(() => {
   background: #eceff1;
 }
 
-/* 末端セルの境界線: デフォルト */
+/* Leaf cell borders: Default */
 .performance-header.is-leaf {
   border: 2px solid #9c27b0;
   font-weight: 600;
 }
 
-/* 末端セルの境界線: 大項目ごと */
+/* Leaf cell borders: By root category */
 .performance-header.root-0.is-leaf {
   border: 2px solid #c62828;
 }
@@ -3515,7 +3159,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   border: 2px solid #6c757d;
 }
 
-/* V行セルの背景色: 大項目ごと（ヘッダーと同じ色） */
+/* V row cell background colors: By root category (same colors as headers) */
 .root-summary-cell.root-cell-0 {
   background: #ef9a9a;
   border: 2px solid #c62828;
@@ -3657,8 +3301,6 @@ const insufficientDecompositionAnalysis = computed(() => {
   font-size: 15px;
   font-weight: 700;
 }
-
-
 .empty-matrix {
   text-align: center;
   padding: 60px 20px;
@@ -3667,7 +3309,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   border-radius: 8px;
 }
 
-/* 効用関数ボタン */
+/* Utility Function Button */
 .utility-button {
   position: absolute;
   top: 2px;
@@ -3733,42 +3375,46 @@ const insufficientDecompositionAnalysis = computed(() => {
   position: relative;
 }
 
-/* モーダル */
+/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: transparentize($black, 0.2);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(5px);
 }
 
 .modal-content {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
+  background: $gray;
+  border: 1px solid transparentize($white, 0.9);
+  border-radius: 1vw;
+  padding: 3vh 3vw;
   max-width: 800px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2vh 6vh transparentize($black, 0.5);
 }
 
 .utility-modal h3 {
-  margin-bottom: 20px;
-  font-size: 20px;
-  color: #333;
+  margin-bottom: 2.5vh;
+  font-size: clamp(1.3rem, 1.8vw, 1.6rem);
+  color: $white;
+  font-weight: 600;
 }
 
 .modal-info {
-  background: #f8f9fa;
-  padding: 10px 14px;
-  border-radius: 6px;
-  margin-bottom: 16px;
+  background: transparentize($black, 0.5);
+  padding: 1.5vh 1.5vw;
+  border-radius: 0.5vw;
+  margin-bottom: 2vh;
+  border: 1px solid transparentize($white, 0.95);
 }
 
 .info-row {
@@ -3785,17 +3431,10 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .info-row strong {
   min-width: 60px;
-  color: #495057;
-  font-size: 12px;
-}
-
-.direction-badge {
-  background: #667eea;
-  color: white;
-  padding: 3px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
+  color: transparentize($white, 0.3);
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .graph-section {
@@ -3804,25 +3443,25 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .graph-section label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 0.8vh;
   font-weight: 600;
-  color: #495057;
-  font-size: 14px;
+  color: $white;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
 }
 
 .graph-description {
-  font-size: 12px;
-  color: #6c757d;
-  margin-bottom: 12px;
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
+  color: transparentize($white, 0.4);
+  margin-bottom: 1.5vh;
   font-style: italic;
 }
 
 .graph-container {
-  background: white;
-  border: 2px solid #dee2e6;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: transparentize($black, 0.3);
+  border: 1px solid transparentize($white, 0.9);
+  border-radius: 0.5vw;
+  padding: 1.5vh 1.5vw;
+  box-shadow: inset 0 0.2vh 0.5vh transparentize($black, 0.7);
   max-width: 650px;
   margin: 0 auto;
 }
@@ -3836,22 +3475,22 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .graph-control-button {
-  padding: 6px 8px;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
+  padding: 1vh 1vw;
+  background: transparentize($gray, 0.3);
+  border: 1px solid transparentize($white, 0.8);
+  border-radius: 0.5vw;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #495057;
+  color: $white;
 }
 
 .graph-control-button:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
-  color: #212529;
+  background: transparentize($gray, 0.1);
+  border-color: transparentize($white, 0.7);
+  transform: translateY(-2px);
 }
 
 .graph-control-button.copy-button {
@@ -3908,11 +3547,11 @@ const insufficientDecompositionAnalysis = computed(() => {
   position: absolute;
   top: 100%;
   right: 0;
-  margin-top: 8px;
-  background: white;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-top: 1vh;
+  background: $gray;
+  border: 1px solid transparentize($white, 0.9);
+  border-radius: 0.5vw;
+  box-shadow: 0 0.5vh 1.5vh transparentize($black, 0.4);
   min-width: 280px;
   max-width: 320px;
   z-index: 1000;
@@ -3940,9 +3579,9 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .popup-header h4 {
   margin: 0;
-  font-size: 14px;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
   font-weight: 600;
-  color: #212529;
+  color: $white;
 }
 
 .popup-close {
@@ -3977,9 +3616,9 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .info-list li {
-  margin-bottom: 8px;
-  font-size: 13px;
-  color: #495057;
+  margin-bottom: 0.8vh;
+  font-size: clamp(0.8rem, 0.95vw, 0.9rem);
+  color: $white;
   line-height: 1.5;
   position: relative;
 }
@@ -4107,34 +3746,36 @@ const insufficientDecompositionAnalysis = computed(() => {
 .type-label {
   font-size: 14px;
   font-weight: 600;
-  color: #495057;
+  color: $white;
   margin-right: 4px;
 }
 
 .type-button {
-  padding: 6px 16px;
-  border: 2px solid #dee2e6;
-  border-radius: 6px;
-  background: white;
-  font-size: 13px;
+  padding: 1.2vh 1.5vw;
+  border: 1px solid transparentize($white, 0.8);
+  border-radius: 0.5vw;
+  background: transparentize($gray, 0.5);
+  font-size: clamp(0.8rem, 0.95vw, 0.9rem);
   font-weight: 500;
-  color: #495057;
+  color: $white;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   display: flex;
-  gap: 6px;
+  gap: 0.5vw;
   align-items: center;
 }
 
 .type-button:hover {
-  border-color: #0066cc;
-  background: #f8f9fa;
+  background: transparentize($gray, 0.3);
+  border-color: transparentize($white, 0.7);
+  transform: translateY(-2px);
 }
 
 .type-button.active {
-  background: #0066cc;
-  border-color: #0066cc;
-  color: white;
+  background: linear-gradient(135deg, $main_1, $main_2);
+  border-color: $main_1;
+  color: $white;
+  box-shadow: 0 0.3vh 1vh transparentize($main_1, 0.6);
 }
 
 .type-icon {
@@ -4143,19 +3784,19 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .axis-range-control {
-  margin-top: 16px;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #dee2e6;
+  margin-top: 2vh;
+  padding: 2vh 2vw;
+  background: transparentize($black, 0.5);
+  border-radius: 0.5vw;
+  border: 1px solid transparentize($white, 0.95);
 }
 
 .discrete-matrix-control {
-  margin-top: 16px;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #dee2e6;
+  margin-top: 2vh;
+  padding: 2vh 2vw;
+  background: transparentize($black, 0.5);
+  border-radius: 0.5vw;
+  border: 1px solid transparentize($white, 0.95);
 }
 
 .matrix-header {
@@ -4166,25 +3807,26 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .matrix-label {
-  font-size: 14px;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
   font-weight: 600;
-  color: #495057;
+  color: $white;
 }
 
 .add-row-button {
-  padding: 6px 12px;
-  background: #3b82f6;
-  color: white;
+  padding: 1vh 1.2vw;
+  background: linear-gradient(135deg, $main_1, $main_2);
+  color: $white;
   border: none;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: 0.5vw;
+  font-size: clamp(0.8rem, 0.95vw, 0.9rem);
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .add-row-button:hover {
-  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 0.3vh 1vh transparentize($main_1, 0.6);
 }
 
 .discrete-matrix {
@@ -4194,22 +3836,25 @@ const insufficientDecompositionAnalysis = computed(() => {
 .discrete-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
-  border-radius: 6px;
+  background: transparentize($black, 0.7);
+  border-radius: 0.5vw;
   overflow: hidden;
+  border: 1px solid transparentize($white, 0.95);
 }
 
 .discrete-table thead {
-  background: #e9ecef;
+  background: transparentize($gray, 0.3);
 }
 
 .discrete-table th {
-  padding: 10px 12px;
+  padding: 1vh 1.2vw;
   text-align: left;
-  font-size: 12px;
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
   font-weight: 600;
-  color: #495057;
-  border-bottom: 2px solid #dee2e6;
+  color: $white;
+  border-bottom: 1px solid transparentize($white, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .label-column {
@@ -4226,7 +3871,7 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .discrete-row {
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid transparentize($white, 0.95);
 }
 
 .discrete-row:last-child {
@@ -4234,7 +3879,7 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .discrete-row:hover {
-  background: #f8f9fa;
+  background: transparentize($white, 0.97);
 }
 
 .label-cell,
@@ -4245,49 +3890,54 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .discrete-input {
   width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 13px;
-  transition: border-color 0.2s ease;
+  padding: 1vh 1vw;
+  background: transparentize($black, 0.3);
+  border: 1px solid transparentize($white, 0.9);
+  border-radius: 0.5vw;
+  color: $white;
+  font-size: clamp(0.8rem, 0.95vw, 0.9rem);
+  transition: all 0.3s ease;
 }
 
 .discrete-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: $main_1;
+  background: transparentize($black, 0.1);
 }
 
 .remove-row-button {
-  padding: 4px 8px;
-  background: #dc2626;
-  color: white;
+  padding: 0.8vh 1vw;
+  background: linear-gradient(135deg, $sub_1, darken($sub_1, 10%));
+  color: $white;
   border: none;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: 0.4vw;
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .remove-row-button:hover:not(:disabled) {
-  background: #b91c1c;
+  transform: scale(1.05);
+  box-shadow: 0 0.2vh 0.5vh transparentize($sub_1, 0.6);
 }
 
 .remove-row-button:disabled {
-  background: #e5e7eb;
-  color: #9ca3af;
+  background: transparentize($gray, 0.5);
+  color: transparentize($white, 0.6);
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .matrix-hint {
-  margin-top: 12px;
-  padding: 10px 12px;
-  background: #eff6ff;
-  border-left: 3px solid #3b82f6;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #1e40af;
+  margin-top: 1.5vh;
+  padding: 1vh 1.2vw;
+  background: transparentize($main_1, 0.9);
+  border-left: 3px solid $main_1;
+  border-radius: 0.4vw;
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
+  color: $white;
   line-height: 1.5;
+  opacity: 0.9;
 }
 
 .range-header {
@@ -4298,14 +3948,14 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .range-label {
-  font-size: 14px;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
   font-weight: 600;
-  color: #495057;
+  color: $white;
 }
 
 .range-tip {
-  font-size: 11px;
-  color: #6c757d;
+  font-size: clamp(0.7rem, 0.85vw, 0.8rem);
+  color: transparentize($white, 0.4);
   font-style: italic;
 }
 
@@ -4316,18 +3966,21 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .range-input {
-  padding: 8px 12px;
-  border: 2px solid #dee2e6;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 1vh 1vw;
+  background: transparentize($black, 0.3);
+  border: 1px solid transparentize($white, 0.9);
+  border-radius: 0.5vw;
+  color: $white;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
   font-weight: 500;
   width: 100px;
-  transition: border-color 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .range-input:focus {
   outline: none;
-  border-color: #0066cc;
+  border-color: $main_1;
+  background: transparentize($black, 0.1);
 }
 
 .nouislider-container {
@@ -4337,7 +3990,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   align-items: center;
 }
 
-/* noUiSliderのカスタムスタイル */
+/* Custom styles for noUiSlider */
 .nouislider-container :deep(.noUi-target) {
   border: none;
   box-shadow: none;
@@ -4384,9 +4037,10 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .modal-actions {
   display: flex;
-  gap: 12px;
+  gap: 1vw;
   justify-content: flex-end;
   align-items: center;
+  margin-top: 3vh;
 }
 
 .modal-actions .spacer {
@@ -4394,47 +4048,43 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .modal-actions button {
-  padding: 10px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  padding: 1.5vh 2vw;
+  border-radius: 0.5vw;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal-actions .secondary {
-  background: #e9ecef;
-  color: #495057;
-  border: 1px solid #dee2e6;
-}
-
-.modal-actions .secondary:hover {
-  background: #dee2e6;
-}
-
-.modal-actions .primary {
-  background: #667eea;
-  color: white;
+  transition: all 0.3s ease;
   border: none;
 }
 
+.modal-actions .secondary {
+  background: transparentize($gray, 0.5);
+  color: $white;
+  border: 1px solid transparentize($white, 0.8);
+}
+
+.modal-actions .secondary:hover {
+  background: transparentize($gray, 0.3);
+  border-color: transparentize($white, 0.7);
+}
+
+.modal-actions .primary {
+  background: linear-gradient(135deg, $main_1, $main_2);
+  color: $white;
+}
+
 .modal-actions .primary:hover {
-  background: #5568d3;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 0.5vh 2vh transparentize($main_2, 0.6);
 }
 
 .modal-actions .danger {
-  background: #fee;
-  color: #dc3545;
-  border: 2px solid #dc3545;
-  font-weight: 700;
+  background: linear-gradient(135deg, $sub_1, darken($sub_1, 10%));
+  color: $white;
 }
 
 .modal-actions .danger:hover {
-  background: #dc3545;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 0.5vh 2vh transparentize($sub_1, 0.6);
 }
 </style>
