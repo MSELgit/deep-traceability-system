@@ -2,27 +2,27 @@
   <div class="network-demo">
     <div class="demo-controls">
       <div class="iteration-selector">
-        <label>WL反復回数:</label>
+        <label>WL Iterations:</label>
         <select v-model="selectedIterations" class="iteration-select">
-          <option v-for="i in 4" :key="i" :value="i">{{ i }}回</option>
+          <option v-for="i in 4" :key="i" :value="i">{{ i }}</option>
         </select>
       </div>
       <button class="control-btn" @click="calculateSingleIteration" :disabled="!networks.length">
-        選択反復回数で計算
+        Calculate Selected Iteration
       </button>
       <button class="control-btn primary" @click="calculateAllIterations" :disabled="!networks.length">
-        全反復回数で計算
+        Calculate All Iterations
       </button>
     </div>
 
-    <!-- ネットワーク一覧 -->
+    <!-- Network List -->
     <div class="networks-grid">
       <div v-for="(network, index) in networks" :key="index" class="network-card">
         <div class="network-header">
-          <h3>パターン {{ index + 1 }}: {{ network.name }}</h3>
+          <h3>Pattern {{ index + 1 }}: {{ network.name }}</h3>
           <span class="network-stats">
-            ノード: {{ network.structure.nodes.length }}, 
-            エッジ: {{ network.structure.edges.length }}
+            Nodes: {{ network.structure.nodes.length }}, 
+            Edges: {{ network.structure.edges.length }}
           </span>
         </div>
         <div class="network-viewer-container">
@@ -36,7 +36,7 @@
       </div>
     </div>
 
-    <!-- 反復回数選択タブ（全反復計算時のみ表示） -->
+    <!-- Iteration Selection Tabs (shown only when all iterations calculated) -->
     <div v-if="isAllIterationsMode && Object.keys(allIterationResults).length > 0" class="iteration-tabs">
       <button 
         v-for="iter in [1,2,3,4]" 
@@ -44,24 +44,24 @@
         @click="selectIteration(iter)"
         :class="['tab-btn', { active: selectedIterations === iter }]"
       >
-        反復{{ iter }}回
+Iteration {{ iter }}
       </button>
     </div>
 
-    <!-- 計算結果表示 -->
+    <!-- Computation Results -->
     <div v-if="computationResults" class="computation-results">
       <!-- WLカーネル計算結果 -->
       <div class="result-section">
-        <h3>WLカーネル計算結果 (反復{{ computationResults.wlIterations }}回)</h3>
+        <h3>WL Kernel Computation Results ({{ computationResults.wlIterations }} iterations)</h3>
         <div class="debug-info">
           <div class="debug-item">
-            <span class="label">ノードラベル数:</span> {{ computationResults.labelCount }}
+            <span class="label">Node Label Count:</span> {{ computationResults.labelCount }}
           </div>
         </div>
         
         <!-- カーネル行列 -->
         <div class="matrix-container">
-          <h4>カーネル行列 K</h4>
+          <h4>Kernel Matrix K</h4>
           <table class="data-matrix kernel-matrix">
             <thead>
               <tr>
@@ -83,10 +83,10 @@
 
       <!-- 距離行列表示 -->
       <div class="result-section">
-        <h3>距離行列</h3>
+        <h3>Distance Matrix</h3>
         <div class="debug-info">
           <div class="debug-item">
-            <span class="label">距離計算式:</span> d(i,j) = √(K[i,i] + K[j,j] - 2K[i,j])
+            <span class="label">Distance Formula:</span> d(i,j) = √(K[i,i] + K[j,j] - 2K[i,j])
           </div>
         </div>
         <div class="matrix-container">
@@ -111,11 +111,11 @@
 
       <!-- MDS座標 -->
       <div class="result-section">
-        <h3>MDS計算結果</h3>
+        <h3>MDS Computation Results</h3>
         <div class="method-selector">
           <label>
             <input type="radio" v-model="selectedMethod" value="mds_polar" @change="recalculate" />
-            MDS→極座標
+            MDS→Polar
           </label>
           <label>
             <input type="radio" v-model="selectedMethod" value="circular_mds" @change="recalculate" />
@@ -127,14 +127,14 @@
           <table>
             <thead>
               <tr>
-                <th>手法</th>
-                <th>ユークリッドストレス</th>
-                <th>円環ストレス</th>
+                <th>Method</th>
+                <th>Euclidean Stress</th>
+                <th>Circular Stress</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>MDS→極座標</td>
+                <td>MDS→Polar</td>
                 <td>{{ computationResults.comparisonResults.mds_polar.stress.toFixed(4) }}</td>
                 <td>{{ computationResults.comparisonResults.mds_polar.circular_stress.toFixed(4) }}</td>
               </tr>
@@ -151,11 +151,11 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>パターン</th>
-                <th>グループ</th>
-                <th>X座標</th>
-                <th>Y座標</th>
-                <th>θ (度)</th>
+                <th>Pattern</th>
+                <th>Group</th>
+                <th>X Coordinate</th>
+                <th>Y Coordinate</th>
+                <th>θ (degrees)</th>
               </tr>
             </thead>
             <tbody>
@@ -177,14 +177,14 @@
 
       <!-- 反復回数比較（全反復計算時のみ表示） -->
       <div v-if="isAllIterationsMode && Object.keys(allIterationResults).length > 0" class="result-section">
-        <h3>反復回数による角度変化</h3>
+        <h3>Angle Changes by Iteration Count</h3>
         <div class="iteration-comparison-table">
           <table class="data-table">
             <thead>
               <tr>
-                <th>パターン</th>
-                <th>グループ</th>
-                <th v-for="iter in [1,2,3,4]" :key="iter">反復{{ iter }}回</th>
+                <th>Pattern</th>
+                <th>Group</th>
+                <th v-for="iter in [1,2,3,4]" :key="iter">Iteration {{ iter }}</th>
               </tr>
             </thead>
             <tbody>
@@ -206,9 +206,9 @@
         </div>
       </div>
 
-      <!-- 可視化 -->
+      <!-- Visualization -->
       <div class="result-section">
-        <h3>座標プロット</h3>
+        <h3>Coordinate Plot</h3>
         <div class="legend">
           <div class="legend-item" v-for="(group, idx) in groupNames" :key="idx">
             <span class="legend-color" :style="{ backgroundColor: groupColors[idx] }"></span>
@@ -216,11 +216,16 @@
           </div>
         </div>
         <div class="plots-container">
-          <!-- XY散布図 -->
+          <!-- XY Scatter Plot -->
           <div class="plot-wrapper">
-            <h4>XY座標散布図</h4>
-            <svg class="scatter-plot" viewBox="-320 -320 640 640">
-              <!-- グリッド -->
+            <div class="plot-header">
+              <h4>XY Coordinate Scatter Plot</h4>
+              <button class="camera-btn" @click="downloadScatterPlot" title="Download XY Scatter Plot">
+                <FontAwesomeIcon :icon="['fas', 'camera']" />
+              </button>
+            </div>
+            <svg ref="scatterPlotSvg" class="scatter-plot" viewBox="-320 -320 640 640">
+              <!-- Grid -->
               <g class="grid">
                 <line x1="-300" y1="0" x2="300" y2="0" stroke="#ddd" />
                 <line x1="0" y1="-300" x2="0" y2="300" stroke="#ddd" />
@@ -228,7 +233,7 @@
                 <circle cx="0" cy="0" r="200" fill="none" stroke="#eee" />
                 <circle cx="0" cy="0" r="300" fill="none" stroke="#eee" />
               </g>
-              <!-- データ点 -->
+              <!-- Data Points -->
               <g class="data-points">
                 <circle
                   v-for="(coord, i) in computationResults.xyCoordinates"
@@ -255,14 +260,19 @@
             </svg>
           </div>
 
-          <!-- 円環座標図 -->
+          <!-- Circular Coordinates -->
           <div class="plot-wrapper">
-            <h4>円環座標配置</h4>
-            <svg class="circular-plot" viewBox="-320 -320 640 640">
-              <!-- 円と角度ガイド -->
+            <div class="plot-header">
+              <h4>Circular Coordinate Layout</h4>
+              <button class="camera-btn" @click="downloadCircularPlot" title="Download Circular Plot">
+                <FontAwesomeIcon :icon="['fas', 'camera']" />
+              </button>
+            </div>
+            <svg ref="circularPlotSvg" class="circular-plot" viewBox="-320 -320 640 640">
+              <!-- Circle and Angle Guides -->
               <g class="grid">
                 <circle cx="0" cy="0" r="250" fill="none" stroke="#ddd" stroke-width="2" />
-                <!-- 角度マーカー -->
+                <!-- Angle Markers -->
                 <g v-for="angle in [0, 45, 90, 135, 180, 225, 270, 315]" :key="angle">
                   <line
                     :x1="240 * Math.cos(angle * Math.PI / 180)"
@@ -284,7 +294,7 @@
                   </text>
                 </g>
               </g>
-              <!-- データ点 -->
+              <!-- Data Points -->
               <g class="data-points">
                 <circle
                   v-for="(coord, i) in computationResults.circularCoordinates"
@@ -330,7 +340,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, nextTick, watch } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import NetworkViewer from '../network/NetworkViewer.vue';
 import type { NetworkStructure, NetworkNode, NetworkEdge } from '../../types/project';
 
@@ -370,6 +381,10 @@ const isAllIterationsMode = ref(false);
 // NetworkViewerのref配列
 const networkViewers = ref<Array<InstanceType<typeof NetworkViewer> | null>>([]);
 
+// SVG要素のref
+const scatterPlotSvg = ref<SVGSVGElement>();
+const circularPlotSvg = ref<SVGSVGElement>();
+
 // ref配列を設定する関数
 function setViewerRef(el: any, index: number) {
   if (el) {
@@ -396,7 +411,7 @@ function resetAllViewers() {
 }
 
 // グループ名と色の定義
-const groupNames = ['線形', 'ツリー', 'スター', 'メッシュ', '疎'];
+const groupNames = ['Linear', 'Tree', 'Star', 'Mesh', 'Sparse'];
 const groupColors = [
   '#FF6B6B',  // 線形：赤系
   '#4ECDC4',  // ツリー：青緑系
@@ -490,7 +505,7 @@ function generateLinearNetwork(): DemoNetwork {
   }
 
   return {
-    name: '線形',
+    name: 'Linear',
     structure: { nodes, edges }
   };
 }
@@ -521,7 +536,7 @@ function generateLinearNetworkV1(): DemoNetwork {
   });
   
   return {
-    name: '線形+1',
+    name: 'Linear+1',
     structure: { nodes, edges }
   };
 }
@@ -542,7 +557,7 @@ function generateLinearNetworkV2(): DemoNetwork {
   }
   
   return {
-    name: '線形W',
+    name: 'Linear-W',
     structure: { nodes, edges }
   };
 }
@@ -630,7 +645,7 @@ function generateTreeNetwork(): DemoNetwork {
   }
 
   return {
-    name: 'ツリー',
+    name: 'Tree',
     structure: { nodes, edges }
   };
 }
@@ -661,7 +676,7 @@ function generateTreeNetworkV1(): DemoNetwork {
   });
   
   return {
-    name: 'ツリー+1',
+    name: 'Tree+1',
     structure: { nodes, edges }
   };
 }
@@ -738,7 +753,7 @@ function generateStarNetwork(): DemoNetwork {
   });
 
   return {
-    name: 'スター',
+    name: 'Star',
     structure: { nodes, edges }
   };
 }
@@ -769,7 +784,7 @@ function generateStarNetworkV1(): DemoNetwork {
   });
   
   return {
-    name: 'スター+1',
+    name: 'Star+1',
     structure: { nodes, edges }
   };
 }
@@ -783,7 +798,7 @@ function generateStarNetworkV2(): DemoNetwork {
   edges.splice(-2, 2);
   
   return {
-    name: 'スター-2',
+    name: 'Star-2',
     structure: { nodes, edges }
   };
 }
@@ -830,7 +845,7 @@ function generateMeshNetwork(): DemoNetwork {
   }
 
   return {
-    name: 'メッシュ',
+    name: 'Mesh',
     structure: { nodes, edges }
   };
 }
@@ -849,7 +864,7 @@ function generateMeshNetworkV1(): DemoNetwork {
   }
   
   return {
-    name: 'メッシュ-3',
+    name: 'Mesh-3',
     structure: { nodes, edges }
   };
 }
@@ -865,7 +880,7 @@ function generateMeshNetworkV2(): DemoNetwork {
   if (edges[7]) edges[7].weight = -3 as const;
   
   return {
-    name: 'メッシュW',
+    name: 'Mesh-W',
     structure: { nodes, edges }
   };
 }
@@ -909,7 +924,7 @@ function generateSparseNetwork(): DemoNetwork {
   }
 
   return {
-    name: '疎',
+    name: 'Sparse',
     structure: { nodes, edges }
   };
 }
@@ -938,7 +953,7 @@ function generateSparseNetworkV1(): DemoNetwork {
   });
   
   return {
-    name: '疎+2',
+    name: 'Sparse+2',
     structure: { nodes, edges }
   };
 }
@@ -969,7 +984,7 @@ function generateSparseNetworkV2(): DemoNetwork {
   });
   
   return {
-    name: '疎+1N',
+    name: 'Sparse+1N',
     structure: { nodes, edges }
   };
 }
@@ -1077,180 +1092,370 @@ function selectIteration(iter: number) {
   }
 }
 
+// Download scatter plot as image
+function downloadScatterPlot() {
+  if (!scatterPlotSvg.value) {
+    console.error('Scatter plot SVG not available');
+    return;
+  }
+  downloadSvgAsImage(scatterPlotSvg.value, 'scatter-plot');
+}
+
+// Download circular plot as image
+function downloadCircularPlot() {
+  if (!circularPlotSvg.value) {
+    console.error('Circular plot SVG not available');
+    return;
+  }
+  downloadSvgAsImage(circularPlotSvg.value, 'circular-plot');
+}
+
+// Helper function to download SVG as PNG image
+function downloadSvgAsImage(svgElement: SVGSVGElement, plotType: string) {
+  try {
+    // Clone SVG to avoid modifying the original
+    const svgClone = svgElement.cloneNode(true) as SVGSVGElement;
+    
+    // Set dimensions for proper scaling
+    const width = 640;
+    const height = 640;
+    svgClone.setAttribute('width', String(width));
+    svgClone.setAttribute('height', String(height));
+    
+    // Convert SVG to data URL
+    const svgData = new XMLSerializer().serializeToString(svgClone);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const svgUrl = URL.createObjectURL(svgBlob);
+    
+    // Create Image object and load SVG
+    const img = new Image();
+    img.onload = () => {
+      // Create canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      // Fill background
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw SVG
+      ctx.drawImage(img, 0, 0);
+      
+      // Download
+      const link = document.createElement('a');
+      const method = selectedMethod.value;
+      const iterations = selectedIterations.value;
+      link.download = `mds-${plotType}-${method}-iter${iterations}-${new Date().toISOString().slice(0, 10)}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      // Cleanup
+      URL.revokeObjectURL(svgUrl);
+    };
+    
+    img.onerror = () => {
+      console.error('Failed to convert SVG');
+      alert('Failed to download plot');
+      URL.revokeObjectURL(svgUrl);
+    };
+    
+    img.src = svgUrl;
+  } catch (error) {
+    console.error('Failed to generate plot image:', error);
+    alert('Failed to download plot');
+  }
+}
+
 onMounted(() => {
   generateNetworks();
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use 'sass:color';
+@import '../../style/color';
+
 .network-demo {
-  padding: 20px;
-  background: #f5f5f5;
-  min-height: 100vh;
+  padding: 2vh;
 }
 
 .demo-controls {
   display: flex;
-  gap: 12px;
-  margin-bottom: 30px;
+  gap: clamp(1rem, 2vw, 1.5rem);
+  margin-bottom: clamp(1.5rem, 3vh, 2rem);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.iteration-selector {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.75rem, 1.5vh, 1rem) clamp(1rem, 2vw, 1.25rem);
+  background: linear-gradient(135deg, color.adjust($main_1, $alpha: -0.8, $lightness: 20%), color.adjust($main_2, $alpha: -0.8, $lightness: 20%));
+  border: 1px solid color.adjust($main_1, $alpha: -0.7);
+  border-radius: 0.6vw;
+  box-shadow: 0 0.3vh 0.8vh color.adjust($main_1, $alpha: -0.7);
+}
+
+.iteration-selector label {
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
+  font-weight: 600;
+  color: $white;
+  text-shadow: 0 0.1vh 0.3vh color.adjust($black, $alpha: -0.5);
+}
+
+.iteration-select {
+  padding: clamp(0.5rem, 1vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem);
+  background: $white;
+  border: 2px solid color.adjust($main_1, $alpha: -0.3);
+  border-radius: 0.4vw;
+  color: $black;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0.3vh 0.8vh color.adjust($black, $alpha: -0.7);
+
+  &:hover {
+    background: color.adjust($white, $lightness: -5%);
+    border-color: $main_1;
+    box-shadow: 0 0.4vh 1vh color.adjust($main_1, $alpha: -0.5);
+  }
+
+  &:focus {
+    outline: none;
+    background: $white;
+    border-color: $main_1;
+    box-shadow: 0 0 0 0.2vw color.adjust($main_1, $alpha: -0.6), 0 0.4vh 1vh color.adjust($main_1, $alpha: -0.5);
+  }
+
+  option {
+    background: $white;
+    color: $black;
+    font-weight: 500;
+  }
 }
 
 .control-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: white;
-  border: 2px solid #ddd;
-  border-radius: 6px;
+  gap: clamp(0.4rem, 0.8vw, 0.6rem);
+  padding: clamp(0.75rem, 1.5vh, 1rem) clamp(1.25rem, 2.5vw, 1.75rem);
+  background: linear-gradient(135deg, color.adjust($gray, $lightness: 20%) 0%, color.adjust($gray, $lightness: 15%) 100%);
+  border: 2px solid color.adjust($white, $alpha: -0.85);
+  border-radius: 0.6vw;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
-}
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
+  font-weight: 600;
+  color: $white;
+  transition: all 0.3s ease;
+  box-shadow: 0 0.3vh 0.8vh color.adjust($black, $alpha: -0.6);
 
-.control-btn:hover:not(:disabled) {
-  background: #f0f0f0;
-  border-color: #999;
-}
+  &:hover {
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border-color: color.adjust($main_1, $alpha: -0.3);
+    transform: translateY(-0.1vh);
+    box-shadow: 0 0.4vh 1vh color.adjust($main_1, $alpha: -0.5);
+  }
 
-.control-btn.primary {
-  background: #4CAF50;
-  color: white;
-  border-color: #4CAF50;
-}
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 0.2vh 0.5vh color.adjust($main_1, $alpha: -0.6);
+  }
 
-.control-btn.primary:hover:not(:disabled) {
-  background: #45a049;
-  border-color: #45a049;
-}
+  &:disabled {
+    background: color.adjust($gray, $lightness: 5%);
+    color: color.adjust($white, $alpha: -0.6);
+    cursor: not-allowed;
+    border-color: color.adjust($white, $alpha: -0.95);
+    transform: none;
+    box-shadow: none;
+  }
 
-.control-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  &.primary {
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border-color: $main_1;
+
+    &:hover {
+      background: linear-gradient(135deg, lighten($main_1, 10%) 0%, lighten($main_2, 10%) 100%);
+      box-shadow: 0 0.5vh 1.2vh color.adjust($main_1, $alpha: -0.4);
+    }
+  }
 }
 
 .networks-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 2fr));
-  gap: 20px;
-  margin-bottom: 40px;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(18rem, 30vw, 20rem), 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+  margin-bottom: clamp(2rem, 4vh, 2.5rem);
 }
 
 .network-card {
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  background: lighten($gray, 8%);
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  border-radius: 0.8vw;
   overflow: hidden;
+  box-shadow: 0 0.3vh 0.8vh color.adjust($black, $alpha: -0.5);
 }
 
 .network-header {
-  padding: 16px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: clamp(1rem, 2vh, 1.25rem);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .network-header h3 {
-  font-size: 16px;
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
   font-weight: 600;
-  color: #333;
+  color: $white;
   margin: 0;
 }
 
 .network-stats {
-  font-size: 12px;
-  color: #666;
+  font-size: clamp(0.75rem, 0.9vw, 0.8rem);
+  color: color.adjust($white, $alpha: -0.4);
 }
 
 .network-viewer-container {
   position: relative;
   overflow: hidden;
+  background: white;
 }
 
 .computation-results {
-  margin-top: 40px;
+  margin-top: clamp(2rem, 4vh, 2.5rem);
+}
+
+.iteration-tabs {
+  display: flex;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  margin-bottom: clamp(1.5rem, 3vh, 2rem);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: clamp(0.5rem, 1vh, 0.75rem) clamp(1rem, 2vw, 1.5rem);
+  background: color.adjust($gray, $lightness: 10%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.5vw;
+  cursor: pointer;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  font-weight: 500;
+  color: color.adjust($white, $alpha: -0.3);
+  transition: all 0.3s ease;
+
+  &.active {
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border-color: $main_1;
+    color: $white;
+    box-shadow: 0 0.3vh 0.8vh color.adjust($main_1, $alpha: -0.5);
+  }
+
+  &:hover:not(.active) {
+    background: color.adjust($gray, $lightness: 15%);
+    border-color: color.adjust($main_1, $alpha: -0.5);
+    color: $white;
+  }
 }
 
 .result-section {
-  background: white;
-  padding: 24px;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  margin-bottom: 24px;
+  background: lighten($gray, 8%);
+  padding: clamp(1.5rem, 3vh, 2rem);
+  border-radius: 0.8vw;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  margin-bottom: clamp(1.5rem, 3vh, 2rem);
+  box-shadow: 0 0.3vh 0.8vh color.adjust($black, $alpha: -0.5);
 }
 
 .result-section h3 {
-  font-size: 20px;
-  margin-bottom: 16px;
-  color: #333;
+  font-size: clamp(1.2rem, 1.6vw, 1.4rem);
+  margin-bottom: clamp(1rem, 2vh, 1.25rem);
+  color: $white;
+  font-weight: 600;
 }
 
 .result-section h4 {
-  font-size: 16px;
-  margin: 16px 0 12px;
-  color: #555;
+  font-size: clamp(1rem, 1.3vw, 1.1rem);
+  margin: clamp(1rem, 2vh, 1.25rem) 0 clamp(0.75rem, 1.5vh, 1rem);
+  color: color.adjust($white, $alpha: -0.2);
+  font-weight: 500;
 }
 
 .debug-info {
-  background: #f8f9fa;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 16px;
+  background: color.adjust($gray, $lightness: 15%);
+  padding: clamp(0.75rem, 1.5vh, 1rem);
+  border-radius: 0.6vw;
+  margin-bottom: clamp(1rem, 2vh, 1.25rem);
   font-family: monospace;
-  font-size: 13px;
+  font-size: clamp(0.75rem, 0.9vw, 0.8rem);
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  box-shadow: inset 0 0.1vh 0.3vh color.adjust($black, $alpha: -0.9);
 }
 
 .debug-item {
-  margin: 4px 0;
+  margin: clamp(0.3rem, 0.6vh, 0.5rem) 0;
 }
 
 .debug-item .label {
   font-weight: 600;
-  color: #495057;
+  color: color.adjust($white, $alpha: -0.3);
 }
 
 .matrix-container {
   overflow-x: auto;
-  margin-bottom: 20px;
+  margin-bottom: clamp(1.25rem, 2.5vh, 1.5rem);
+  border-radius: 0.6vw;
+  box-shadow: 0 0.3vh 0.8vh color.adjust($black, $alpha: -0.7);
 }
 
 .data-matrix {
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: clamp(0.75rem, 0.9vw, 0.8rem);
   min-width: 100%;
+  background: color.adjust($gray, $lightness: 15%);
+  border-radius: 0.6vw;
+  overflow: hidden;
 }
 
 .data-matrix th,
 .data-matrix td {
-  padding: 6px 10px;
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.6rem, 1.2vw, 0.8rem);
   text-align: center;
-  border: 1px solid #dee2e6;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .data-matrix th {
-  background: #f8f9fa;
+  background: linear-gradient(135deg, $main_1 0%, color.adjust($main_1, $lightness: 10%) 100%);
   font-weight: 600;
-  color: #495057;
+  color: $white;
 }
 
 .data-matrix td {
-  background: white;
+  background: color.adjust($gray, $lightness: 12%);
   font-family: monospace;
+  color: $white;
 }
 
 .data-matrix td.diagonal {
-  background: #e9ecef;
+  background: color.adjust($gray, $lightness: 20%);
   font-weight: 600;
+  color: color.adjust($white, $lightness: 10%);
 }
 
 .kernel-matrix td {
-  color: #28a745;
+  color: lighten(#28a745, 20%);
 }
 
 .distance-matrix td {
-  color: #dc3545;
+  color: lighten(#dc3545, 15%);
 }
 
 .coordinates-table {
@@ -1260,28 +1465,32 @@ onMounted(() => {
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: clamp(0.75rem, 0.9vw, 0.8rem);
+  background: color.adjust($gray, $lightness: 15%);
+  border-radius: 0.6vw;
+  overflow: hidden;
 }
 
 .data-table th,
 .data-table td {
-  padding: 10px 12px;
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.6rem, 1.2vw, 0.8rem);
   text-align: left;
-  border: 1px solid #dee2e6;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .data-table th {
-  background: #f8f9fa;
+  background: linear-gradient(135deg, $main_1 0%, color.adjust($main_1, $lightness: 10%) 100%);
   font-weight: 600;
-  color: #495057;
+  color: $white;
 }
 
 .data-table td {
-  background: white;
+  background: color.adjust($gray, $lightness: 12%);
+  color: $white;
 }
 
 .data-table tr:hover td {
-  background: #f8f9fa;
+  background: color.adjust($main_1, $alpha: -0.8, $lightness: 25%);
 }
 
 .group-badge {
@@ -1295,11 +1504,13 @@ onMounted(() => {
 
 .legend {
   display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
+  gap: clamp(1rem, 2vw, 1.25rem);
+  margin-bottom: clamp(1rem, 2vh, 1.25rem);
+  padding: clamp(0.75rem, 1.5vh, 1rem);
+  background: color.adjust($gray, $lightness: 15%);
+  border-radius: 0.6vw;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  box-shadow: inset 0 0.1vh 0.3vh color.adjust($black, $alpha: -0.9);
   flex-wrap: wrap;
 }
 
@@ -1310,16 +1521,16 @@ onMounted(() => {
 }
 
 .legend-color {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  border: 2px solid #333;
+  width: clamp(1rem, 2vw, 1.25rem);
+  height: clamp(1rem, 2vw, 1.25rem);
+  border-radius: 0.3vw;
+  border: 2px solid color.adjust($white, $alpha: -0.2);
 }
 
 .legend-label {
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 500;
-  color: #333;
+  color: $white;
 }
 
 .plots-container {
@@ -1331,38 +1542,59 @@ onMounted(() => {
 
 .plot-wrapper {
   flex: 1;
-  min-width: 400px;
+  min-width: clamp(20rem, 40vw, 25rem);
 }
 
-.plot-wrapper h4 {
-  text-align: center;
-  margin-bottom: 12px;
-  font-size: 16px;
-  color: #333;
+.plot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: clamp(0.6rem, 1.2vh, 0.75rem);
+  padding: 0 clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.plot-header h4 {
+  margin: 0;
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
+  color: $white;
+  font-weight: 600;
+}
+
+.plot-header .camera-btn {
+  background: color.adjust($gray, $lightness: 15%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.4vw;
+  padding: clamp(0.3rem, 0.6vh, 0.5rem) clamp(0.5rem, 1vw, 0.75rem);
+  cursor: pointer;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  color: $white;
+  transition: all 0.3s ease;
+  box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.8);
+
+  &:hover {
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border-color: color.adjust($main_1, $alpha: -0.3);
+    transform: translateY(-0.05vh);
+    box-shadow: 0 0.3vh 0.8vh color.adjust($main_1, $alpha: -0.5);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 0.2vh 0.5vh color.adjust($main_1, $alpha: -0.6);
+  }
 }
 
 .scatter-plot,
 .circular-plot {
   width: 100%;
   height: auto;
-  max-width: 500px;
+  max-width: clamp(25rem, 50vw, 31.25rem);
   margin: 0 auto;
   display: block;
-  background: #fafafa;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-}
-
-.iteration-selector {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.iteration-selector label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
+  background: white;
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.6vw;
+  box-shadow: 0 0.3vh 0.8vh color.adjust($black, $alpha: -0.7);
 }
 
 .iteration-select {
@@ -1405,45 +1637,68 @@ onMounted(() => {
 }
 
 .method-selector {
-  margin: 10px 0;
+  margin: clamp(0.5rem, 1vh, 0.75rem) 0;
   display: flex;
-  gap: 15px;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
   flex-wrap: wrap;
+  padding: clamp(0.75rem, 1.5vh, 1rem);
+  background: color.adjust($gray, $lightness: 15%);
+  border-radius: 0.6vw;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .method-selector label {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: clamp(0.3rem, 0.6vw, 0.4rem);
   cursor: pointer;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  font-weight: 500;
+  color: $white;
+}
+
+.method-selector input[type="radio"] {
+  accent-color: $main_1;
+  transform: scale(1.2);
 }
 
 .comparison-results {
-  margin: 15px 0;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 5px;
+  margin: clamp(0.75rem, 1.5vh, 1rem) 0;
+  padding: clamp(0.75rem, 1.5vh, 1rem);
+  background: color.adjust($gray, $lightness: 15%);
+  border-radius: 0.6vw;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  box-shadow: inset 0 0.1vh 0.3vh color.adjust($black, $alpha: -0.9);
 }
 
 .comparison-results table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
+  margin-top: clamp(0.5rem, 1vh, 0.75rem);
+  background: color.adjust($gray, $lightness: 15%);
+  border-radius: 0.6vw;
+  overflow: hidden;
 }
 
 .comparison-results th,
 .comparison-results td {
-  padding: 8px;
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.6rem, 1.2vw, 0.8rem);
   text-align: left;
-  border-bottom: 1px solid #ddd;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .comparison-results th {
-  background: #e9ecef;
-  font-weight: bold;
+  background: linear-gradient(135deg, $main_1 0%, color.adjust($main_1, $lightness: 10%) 100%);
+  font-weight: 600;
+  color: $white;
 }
 
-.comparison-results tbody tr:hover {
-  background: #f5f5f5;
+.comparison-results td {
+  color: $white;
+  font-family: monospace;
+}
+
+.comparison-results tbody tr:hover td {
+  background: color.adjust($main_1, $alpha: -0.8, $lightness: 25%);
 }
 </style>

@@ -3,37 +3,42 @@
     <div class="view-header">
       <div class="axis-selectors">
         <label>
-          X軸:
+          X-axis:
           <select v-model="selectedX">
             <option v-for="perf in performances" :key="perf.id" :value="perf.id">
               {{ perf.name }}
             </option>
-            <option value="__height">標高</option>
-            <option value="__energy">エネルギー</option>
+            <option value="__height">Height</option>
+            <option value="__energy">Energy</option>
           </select>
         </label>
         <label>
-          Y軸:
+          Y-axis:
           <select v-model="selectedY">
             <option v-for="perf in performances" :key="perf.id" :value="perf.id">
               {{ perf.name }}
             </option>
-            <option value="__height">標高</option>
-            <option value="__energy">エネルギー</option>
+            <option value="__height">Height</option>
+            <option value="__energy">Energy</option>
           </select>
         </label>
       </div>
-      <button class="close-btn" @click="onRemove(viewId)" title="ビューを閉じる">×</button>
+      <div class="header-actions">
+        <button class="camera-btn" @click="downloadPlotImage" title="Download 2-Axis Plot">
+          <FontAwesomeIcon :icon="['fas', 'camera']" />
+        </button>
+        <button class="close-btn" @click="onRemove(viewId)" title="Close View">×</button>
+      </div>
     </div>
     <div class="plot-area">
-      <svg :width="svgWidth" :height="svgHeight">
-        <!-- 十字クロス軸 -->
+      <svg ref="plotSvg" :width="svgWidth" :height="svgHeight" :viewBox="`0 0 ${svgWidth} ${svgHeight}`">
+        <!-- Axis lines -->
         <line :x1="margin" :y1="svgHeight/2" :x2="svgWidth - margin" :y2="svgHeight/2" stroke="#888" stroke-width="2" />
         <line :x1="svgWidth/2" :y1="margin" :x2="svgWidth/2" :y2="svgHeight - margin" stroke="#888" stroke-width="2" />
-        <!-- 軸ラベル -->
-        <text :x="svgWidth/2" :y="svgHeight - 8" text-anchor="middle" font-size="14" fill="#333">{{ getPerfName(selectedX) }}</text>
+        <!-- Axis labels -->
+        <text :x="svgWidth-48" :y="svgHeight/2 + 25" text-anchor="middle" font-size="14" fill="#333">{{ getPerfName(selectedX) }}</text>
         <text :x="svgWidth/2 - 8" :y="24" text-anchor="end" font-size="14" fill="#333" :transform="`rotate(-90,${svgWidth/2 - 8},24)`">{{ getPerfName(selectedY) }}</text>
-        <!-- 設計案プロット -->
+        <!-- Design case plots -->
         <g v-for="dc in designCases" :key="dc.id">
           <circle
             :cx="scaleX(getValue(dc, selectedX))"
@@ -54,12 +59,12 @@
         </g>
       </svg>
     </div>
-    <!-- デバッグ: 各案のX/Y値表示 -->
+    <!-- Debug: X/Y values for each design case -->
     <div class="debug-values">
       <table>
         <thead>
           <tr>
-            <th>設計案</th>
+            <th>Design Case</th>
             <th>{{ getPerfName(selectedX) }} (X)</th>
             <th>{{ getPerfName(selectedY) }} (Y)</th>
           </tr>
@@ -95,6 +100,7 @@ import { ref, watch, computed, onMounted } from 'vue';
 import type { DesignCase, Performance } from '../../types/project';
 import { calculationApi } from '../../utils/api';
 import { useRoute } from 'vue-router';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 const props = defineProps<{
   viewId: number|string;
@@ -111,9 +117,10 @@ const emit = defineEmits<{
 
 const route = useRoute();
 
-const svgWidth = ref(340);
-const svgHeight = ref(320);
+const svgWidth = ref(300);
+const svgHeight = ref(280);
 const margin = ref(38);
+const plotSvg = ref<SVGSVGElement>();
 
 
 const selectedX = ref(props.initialX || props.performances[0]?.id || '');
@@ -143,7 +150,7 @@ async function recalculateEnergy() {
       }
     }
   } catch (error) {
-    console.error('エネルギー再計算に失敗:', error);
+    console.error('Failed to recalculate energy:', error);
   }
 }
 
@@ -176,8 +183,8 @@ watch(selectedY, (newVal) => {
 });
 
 function getPerfName(id: string) {
-  if (id === "__height") return "標高";
-  if (id === "__energy") return "エネルギー";
+  if (id === "__height") return "Height";
+  if (id === "__energy") return "Energy";
   return props.performances.find(p => p.id === id)?.name || '';
 }
 function getValue(dc: DesignCase, perfId: string): number | string {
@@ -265,81 +272,253 @@ function labelAnchor(val: number | string) {
   if (x < margin.value + 40) return 'start';
   return 'start';
 }
+
+// Download 2-axis plot as image
+function downloadPlotImage() {
+  if (!plotSvg.value) {
+    console.error('SVG not available');
+    return;
+  }
+
+  try {
+    // Clone SVG to avoid modifying the original
+    const svgClone = plotSvg.value.cloneNode(true) as SVGSVGElement;
+    
+    // Set viewBox and dimensions for proper scaling
+    svgClone.setAttribute('viewBox', `0 0 ${svgWidth.value} ${svgHeight.value}`);
+    svgClone.setAttribute('width', String(svgWidth.value));
+    svgClone.setAttribute('height', String(svgHeight.value));
+    
+    // Convert SVG to data URL
+    const svgData = new XMLSerializer().serializeToString(svgClone);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const svgUrl = URL.createObjectURL(svgBlob);
+    
+    // Create Image object and load SVG
+    const img = new Image();
+    img.onload = () => {
+      // Create canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = svgWidth.value;
+      canvas.height = svgHeight.value;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      // Fill background
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw SVG
+      ctx.drawImage(img, 0, 0);
+      
+      // Download
+      const link = document.createElement('a');
+      const xAxisName = getPerfName(selectedX.value);
+      const yAxisName = getPerfName(selectedY.value);
+      link.download = `2axis-plot-${xAxisName}-${yAxisName}-${new Date().toISOString().slice(0, 10)}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      // Cleanup
+      URL.revokeObjectURL(svgUrl);
+    };
+    
+    img.onerror = () => {
+      console.error('Failed to convert SVG');
+      alert('Failed to download plot');
+      URL.revokeObjectURL(svgUrl);
+    };
+    
+    img.src = svgUrl;
+  } catch (error) {
+    console.error('Failed to generate plot image:', error);
+    alert('Failed to download plot');
+  }
+}
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use 'sass:color';
+@import '../../style/color';
+
 .twoaxis-eval-wrapper {
   position: relative;
-  width: 340px;
-  min-width: 280px;
-  max-width: 100%;
-  margin: 0 8px 24px 0;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin: 0 0 clamp(1.5rem, 2vh, 2rem) 0;
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  border-radius: 0.8vw;
+  box-shadow: 0 0.3vh 0.8vh color.adjust($black, $alpha: -0.5);
 }
+
 .view-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px 0 16px;
+  padding: clamp(0.6rem, 1.2vh, 1rem) clamp(1rem, 2vw, 1.25rem) 0 clamp(1rem, 2vw, 1.25rem);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
 }
+
 .axis-selectors {
   display: flex;
-  gap: 18px;
+  gap: clamp(1rem, 2vw, 1.5rem);
+  flex-wrap: wrap;
 }
-.close-btn {
-  background: #eee;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  font-size: 20px;
-  color: #888;
+
+.axis-selectors label {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.4rem, 0.8vw, 0.6rem);
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  font-weight: 500;
+  color: $white;
+}
+
+.axis-selectors select {
+  padding: clamp(0.3rem, 0.6vh, 0.5rem) clamp(0.5rem, 1vw, 0.75rem);
+  background: color.adjust($gray, $lightness: 15%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.4vw;
+  color: $white;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
   cursor: pointer;
-  margin-left: 12px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: color.adjust($gray, $lightness: 20%);
+    border-color: color.adjust($main_1, $alpha: -0.5);
+  }
+
+  &:focus {
+    outline: none;
+    background: color.adjust($gray, $lightness: 20%);
+    border-color: $main_1;
+    box-shadow: 0 0 0 0.15vw color.adjust($main_1, $alpha: -0.7);
+  }
+
+  option {
+    background: color.adjust($gray, $lightness: 15%);
+    color: $white;
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  align-items: center;
+}
+
+.camera-btn {
+  background: color.adjust($gray, $lightness: 15%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.4vw;
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.6rem, 1vw, 0.8rem);
+  cursor: pointer;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
+  color: $white;
+  transition: all 0.3s ease;
+  box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.8);
+
+  &:hover {
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border-color: color.adjust($main_1, $alpha: -0.3);
+    transform: translateY(-0.05vh);
+    box-shadow: 0 0.3vh 0.8vh color.adjust($main_1, $alpha: -0.5);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 0.2vh 0.5vh color.adjust($main_1, $alpha: -0.6);
+  }
+}
+
+.close-btn {
+  background: color.adjust($gray, $lightness: 15%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 50%;
+  width: clamp(2rem, 3vw, 2.5rem);
+  height: clamp(2rem, 3vw, 2.5rem);
+  font-size: clamp(1.2rem, 1.6vw, 1.4rem);
+  color: color.adjust($white, $alpha: -0.3);
+  cursor: pointer;
+  margin-left: clamp(0.75rem, 1.5vw, 1rem);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-  transition: background 0.2s, color 0.2s;
+  box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.8);
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+    border-color: #d32f2f;
+    color: $white;
+    transform: scale(1.05);
+    box-shadow: 0 0.3vh 0.8vh rgba(211, 47, 47, 0.4);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
 }
-.close-btn:hover {
-  background: #f44336;
-  color: #fff;
-}
+
 .plot-area {
-  padding: 8px 8px 16px 8px;
+  padding: clamp(0.5rem, 1vh, 0.75rem);
   display: flex;
   justify-content: center;
   align-items: center;
+  background: white;
+  margin: clamp(0.5rem, 1vh, 0.75rem);
+  border-radius: 0.6vw;
+  box-shadow: inset 0 0.1vh 0.3vh color.adjust($black, $alpha: -0.9);
+
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
 }
-  .debug-values {
-    margin: 8px 0 0 0;
-    padding: 0 16px 12px 16px;
-  }
-  .debug-values table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    background: #f8f9fa;
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .debug-values th, .debug-values td {
-    border: 1px solid #e0e0e0;
-    padding: 4px 8px;
-    text-align: left;
-  }
-  .debug-values th {
-    background: #e3eafc;
-    font-weight: 600;
-    color: #3357FF;
-  }
-  .debug-values tr:nth-child(even) {
-    background: #f4f8ff;
-  }
+
+.debug-values {
+  margin: clamp(0.5rem, 1vh, 0.75rem) 0 0 0;
+  padding: 0 clamp(1rem, 2vw, 1.25rem) clamp(0.75rem, 1.5vh, 1rem) clamp(1rem, 2vw, 1.25rem);
+}
+
+.debug-values table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(0.75rem, 0.9vw, 0.8rem);
+  background: color.adjust($gray, $lightness: 15%);
+  border-radius: 0.6vw;
+  overflow: hidden;
+  box-shadow: inset 0 0.1vh 0.3vh color.adjust($black, $alpha: -0.9);
+}
+
+.debug-values th, 
+.debug-values td {
+  border: 1px solid color.adjust($white, $alpha: -0.95);
+  padding: clamp(0.3rem, 0.6vh, 0.5rem) clamp(0.5rem, 1vw, 0.75rem);
+  text-align: left;
+}
+
+.debug-values th {
+  background: linear-gradient(135deg, $main_1 0%, color.adjust($main_1, $lightness: 10%) 100%);
+  font-weight: 600;
+  color: $white;
+  font-size: clamp(0.7rem, 0.85vw, 0.75rem);
+}
+
+.debug-values td {
+  color: $white;
+}
+
+.debug-values tr:nth-child(even) td {
+  background: color.adjust($gray, $lightness: 10%);
+}
+
+.debug-values tr:hover td {
+  background: color.adjust($main_1, $alpha: -0.8, $lightness: 25%);
+}
 </style>

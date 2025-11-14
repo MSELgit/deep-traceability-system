@@ -63,7 +63,7 @@
           </div>
 
           <!-- 2-axis Evaluation (Multiple Views) -->
-          <div v-show="activeTab === 'twoaxis'">
+          <div v-show="activeTab === 'twoaxis'" class="two-axis-placeholder">
             <div v-if="energyCalculated">
               <div class="twoaxis-multiview-header">
                 <button class="add-view-btn" @click="addTwoAxisView">
@@ -347,10 +347,10 @@ onMounted(async () => {
   box-shadow: 0 0.5vh 2vh transparentize($main_2, 0.6);
 }
 .twoaxis-multiview-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2vw;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1rem, 2vw, 1.5rem);
+  align-items: start;
 }
 .project-header {
   display: flex;
@@ -510,6 +510,12 @@ onMounted(async () => {
 }
 
 // Responsive
+@media (max-width: 1200px) {
+  .twoaxis-multiview-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .project-header {
     flex-direction: column;
@@ -528,7 +534,7 @@ onMounted(async () => {
   }
   
   .twoaxis-multiview-row {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 }
 </style>
