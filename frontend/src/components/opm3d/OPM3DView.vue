@@ -3,33 +3,33 @@
     <div class="network-viewer-wrapper">
       <div class="properties-panel">
         <div class="panel-header">
-          <h3>詳細情報</h3>
+          <h3>Details</h3>
         </div>
         
         <div v-if="selectedNode" class="property-section">
-          <h4>選択中のノード</h4>
+          <h4>Selected Node</h4>
           <div class="property-grid">
             <div class="property-row">
-              <label>ラベル</label>
+              <label>Label</label>
               <input 
                 v-if="canEditNodeLabel"
                 v-model="nodeEditData.label"
                 @keyup.enter="updateNodeWithReset"
                 type="text" 
                 class="property-input"
-                placeholder="ノード名を入力"
+                placeholder="Enter node name"
               />
               <div 
                 v-else 
                 class="property-value readonly"
-                title="性能ノードは編集できません"
+                title="Performance nodes cannot be edited"
               >
                 {{ selectedNode.label }}
-                <span class="readonly-hint">(編集不可)</span>
+                <span class="readonly-hint">(Read-only)</span>
               </div>
             </div>
             <div class="property-row">
-              <label>レイヤー</label>
+              <label>Layer</label>
               <div class="property-badge" :style="{ 
                 backgroundColor: LAYER_COLORS[selectedNode.layer],
                 color: 'white'
@@ -38,13 +38,13 @@
               </div>
             </div>
             <div class="property-row">
-              <label>タイプ</label>
+              <label>Type</label>
               <div class="property-value">{{ selectedNode.type }}</div>
             </div>
           </div>
           
           <div class="coordinate-info">
-            <h5>3D座標</h5>
+            <h5>3D Coordinates</h5>
             <div class="coordinate-grid">
               <div class="coordinate-item">
                 <span class="coordinate-label">X:</span>
@@ -57,21 +57,21 @@
             </div>
             
             <div class="movement-controls">
-              <h5>ノード移動</h5>
+              <h5>Node Movement</h5>
               <div class="directional-pad">
-                <button class="direction-btn up" @click="moveNode('up')" title="上に移動">
+                <button class="direction-btn up" @click="moveNode('up')" title="Move up">
                   <FontAwesomeIcon :icon="['fas', 'chevron-up']" />
                 </button>
                 <div class="middle-row">
-                  <button class="direction-btn left" @click="moveNode('left')" title="左に移動">
+                  <button class="direction-btn left" @click="moveNode('left')" title="Move left">
                     <FontAwesomeIcon :icon="['fas', 'chevron-left']" />
                   </button>
                   <div class="center-space"></div>
-                  <button class="direction-btn right" @click="moveNode('right')" title="右に移動">
+                  <button class="direction-btn right" @click="moveNode('right')" title="Move right">
                     <FontAwesomeIcon :icon="['fas', 'chevron-right']" />
                   </button>
                 </div>
-                <button class="direction-btn down" @click="moveNode('down')" title="下に移動">
+                <button class="direction-btn down" @click="moveNode('down')" title="Move down">
                   <FontAwesomeIcon :icon="['fas', 'chevron-down']" />
                 </button>
               </div>
@@ -83,13 +83,13 @@
                   class="update-btn primary" 
                   @click="updateNodeWithReset"
                 >
-                  更新
+                  Update
                 </button>
                 <button 
                   class="update-btn secondary" 
                   @click="cancelNodeChanges"
                 >
-                  キャンセル
+                  Cancel
                 </button>
               </template>
               
@@ -99,13 +99,13 @@
                   @click="deleteNodeWithConfirm"
                   :disabled="isPerformanceNode(selectedNode)"
                 >
-                  削除
+                  Delete
                 </button>
                 <button 
                   class="update-btn secondary" 
                   @click="clearSelection"
                 >
-                  キャンセル
+                  Cancel
                 </button>
               </template>
             </div>
@@ -113,7 +113,7 @@
         </div>
         
         <div v-else-if="selectedEdge" class="property-section">
-          <h4>選択中のエッジ</h4>
+          <h4>Selected Edge</h4>
           <div class="property-grid">
             <div class="property-row">
               <label>From</label>
@@ -124,18 +124,18 @@
               <div class="property-value small">{{ getNodeLabel(selectedEdge.target_id) }}</div>
             </div>
             <div class="property-row">
-              <label>重み</label>
+              <label>Weight</label>
               <select 
                 v-model="edgeEditData.weight"
                 class="property-select"
               >
-                <option :value="3">3 (強い正の関係)</option>
-                <option :value="1">1 (弱い正の関係)</option>
-                <option :value="0.33">0.33 (非常に弱い正の関係)</option>
-                <option :value="0">0 (無関係)</option>
-                <option :value="-0.33">-0.33 (非常に弱い負の関係)</option>
-                <option :value="-1">-1 (弱い負の関係)</option>
-                <option :value="-3">-3 (強い負の関係)</option>
+                <option :value="3">3 (Strong positive relationship)</option>
+                <option :value="1">1 (Weak positive relationship)</option>
+                <option :value="0.33">0.33 (Very weak positive relationship)</option>
+                <option :value="0">0 (No relationship)</option>
+                <option :value="-0.33">-0.33 (Very weak negative relationship)</option>
+                <option :value="-1">-1 (Weak negative relationship)</option>
+                <option :value="-3">-3 (Strong negative relationship)</option>
               </select>
             </div>
             <div class="property-row">
@@ -145,13 +145,13 @@
                     class="update-btn primary" 
                     @click="updateEdgeWeightWithReset"
                   >
-                    更新
+                    Update
                   </button>
                   <button 
                     class="update-btn secondary" 
                     @click="cancelEdgeChanges"
                   >
-                    キャンセル
+                    Cancel
                   </button>
                 </template>
                 
@@ -160,13 +160,13 @@
                     class="update-btn danger" 
                     @click="deleteEdgeWithConfirm"
                   >
-                    削除
+                    Delete
                   </button>
                   <button 
                     class="update-btn secondary" 
                     @click="clearSelection"
                   >
-                    キャンセル
+                    Cancel
                   </button>
                 </template>
               </div>
@@ -176,24 +176,24 @@
         
         <div v-else-if="selectedCase" class="add-panel">
           <div class="add-section">
-            <h5>ノード追加</h5>
+            <h5>Add Node</h5>
             <div class="add-form">
               <div class="form-group">
-                <label>レイヤー:</label>
+                <label>Layer:</label>
                 <select v-model="newNodeData.layer" class="form-select">
-                  <option value="">-- レイヤーを選択 --</option>
-                  <option value="2">特性</option>
-                  <option value="3">変数</option>
-                  <option value="4">モノ・環境</option>
+                  <option value="">-- Select Layer --</option>
+                  <option value="2">Properties</option>
+                  <option value="3">Variables</option>
+                  <option value="4">Objects/Environment</option>
                 </select>
               </div>
               <div class="form-group">
-                <label>名前:</label>
+                <label>Name:</label>
                 <input 
                   v-model="newNodeData.label" 
                   type="text" 
                   class="form-input"
-                  placeholder="ノード名を入力"
+                  placeholder="Enter node name"
                   @keyup.enter="addNode"
                 />
               </div>
@@ -202,7 +202,7 @@
                 @click="addNode"
                 :disabled="!canAddNode"
               >
-                <FontAwesomeIcon :icon="['fas', 'plus']" /> ノード追加
+                <FontAwesomeIcon :icon="['fas', 'plus']" /> Add Node
               </button>
             </div>
           </div>
@@ -210,12 +210,12 @@
           <div class="section-divider"></div>
           
           <div class="add-section">
-            <h5>エッジ追加</h5>
+            <h5>Add Edge</h5>
             <div class="add-form">
               <div class="form-group">
-                <label>開始ノード:</label>
+                <label>Source Node:</label>
                 <select v-model="newEdgeData.sourceId" class="form-select">
-                  <option value="">-- 開始ノードを選択 --</option>
+                  <option value="">-- Select Source Node --</option>
                   <option 
                     v-for="node in availableNodes" 
                     :key="node.id" 
@@ -226,9 +226,9 @@
                 </select>
               </div>
               <div class="form-group">
-                <label>終了ノード:</label>
+                <label>End Node:</label>
                 <select v-model="newEdgeData.targetId" class="form-select">
-                  <option value="">-- 終了ノードを選択 --</option>
+                  <option value="">-- Select End Node --</option>
                   <option 
                     v-for="node in availableNodes" 
                     :key="node.id" 
@@ -240,16 +240,16 @@
                 </select>
               </div>
               <div class="form-group">
-                <label>重み:</label>
+                <label>Weight:</label>
                 <select v-model="newEdgeData.weight" class="form-select">
-                  <option value="">-- 重みを選択 --</option>
-                  <option :value="3">3 (強い正の関係)</option>
-                  <option :value="1">1 (弱い正の関係)</option>
-                  <option :value="0.33">0.33 (非常に弱い正の関係)</option>
-                  <option :value="0">0 (無関係)</option>
-                  <option :value="-0.33">-0.33 (非常に弱い負の関係)</option>
-                  <option :value="-1">-1 (弱い負の関係)</option>
-                  <option :value="-3">-3 (強い負の関係)</option>
+                  <option value="">-- Select Weight --</option>
+                  <option :value="3">3 (Strong positive relationship)</option>
+                  <option :value="1">1 (Weak positive relationship)</option>
+                  <option :value="0.33">0.33 (Very weak positive relationship)</option>
+                  <option :value="0">0 (No relationship)</option>
+                  <option :value="-0.33">-0.33 (Very weak negative relationship)</option>
+                  <option :value="-1">-1 (Weak negative relationship)</option>
+                  <option :value="-3">-3 (Strong negative relationship)</option>
                 </select>
               </div>
               <button 
@@ -257,14 +257,14 @@
                 @click="addEdge"
                 :disabled="!canAddEdge"
               >
-                <FontAwesomeIcon :icon="['fas', 'plus']" /> エッジ追加
+                <FontAwesomeIcon :icon="['fas', 'plus']" /> Add Edge
               </button>
             </div>
           </div>
         </div>
         
         <div v-else class="empty-selection">
-          <p>設計案を選択してください</p>
+          <p>Please select a design case</p>
         </div>
       </div>
 
@@ -280,25 +280,36 @@
           @node-selected="handleNodeSelected"
           @edge-selected="handleEdgeSelected"
         />
+        
+        <!-- Camera button for 3D OPM -->
+        <button 
+          v-if="selectedCase"
+          class="opm3d-camera-btn" 
+          @click="downloadOPM3DImage" 
+          title="Download 3D OPM Network"
+        >
+          <FontAwesomeIcon :icon="['fas', 'camera']" />
+        </button>
+        
         <div v-else class="empty-state">
           <div class="empty-icon">
             <FontAwesomeIcon :icon="['fas', 'hexagon-nodes']" />
           </div>
           <h3>3D Network Viewer</h3>
-          <p>設計案を選択して3Dネットワークを表示してください</p>
+          <p>Select a design case to display the 3D network</p>
         </div>
       </div>
 
       <div class="controls-panel">
         <div class="panel-header">
-          <h3>3D表示設定</h3>
+          <h3>3D Display Settings</h3>
         </div>
         
         <div class="controls-section">
           <div class="control-group">
-            <label class="control-label">設計案:</label>
+            <label class="control-label">Design Case:</label>
             <select v-model="selectedCaseId" class="control-selector">
-              <option value="">-- 設計案を選択 --</option>
+              <option value="">-- Select Design Case --</option>
               <option 
                 v-for="designCase in designCases" 
                 :key="designCase.id" 
@@ -310,7 +321,7 @@
           </div>
           
           <div class="control-group">
-            <label class="control-label">表示レイヤー:</label>
+            <label class="control-label">Visible Layers:</label>
             <div class="layer-toggles">
               <button 
                 v-for="layer in layers"
@@ -326,7 +337,7 @@
           </div>
           
           <div class="control-group">
-            <label class="control-label">レイヤー間隔:</label>
+            <label class="control-label">Layer Spacing:</label>
             <div class="slider-control">
               <input 
                 type="range" 
@@ -341,7 +352,7 @@
           </div>
           
           <div class="control-group">
-            <label class="control-label">平面サイズ:</label>
+            <label class="control-label">Plane Size:</label>
             <div class="slider-control">
               <input 
                 type="range" 
@@ -357,7 +368,7 @@
           
           <button class="reset-button" @click="resetView">
             <FontAwesomeIcon :icon="['fas', 'rotate-right']" />
-            ビューをリセット
+            Reset View
           </button>
         </div>
       </div>
@@ -378,10 +389,10 @@ const projectStore = useProjectStore();
 const { currentProject } = storeToRefs(projectStore);
 
 const layers = [
-  { id: 1, label: '性能', color: '#4CAF50' },
-  { id: 2, label: '特性', color: '#2196F3' },
-  { id: 3, label: '変数', color: '#FFC107' },
-  { id: 4, label: 'モノ・環境', color: '#9C27B0' }
+  { id: 1, label: 'Performance', color: '#4CAF50' },
+  { id: 2, label: 'Properties', color: '#2196F3' },
+  { id: 3, label: 'Variables', color: '#FFC107' },
+  { id: 4, label: 'Objects/Environment', color: '#9C27B0' }
 ];
 
 const LAYER_COLORS: { [key: number]: string } = {
@@ -841,6 +852,55 @@ function cancelEdgeChanges() {
   }
 }
 
+// 3D OPM image download functionality
+function downloadOPM3DImage() {
+  if (!sceneRef.value) {
+    console.error('3D scene not available');
+    return;
+  }
+
+  try {
+    // Access the Three.js renderer from the exposed scene component
+    const sceneComponent = sceneRef.value as any;
+    const renderer = sceneComponent.renderer;
+    
+    if (!renderer || !renderer.domElement) {
+      console.error('Renderer or canvas not available');
+      return;
+    }
+
+    // Force a render to ensure the canvas has content
+    // We need to access the scene and camera from the component as well
+    const scene = sceneComponent.scene?.();
+    const camera = sceneComponent.camera?.();
+    
+    if (!scene || !camera) {
+      console.error('Scene or camera not available');
+      return;
+    }
+
+    // Force render the current frame
+    renderer.render(scene, camera);
+
+    const canvas = renderer.domElement;
+    
+    // Download canvas as PNG image
+    const link = document.createElement('a');
+    const caseName = selectedCase.value?.name || 'OPM3D';
+    const timestamp = new Date().toISOString().slice(0, 10);
+    link.download = `3D-OPM-${caseName}-${timestamp}.png`;
+    
+    // Convert canvas to data URL
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    
+    console.log('3D OPM image downloaded successfully');
+  } catch (error) {
+    console.error('Failed to download 3D OPM image:', error);
+    alert('Failed to download image');
+  }
+}
+
 function initializeExisting3DPositions() {
   if (!selectedCase.value) return;
   
@@ -867,12 +927,16 @@ function initializeExisting3DPositions() {
 
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use 'sass:color';
+@import '../../style/color';
+
 .network-viewer {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 200px);
-  background: #f5f5f5;
+
+  padding: 2vh;
 }
 
 .toolbar {
@@ -889,160 +953,169 @@ function initializeExisting3DPositions() {
 .network-viewer-wrapper {
   display: flex;
   flex: 1;
-  gap: 12px;
-  padding: 12px;
   overflow: hidden;
 }
 
 .properties-panel {
-  width: 250px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  width: clamp(200px, 15vw, 250px);
+  background: color.adjust($gray, $lightness: 8%);
+  border-radius: 1vw 0 0 1vw;
+  box-shadow: 0 0.5vh 2vh color.adjust($black, $alpha: -0.5);
   overflow-y: auto;
   flex-shrink: 0;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .panel-header {
-  padding: 16px 20px 12px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: clamp(1rem, 2vh, 1.5rem) clamp(1.25rem, 2.5vw, 1.75rem) clamp(0.75rem, 1.5vh, 1rem);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .panel-header h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
   font-weight: 600;
-  color: #333;
+  color: $white;
 }
 
 .property-section {
-  padding: 20px;
+  padding: clamp(1.25rem, 2.5vh, 1.75rem);
 }
 
 .property-section h4 {
-  margin: 0 0 16px 0;
-  font-size: 14px;
+  margin: 0 0 clamp(1rem, 2vh, 1.5rem) 0;
+  font-size: clamp(0.9rem, 1.1vw, 1rem);
   font-weight: 600;
-  color: #555;
+  color: $white;
 }
 
 .property-grid {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: clamp(0.75rem, 1.5vh, 1rem);
 }
 
 .property-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: clamp(0.5rem, 1vh, 0.75rem);
 }
 
 .property-row label {
-  font-size: 13px;
-  color: #666;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  color: $white;
   font-weight: 500;
+  min-width: clamp(60px, 12vw, 80px);
 }
 
 .property-value {
-  font-size: 13px;
-  color: #333;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  color: $white;
   font-weight: 500;
   text-align: right;
-  max-width: 150px;
+  max-width: clamp(150px, 30vw, 200px);
   word-break: break-all;
 }
 
 .property-value.small {
-  font-size: 11px;
-  color: #888;
+  font-size: clamp(0.7rem, 0.85vw, 0.75rem);
+  color: color.adjust($white, $alpha: -0.3);
 }
 
 .property-value.readonly {
-  background: #f8f8f8;
-  padding: 6px 8px;
-  border-radius: 4px;
-  border: 1px solid #e0e0e0;
-  font-size: 12px;
+  background: color.adjust($gray, $lightness: 5%);
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.5rem, 1vw, 0.7rem);
+  border-radius: 0.4vw;
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
 }
 
 .readonly-hint {
-  font-size: 10px;
-  color: #999;
-  margin-left: 8px;
+  font-size: clamp(0.65rem, 0.8vw, 0.7rem);
+  color: color.adjust($white, $alpha: -0.4);
+  margin-left: clamp(0.5rem, 1vw, 0.75rem);
+  font-style: italic;
 }
 
 .property-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
+  padding: clamp(0.25rem, 0.5vh, 0.3rem) clamp(0.5rem, 1vw, 0.7rem);
+  border-radius: 0.3vw;
+  font-size: clamp(0.7rem, 0.85vw, 0.75rem);
   font-weight: 600;
   text-transform: uppercase;
 }
 
 .coordinate-info {
-  margin-top: 16px;
-  padding: 12px;
-  background: #f9f9f9;
-  border-radius: 6px;
+  margin-top: clamp(1rem, 2vh, 1.5rem);
+  padding: clamp(0.75rem, 1.5vh, 1rem);
+  background: color.adjust($gray, $lightness: 5%);
+  border-radius: 0.6vw;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .coordinate-info h5 {
-  margin: 0 0 8px 0;
-  font-size: 12px;
+  margin: 0 0 clamp(0.5rem, 1vh, 0.75rem) 0;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 600;
-  color: #666;
+  color: $white;
   text-transform: uppercase;
 }
 
 .coordinate-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  margin-bottom: clamp(0.75rem, 1.5vh, 1rem);
 }
 
 .coordinate-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.6rem, 1.2vw, 0.8rem);
+  background: color.adjust($gray, $lightness: 10%);
+  border-radius: 0.4vw;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .coordinate-label {
-  font-size: 12px;
-  color: #888;
-  font-weight: 500;
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
+  color: $white;
+  font-weight: 600;
 }
 
 .coordinate-value {
-  font-size: 12px;
-  color: #333;
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
+  color: color.adjust($white, $alpha: -0.3);
   font-weight: 600;
   font-family: monospace;
 }
 
 .empty-selection {
-  padding: 40px 20px;
+  padding: clamp(2.5rem, 5vh, 3rem) clamp(1.25rem, 2.5vw, 1.75rem);
   text-align: center;
 }
 
 .empty-icon {
-  font-size: 24px;
-  margin-bottom: 8px;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin-bottom: clamp(0.5rem, 1vh, 0.75rem);
+  color: color.adjust($white, $alpha: -0.4);
 }
 
 .empty-selection p {
   margin: 0;
-  font-size: 13px;
-  color: #999;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  color: color.adjust($white, $alpha: -0.4);
 }
 
 .canvas-container {
   flex: 1;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: $black;
+  box-shadow: 0 0.5vh 2vh color.adjust($black, $alpha: -0.5);
   overflow: hidden;
   position: relative;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .empty-state {
@@ -1051,43 +1124,44 @@ function initializeExisting3DPositions() {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #999;
+  color: color.adjust($white, $alpha: -0.3);
   text-align: center;
 }
 
 .empty-state .empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: clamp(3rem, 5vw, 4rem);
+  margin-bottom: clamp(1rem, 2vh, 1.5rem);
   opacity: 0.5;
 }
 
 .empty-state h3 {
-  margin: 0 0 8px 0;
-  font-size: 20px;
+  margin: 0 0 clamp(0.5rem, 1vh, 0.75rem) 0;
+  font-size: clamp(1.2rem, 1.8vw, 1.5rem);
   font-weight: 600;
-  color: #666;
+  color: $white;
 }
 
 .empty-state p {
   margin: 0;
-  font-size: 14px;
+  font-size: clamp(0.9rem, 1.1vw, 1rem);
 }
 
 .controls-panel {
-  width: 280px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  width: clamp(200px, 15vw, 250px);
+  background: color.adjust($gray, $lightness: 8%);
+  border-radius: 0 1vw 1vw 0;
+  box-shadow: 0 0.5vh 2vh color.adjust($black, $alpha: -0.5);
   overflow-y: auto;
   flex-shrink: 0;
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .controls-section {
-  padding: 20px;
+  padding: clamp(1.25rem, 2.5vh, 1.75rem);
 }
 
 .control-group {
-  margin-bottom: 15px;
+  margin-bottom: clamp(0.95rem, 1.9vh, 1.3rem);
 }
 
 .control-group:last-child {
@@ -1096,350 +1170,514 @@ function initializeExisting3DPositions() {
 
 .control-label {
   display: block;
-  margin-bottom: 8px;
-  font-size: 13px;
-  color: #666;
+  margin-bottom: clamp(0.5rem, 1vh, 0.75rem);
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  color: $white;
   font-weight: 500;
 }
 
 .control-selector {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 13px;
-  background: white;
+  padding: clamp(0.5rem, 1vh, 0.7rem) clamp(0.75rem, 1.5vw, 1rem);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.5vw;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  background: color.adjust($gray, $lightness: 15%);
+  color: $white;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: color.adjust($gray, $lightness: 20%);
+    border-color: color.adjust($main_1, $alpha: -0.5);
+  }
+
+  &:focus {
+    outline: none;
+    background: color.adjust($gray, $lightness: 20%);
+    border-color: $main_1;
+    box-shadow: 0 0 0 0.15vw color.adjust($main_1, $alpha: -0.7);
+  }
+
+  option {
+    background: color.adjust($gray, $lightness: 15%);
+    color: $white;
+  }
 }
 
 .layer-toggles {
   display: flex;
   flex-wrap: wrap;
   flex-direction: column;
-  gap: 6px;
+  gap: clamp(0.4rem, 0.8vh, 0.6rem);
 }
 
 .layer-toggle {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px;
-  background: white;
-  border: 2px solid #ddd;
-  border-radius: 4px;
+  gap: clamp(0.4rem, 0.8vw, 0.6rem);
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.6rem, 1.2vw, 0.8rem) clamp(0.4rem, 0.8vh, 0.6rem) clamp(2rem, 4vw, 2.5rem);
+  background: color.adjust($black, $lightness: 15%);
+  border: 2px solid color.adjust($gray, $lightness: 25%);
+  border-radius: 0.4vw;
   cursor: pointer;
-  font-size: 10px;
-  transition: all 0.2s;
+  font-size: clamp(0.7rem, 0.85vw, 0.75rem);
+  font-weight: 600;
+  color: color.adjust($white, $alpha: -0.4);
+  transition: all 0.3s ease;
   flex: 1;
   min-width: 0;
+  opacity: 0.6;
+  transform: scale(0.98);
+  position: relative;
+  text-decoration: line-through;
+
+  &::before {
+    content: '✗';
+    position: absolute;
+    right: clamp(0.3rem, 0.6vw, 0.4rem);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: clamp(0.6rem, 0.75vw, 0.7rem);
+    font-weight: bold;
+    color: color.adjust($white, $alpha: -0.3);
+    opacity: 0.7;
+  }
 }
 
 .layer-toggle:hover {
-  background: #f5f5f5;
-  border-color: #999;
+  background: color.adjust($black, $lightness: 20%);
+  border-color: color.adjust($gray, $lightness: 35%);
+  opacity: 0.8;
 }
 
 .layer-toggle.active {
-  background: #E3F2FD;
-  border-color: #2196F3;
-  color: #2196F3;
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  border: 2px solid $white;
+  color: $white;
+  opacity: 1;
+  transform: scale(1);
+  text-decoration: none;
+  box-shadow: 
+    0 0.3vh 0.8vh color.adjust($main_1, $alpha: -0.5),
+    inset 0 0.1vh 0.2vh rgba(255, 255, 255, 0.3);
+  position: relative;
+
+  &::before {
+    content: '✓';
+    position: absolute;
+    right: clamp(0.3rem, 0.6vw, 0.4rem);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: clamp(0.6rem, 0.75vw, 0.7rem);
+    font-weight: bold;
+    color: $white;
+    opacity: 0.9;
+  }
+
+  &:hover {
+    background: linear-gradient(135deg, color.adjust($main_1, $lightness: 10%) 0%, color.adjust($main_2, $lightness: 10%) 100%);
+    transform: scale(1.02);
+    box-shadow: 
+      0 0.4vh 1vh color.adjust($main_1, $alpha: -0.4),
+      inset 0 0.1vh 0.2vh rgba(255, 255, 255, 0.4);
+  }
 }
 
 .slider-control {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
 }
 
 .control-slider {
   flex: 1;
   min-width: 0;
+  
+  &::-webkit-slider-track {
+    background: color.adjust($gray, $lightness: 20%);
+    border-radius: 0.2vw;
+  }
+  
+  &::-webkit-slider-thumb {
+    background: $main_1;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  
+  &::-moz-range-track {
+    background: color.adjust($gray, $lightness: 20%);
+    border-radius: 0.2vw;
+  }
+  
+  &::-moz-range-thumb {
+    background: $main_1;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+  }
 }
 
 .slider-value {
-  min-width: 30px;
-  font-size: 12px;
+  min-width: clamp(30px, 6vw, 40px);
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
   font-weight: 600;
-  color: #666;
+  color: color.adjust($white, $alpha: -0.3);
 }
 
 .reset-button {
   width: 100%;
-  padding: 10px;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: clamp(0.6rem, 1.2vh, 0.8rem) clamp(0.8rem, 1.6vw, 1rem);
+  background: color.adjust($gray, $lightness: 15%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.5vw;
   cursor: pointer;
-  font-size: 13px;
-  color: #666;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  font-weight: 600;
+  color: $white;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  transition: all 0.2s;
-  margin-top: 12px;
+  gap: clamp(0.4rem, 0.8vw, 0.6rem);
+  transition: all 0.3s ease;
+  margin-top: clamp(0.75rem, 1.5vh, 1rem);
 }
 
 .reset-button:hover {
-  background: #e3f2fd;
-  border-color: #2196F3;
-  color: #2196F3;
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  border-color: $main_1;
+  transform: translateY(-0.1vh);
+  box-shadow: 0 0.3vh 0.8vh color.adjust($main_1, $alpha: -0.5);
 }
 
 .panel-divider {
   height: 1px;
-  background: #f0f0f0;
-  margin: 16px 0;
+  background: color.adjust($white, $alpha: -0.95);
+  margin: clamp(1rem, 2vh, 1.5rem) 0;
 }
 
 
 .property-input {
   width: 100%;
-  padding: 6px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 12px;
-  background: white;
-  transition: border-color 0.2s;
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.5rem, 1vw, 0.7rem);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.4vw;
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
+  background: color.adjust($gray, $lightness: 15%);
+  color: $white;
+  transition: all 0.3s ease;
 }
 
 .property-input:focus {
   outline: none;
-  border-color: #2196F3;
-  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+  border-color: $main_1;
+  box-shadow: 0 0 0 0.15vw color.adjust($main_1, $alpha: -0.7);
+  background: color.adjust($gray, $lightness: 20%);
 }
 
 .property-select {
   width: 100%;
-  padding: 6px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 12px;
-  background: white;
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.5rem, 1vw, 0.7rem);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.4vw;
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
+  background: color.adjust($gray, $lightness: 15%);
+  color: $white;
   cursor: pointer;
+  transition: all 0.3s ease;
+
+  option {
+    background: color.adjust($gray, $lightness: 15%);
+    color: $white;
+  }
 }
 
 .property-select:focus {
   outline: none;
-  border-color: #2196F3;
+  border-color: $main_1;
+  box-shadow: 0 0 0 0.15vw color.adjust($main_1, $alpha: -0.7);
+  background: color.adjust($gray, $lightness: 20%);
 }
 
 
 .movement-controls {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
+  margin-top: clamp(1rem, 2vh, 1.5rem);
+  padding-top: clamp(0.75rem, 1.5vh, 1rem);
+  border-top: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .movement-controls h5 {
-  margin: 0 0 12px 0;
-  font-size: 12px;
+  margin: 0 0 clamp(0.75rem, 1.5vh, 1rem) 0;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 600;
-  color: #555;
+  color: $white;
 }
 
 .directional-pad {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
+  display: grid;
+  grid-template-areas:
+    ". up ."
+    "left center right"
+    ". down .";
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: clamp(0.3rem, 0.6vw, 0.4rem);
+  max-width: 120px;
+  margin: 0 auto clamp(0.75rem, 1.5vh, 1rem);
 }
 
 .direction-btn {
-  width: 32px;
-  height: 32px;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  background: color.adjust($gray, $lightness: 15%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.3vw;
+  padding: clamp(0.4rem, 0.8vh, 0.6rem);
+  color: $white;
   cursor: pointer;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  color: #666;
-  transition: all 0.2s;
-}
 
-.direction-btn:hover {
-  background: #e3f2fd;
-  border-color: #2196F3;
-  color: #2196F3;
-}
+  &.up {
+    grid-area: up;
+  }
 
-.direction-btn:active {
-  background: #bbdefb;
-  transform: scale(0.95);
+  &.down {
+    grid-area: down;
+  }
+
+  &.left {
+    grid-area: left;
+  }
+
+  &.right {
+    grid-area: right;
+  }
+
+  &:hover {
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border-color: $main_1;
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
 }
 
 .middle-row {
-  display: flex;
-  gap: 4px;
-  align-items: center;
+  display: contents;
 }
 
 .center-space {
-  width: 32px;
-  height: 32px;
+  grid-area: center;
 }
 
 
 .update-buttons {
   display: flex;
-  gap: 8px;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
   width: 100%;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
+  margin-top: clamp(1rem, 2vh, 1.5rem);
+  padding-top: clamp(0.75rem, 1.5vh, 1rem);
+  border-top: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .update-btn {
   flex: 1;
-  padding: 8px 12px;
+  padding: clamp(0.5rem, 1vh, 0.7rem) clamp(0.75rem, 1.5vw, 1rem);
   border: none;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: 0.4vw;
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  transition: all 0.2s;
+  gap: clamp(0.4rem, 0.8vw, 0.6rem);
+  transition: all 0.3s ease;
 }
 
 .update-btn.primary {
-  background: #2196F3;
-  color: white;
-}
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  color: $white;
 
-.update-btn.primary:hover:not(:disabled) {
-  background: #1976D2;
-}
+  &:hover:not(:disabled) {
+    transform: translateY(-0.1vh);
+    box-shadow: 0 0.3vh 0.8vh color.adjust($main_1, $alpha: -0.5);
+  }
 
-.update-btn.primary:disabled {
-  background: #ccc;
-  color: #888;
-  cursor: not-allowed;
+  &:disabled {
+    background: color.adjust($gray, $lightness: 10%);
+    color: color.adjust($white, $alpha: -0.5);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
 }
 
 .update-btn.secondary {
-  background: #f5f5f5;
-  color: #666;
-  border: 1px solid #ddd;
+  background: color.adjust($gray, $lightness: 15%);
+  color: $white;
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+
+  &:hover {
+    background: color.adjust($gray, $lightness: 20%);
+    border-color: color.adjust($main_1, $alpha: -0.5);
+  }
 }
 
-.update-btn.secondary:hover {
-  background: #eeeeee;
-  border-color: #999;
+.update-btn.danger {
+  background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+  color: $white;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-0.1vh);
+    box-shadow: 0 0.3vh 0.8vh rgba(211, 47, 47, 0.5);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
 }
 
 
 .add-panel {
-  padding: 16px;
+  padding: clamp(1rem, 2vh, 1.5rem);
 }
 
 .add-panel .panel-header h4 {
-  margin: 0 0 16px 0;
-  font-size: 14px;
+  margin: 0 0 clamp(1rem, 2vh, 1.5rem) 0;
+  font-size: clamp(0.9rem, 1.1vw, 1rem);
   font-weight: 600;
-  color: #333;
+  color: $white;
 }
 
 .add-section h5 {
-  margin: 0 0 6px 0;
-  font-size: 13px;
+  margin: 0 0 clamp(0.4rem, 0.8vh, 0.6rem) 0;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 600;
-  color: #555;
+  color: $white;
   display: flex;
   align-items: center;
 }
 
 .section-divider {
   height: 1px;
-  background: #f0f0f0;
-  margin: 12px 0;
+  background: color.adjust($white, $alpha: -0.95);
+  margin: clamp(0.75rem, 1.5vh, 1rem) 0;
 }
 
 .add-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: clamp(0.5rem, 1vh, 0.75rem);
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: clamp(0.25rem, 0.5vh, 0.4rem);
 }
 
 .form-group label {
-  font-size: 12px;
-  color: #666;
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
+  color: $white;
   font-weight: 500;
 }
 
 .form-select,
 .form-input {
   width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 12px;
-  background: white;
-  transition: border-color 0.2s;
-}
+  padding: clamp(0.5rem, 1vh, 0.7rem) clamp(0.6rem, 1.2vw, 0.8rem);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.4vw;
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
+  background: color.adjust($gray, $lightness: 15%);
+  color: $white;
+  transition: all 0.3s ease;
 
-.form-select:focus,
-.form-input:focus {
-  outline: none;
-  border-color: #2196F3;
-  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
-}
+  &:hover {
+    background: color.adjust($gray, $lightness: 20%);
+    border-color: color.adjust($main_1, $alpha: -0.5);
+  }
 
-.form-select option:disabled {
-  color: #ccc;
+  &:focus {
+    outline: none;
+    border-color: $main_1;
+    box-shadow: 0 0 0 0.15vw color.adjust($main_1, $alpha: -0.7);
+    background: color.adjust($gray, $lightness: 20%);
+  }
+
+  option {
+    background: color.adjust($gray, $lightness: 15%);
+    color: $white;
+
+    &:disabled {
+      color: color.adjust($white, $alpha: -0.6);
+    }
+  }
 }
 
 .add-btn {
-  padding: 8px 12px;
-  background: #4CAF50;
-  color: white;
+  padding: clamp(0.5rem, 1vh, 0.7rem) clamp(0.75rem, 1.5vw, 1rem);
+  background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+  color: $white;
   border: none;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: 0.4vw;
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  transition: all 0.2s;
-  margin-top: 8px;
+  gap: clamp(0.4rem, 0.8vw, 0.6rem);
+  transition: all 0.3s ease;
+  margin-top: clamp(0.5rem, 1vh, 0.75rem);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-0.1vh);
+    box-shadow: 0 0.3vh 0.8vh color.adjust($main_1, $alpha: -0.5);
+  }
+
+  &:disabled {
+    background: color.adjust($gray, $lightness: 10%);
+    color: color.adjust($white, $alpha: -0.5);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
 }
 
-.add-btn:hover:not(:disabled) {
-  background: #45a049;
+// 3D OPMカメラボタン
+.opm3d-camera-btn {
+  position: absolute;
+  top: clamp(1rem, 2vh, 1.25rem);
+  right: clamp(1rem, 2vw, 1.25rem);
+  background: color.adjust($gray, $lightness: 20%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.5vw;
+  padding: clamp(0.5rem, 1vh, 0.75rem) clamp(0.7rem, 1.2vw, 1rem);
+  cursor: pointer;
+  font-size: clamp(1rem, 1.3vw, 1.1rem);
+  color: $white;
+  transition: all 0.3s ease;
+  box-shadow: 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.8);
+  z-index: 10;
+
+  &:hover {
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border-color: color.adjust($main_1, $alpha: -0.3);
+    transform: translateY(-0.1vh);
+    box-shadow: 0 0.4vh 1vh color.adjust($main_1, $alpha: -0.5);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 0.2vh 0.5vh color.adjust($main_1, $alpha: -0.6);
+  }
 }
 
-.add-btn:disabled {
-  background: #ccc;
-  color: #888;
-  cursor: not-allowed;
-}
-
-.update-btn.danger {
-  background: #f44336;
-  color: white;
-  border-color: #f44336;
-}
-
-.update-btn.danger:hover:not(:disabled) {
-  background: #d32f2f;
-  border-color: #d32f2f;
-}
-
-.update-btn.danger:disabled {
-  background: #ccc;
-  color: #888;
-  cursor: not-allowed;
-}
 </style>

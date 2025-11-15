@@ -25,10 +25,11 @@ const containerRef = ref<HTMLDivElement>();
 
 let scene: THREE.Scene;
 let camera: THREE.PerspectiveCamera;
-let renderer: THREE.WebGLRenderer;
 let controls: OrbitControls;
 let raycaster: THREE.Raycaster;
 let mouse: THREE.Vector2;
+
+const renderer = ref<THREE.WebGLRenderer>();
 
 const nodeMeshes = new Map<string, THREE.Mesh>();
 const edgeLines = new Map<string, THREE.Group>();
@@ -53,8 +54,8 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  if (renderer) {
-    renderer.dispose();
+  if (renderer.value) {
+    renderer.value.dispose();
   }
   if (controls) {
     controls.dispose();
@@ -89,11 +90,14 @@ function initThreeJS() {
   camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 500);
   camera.position.set(30, 30, 30);
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(width, height);
-  containerRef.value.appendChild(renderer.domElement);
+  renderer.value = new THREE.WebGLRenderer({ 
+    antialias: true,
+    preserveDrawingBuffer: true 
+  });
+  renderer.value.setSize(width, height);
+  containerRef.value.appendChild(renderer.value.domElement);
 
-  controls = new OrbitControls(camera, renderer.domElement);
+  controls = new OrbitControls(camera, renderer.value.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
   controls.minDistance = 5;
@@ -111,26 +115,28 @@ function initThreeJS() {
   raycaster = new THREE.Raycaster();
   mouse = new THREE.Vector2();
 
-  renderer.domElement.addEventListener('click', onCanvasClick);
+  renderer.value.domElement.addEventListener('click', onCanvasClick);
 
   window.addEventListener('resize', onWindowResize);
 }
 
 function onWindowResize() {
-  if (!containerRef.value) return;
+  if (!containerRef.value || !renderer.value) return;
   
   const width = containerRef.value.clientWidth;
   const height = containerRef.value.clientHeight;
   
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
-  renderer.setSize(width, height);
+  renderer.value.setSize(width, height);
 }
 
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
-  renderer.render(scene, camera);
+  if (renderer.value) {
+    renderer.value.render(scene, camera);
+  }
 }
 
 function initializeNode3DPositions() {
@@ -185,31 +191,25 @@ function layoutNodesInLayer(nodes: NetworkNode[]) {
   if (nodeCount === 0) {
     return;
   }
-  
-  // 平面サイズに基づいて配置エリアを決定
   const planeSize = props.planeSize || 30;
-  const usableArea = planeSize * 0.7; // 平面の70%を使用
+  const usableArea = planeSize * 0.7;
   const maxRadius = usableArea / 2;
   nodes.forEach((node, index) => {
-    // 既に3D座標が設定されている場合はスキップ
     if (node3DPositions.has(node.id)) {
       return;
     }
     
     let x3d, y3d;
     let attempts = 0;
-    const maxAttempts = 100; // 試行回数を増加
-    
-    // 重複を避けるポアソンディスク配置的なアプローチ
+    const maxAttempts = 100;
+
     do {
       if (nodeCount <= 4) {
-        // 少数の場合：円周上に配置（半径を調整）
         const angle = (index / nodeCount) * 2 * Math.PI;
-        const radius = Math.min(maxRadius * 0.7, 10); // 半径を増加
+        const radius = Math.min(maxRadius * 0.7, 10); 
         x3d = Math.cos(angle) * radius;
         y3d = Math.sin(angle) * radius;
       } else if (nodeCount <= 12) {
-        // 中程度の場合：同心円状に配置
         const ringSize = Math.ceil(Math.sqrt(nodeCount));
         const ring = Math.floor(index / ringSize);
         const posInRing = index % ringSize;
@@ -218,7 +218,6 @@ function layoutNodesInLayer(nodes: NetworkNode[]) {
         const radius = (ring + 1) * (maxRadius / Math.ceil(nodeCount / ringSize)) * 0.8;
         const angle = (posInRing / totalInRing) * 2 * Math.PI;
         
-        // ランダムノイズを追加
         const noise = radius * 0.3;
         const angleNoise = Math.PI / 6;
         
@@ -227,14 +226,12 @@ function layoutNodesInLayer(nodes: NetworkNode[]) {
         y3d = Math.sin(angle + (Math.random() - 0.5) * angleNoise) * 
               (radius + (Math.random() - 0.5) * noise);
       } else {
-        // 多数の場合：ランダムだが均等に分散
         const angle = Math.random() * 2 * Math.PI;
         const radius = Math.sqrt(Math.random()) * maxRadius;
         
         x3d = Math.cos(angle) * radius;
         y3d = Math.sin(angle) * radius;
         
-        // 中心付近を避ける（最小半径を増加）
         if (radius < maxRadius * 0.3) {
           const minRadius = maxRadius * 0.3;
           x3d = Math.cos(angle) * minRadius;
@@ -249,7 +246,7 @@ function layoutNodesInLayer(nodes: NetworkNode[]) {
 }
 
 function isTooClose(x: number, y: number, currentNodeId: string): boolean {
-  const minDistance = 4; // 最小距離を増加
+  const minDistance = 4;
   
   for (const [nodeId, position] of node3DPositions) {
     if (nodeId === currentNodeId) continue;
@@ -315,12 +312,11 @@ function renderLayerPlanes() {
     });
     const plane = new THREE.Mesh(planeGeometry, planeMaterial);
     plane.position.y = y;
-    plane.rotation.x = -Math.PI / 2; // X軸周りに-90度回転してXZ平面（水平）にする
+    plane.rotation.x = -Math.PI / 2;
     plane.userData.isLayerPlane = true;
     scene.add(plane);
     
     const gridHelper = new THREE.GridHelper(size, size, 0xcccccc, 0xeeeeee);
-    // Y軸が上方向の場合、GridHelperはデフォルトでXZ平面に配置されるので回転不要
     gridHelper.position.y = y;
     gridHelper.userData.isGridHelper = true;
     scene.add(gridHelper);
@@ -443,9 +439,7 @@ function getLayerY(layer: number): number {
   if (baseY !== undefined) {
     return baseY;
   }
-  
-  // fallback: レイヤー番号から計算
-  return 15 - (layer - 1) * 5; // 固定間隔5
+  return 15 - (layer - 1) * 5;
 }
 
 function createNodeLabel(text: string, color: string = '#000'): THREE.Sprite {
@@ -471,10 +465,9 @@ function createNodeLabel(text: string, color: string = '#000'): THREE.Sprite {
   canvas.style.height = `${canvas.height / resolution}px`;
   
   context.clearRect(0, 0, canvas.width, canvas.height);
-  
-  // テキスト描画の設定（高解像度対応）
+
   context.scale(resolution, resolution);
-  context.font = `bold ${24}px ${fontFamily}`; // 元のサイズで指定
+  context.font = `bold ${24}px ${fontFamily}`;
   context.fillStyle = color;
   context.textAlign = 'center';
   context.textBaseline = 'middle';
@@ -521,24 +514,6 @@ function getEdgeColor(weight?: number): number {
   
   const colorHex = colorMap[weight || 0] || 'silver';
   return new THREE.Color(colorHex).getHex();
-}
-
-function updateVisibility() {
-  nodeMeshes.forEach((mesh, nodeId) => {
-    const node = mesh.userData.node as NetworkNode;
-    mesh.visible = props.visibleLayers.includes(node.layer);
-  });
-  
-  edgeLines.forEach((edgeGroup) => {
-    const edge = edgeGroup.userData.edge as NetworkEdge;
-    const sourceNode = props.network.nodes.find(n => n.id === edge.source_id);
-    const targetNode = props.network.nodes.find(n => n.id === edge.target_id);
-    
-    if (sourceNode && targetNode) {
-      edgeGroup.visible = props.visibleLayers.includes(sourceNode.layer) && 
-                         props.visibleLayers.includes(targetNode.layer);
-    }
-  });
 }
 
 function onCanvasClick(event: MouseEvent) {
@@ -671,13 +646,13 @@ function updateNodePosition(nodeId: string, x3d: number, y3d: number) {
     const layerY = getLayerY(node.layer);
     
     nodeObject.position.x = x3d;
-    nodeObject.position.y = layerY; // レイヤーのY座標
-    nodeObject.position.z = -y3d; // 2D座標のy3dを反転してZ軸にマッピング
+    nodeObject.position.y = layerY; 
+    nodeObject.position.z = -y3d;
     
     if (labelObject) {
       labelObject.position.x = x3d;
-      labelObject.position.y = layerY + 0.75; // ノードの上に配置
-      labelObject.position.z = -y3d; // 2D座標のy3dを反転してZ軸にマッピング
+      labelObject.position.y = layerY + 0.75; 
+      labelObject.position.z = -y3d;
     }
   }
   
@@ -703,7 +678,7 @@ function updateNodeLabel(nodeId: string, newLabel: string) {
     scene.add(newLabelSprite);
     nodeLabels.set(nodeId, newLabelSprite);
   } else {
-    console.warn(`⚠️ ラベルオブジェクトが見つかりません: ${nodeId}`);
+    console.warn(`⚠️ Label object not found: ${nodeId}`);
   }
 }
 
@@ -718,13 +693,13 @@ function setNodePosition(nodeId: string, x3d: number, y3d: number) {
     const layerY = getLayerY(node.layer);
     
     nodeObject.position.x = x3d;
-    nodeObject.position.y = layerY; // レイヤーのY座標
-    nodeObject.position.z = -y3d; // 2D座標のy3dを反転してZ軸にマッピング
+    nodeObject.position.y = layerY; 
+    nodeObject.position.z = -y3d; 
     
     if (labelObject) {
       labelObject.position.x = x3d;
-      labelObject.position.y = layerY + 0.75; // ノードの上に配置
-      labelObject.position.z = -y3d; // 2D座標のy3dを反転してZ軸にマッピング
+      labelObject.position.y = layerY + 0.75; 
+      labelObject.position.z = -y3d; 
     }
   }
 }
@@ -750,6 +725,9 @@ defineExpose({
   highlightEdge,
   nodeMeshes,
   edgeLines,
+  renderer,
+  scene: () => scene,
+  camera: () => camera,
 });
 </script>
 
