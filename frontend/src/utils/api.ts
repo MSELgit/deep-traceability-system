@@ -79,6 +79,8 @@ export const stakeholderNeedRelationApi = {
     apiClient.get<StakeholderNeedRelation[]>(`/projects/${projectId}/stakeholder-need-relations`),
   create: (projectId: string, data: StakeholderNeedRelation) =>
     apiClient.post(`/projects/${projectId}/stakeholder-need-relations`, data),
+  update: (projectId: string, stakeholderId: string, needId: string, data: { relationship_weight: number }) =>
+    apiClient.put(`/projects/${projectId}/stakeholder-need-relations/${stakeholderId}/${needId}`, data),
   delete: (projectId: string, stakeholderId: string, needId: string) =>
     apiClient.delete(`/projects/${projectId}/stakeholder-need-relations/${stakeholderId}/${needId}`),
 };

@@ -77,6 +77,7 @@ export interface NeedCreate {
 export interface StakeholderNeedRelation {
   stakeholder_id: string;
   need_id: string;
+  relationship_weight: number; // 1.0=○, 0.5=△
 }
 
 /**

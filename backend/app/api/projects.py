@@ -309,7 +309,8 @@ def create_stakeholder_need_relation(
     db_relation = StakeholderNeedRelationModel(
         project_id=project_id,
         stakeholder_id=relation.stakeholder_id,
-        need_id=relation.need_id
+        need_id=relation.need_id,
+        relationship_weight=relation.relationship_weight
     )
     db.add(db_relation)
     
@@ -334,6 +335,33 @@ def list_stakeholder_need_relations(project_id: str, db: Session = Depends(get_d
             need_id=r.need_id
         ) for r in relations
     ]
+
+
+@router.put("/{project_id}/stakeholder-need-relations/{stakeholder_id}/{need_id}")
+def update_stakeholder_need_relation(
+    project_id: str,
+    stakeholder_id: str,
+    need_id: str,
+    weight_data: dict,
+    db: Session = Depends(get_db)
+):
+    """ステークホルダー-ニーズ関係の重みを更新"""
+    relation = db.query(StakeholderNeedRelationModel).filter(
+        StakeholderNeedRelationModel.project_id == project_id,
+        StakeholderNeedRelationModel.stakeholder_id == stakeholder_id,
+        StakeholderNeedRelationModel.need_id == need_id
+    ).first()
+    
+    if not relation:
+        raise HTTPException(status_code=404, detail="Relation not found")
+    
+    new_weight = weight_data.get('relationship_weight')
+    if new_weight not in [0.5, 1.0]:
+        raise HTTPException(status_code=400, detail="Invalid weight. Must be 0.5 or 1.0")
+    
+    relation.relationship_weight = new_weight
+    db.commit()
+    return {"message": "Relation updated successfully"}
 
 
 @router.delete("/{project_id}/stakeholder-need-relations/{stakeholder_id}/{need_id}")

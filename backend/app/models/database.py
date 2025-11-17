@@ -106,6 +106,7 @@ class StakeholderNeedRelationModel(Base):
     project_id = Column(String, ForeignKey('projects.id'), nullable=False)
     stakeholder_id = Column(String, nullable=False)
     need_id = Column(String, nullable=False)
+    relationship_weight = Column(Float, default=1.0, nullable=False)  # 1.0=○, 0.5=△
     
     project = relationship('ProjectModel', back_populates='stakeholder_need_relations')
     

@@ -288,7 +288,7 @@ export const useProjectStore = defineStore('project', () => {
     await loadProject(currentProject.value.id);
   }
   
-  async function addStakeholderNeedRelation(stakeholderId: string, needId: string) {
+  async function addStakeholderNeedRelation(stakeholderId: string, needId: string, weight: number = 1.0) {
     if (!currentProject.value) return;
     
     // 既に存在する関係かチェック（ローカル確認のみ、APIは重複を許可しない）
@@ -304,12 +304,14 @@ export const useProjectStore = defineStore('project', () => {
     try {
       await stakeholderNeedRelationApi.create(currentProject.value.id, {
         stakeholder_id: stakeholderId,
-        need_id: needId
+        need_id: needId,
+        relationship_weight: weight
       });
       
       currentProject.value.stakeholder_need_relations.push({
         stakeholder_id: stakeholderId,
-        need_id: needId
+        need_id: needId,
+        relationship_weight: weight
       });
     } catch (error: any) {
       // 400エラー（重複）は無視、その他はエラーを投げる
@@ -321,6 +323,37 @@ export const useProjectStore = defineStore('project', () => {
       if (currentProject.value) {
         await loadProject(currentProject.value.id);
       }
+    }
+  }
+  
+  async function updateStakeholderNeedRelation(stakeholderId: string, needId: string, weight: number) {
+    if (!currentProject.value) return;
+    
+    // ローカル配列で該当関係を見つけて更新（楽観的更新）
+    const relation = currentProject.value.stakeholder_need_relations.find(
+      r => r.stakeholder_id === stakeholderId && r.need_id === needId
+    );
+    
+    if (!relation) {
+      console.warn('Relation not found locally:', { stakeholderId, needId });
+      return;
+    }
+    
+    const originalWeight = relation.relationship_weight;
+    relation.relationship_weight = weight;
+    
+    try {
+      await stakeholderNeedRelationApi.update(
+        currentProject.value.id,
+        stakeholderId,
+        needId,
+        { relationship_weight: weight }
+      );
+    } catch (error: any) {
+      // エラーが発生した場合は元に戻す
+      console.error('Failed to update relation, rolling back:', error);
+      relation.relationship_weight = originalWeight;
+      throw error;
     }
   }
   
@@ -700,6 +733,7 @@ export const useProjectStore = defineStore('project', () => {
     updatePerformance,
     deletePerformance,
     addStakeholderNeedRelation,
+    updateStakeholderNeedRelation,
     removeStakeholderNeedRelation,
     addNeedPerformanceRelation,
     updateNeedPerformanceRelation,

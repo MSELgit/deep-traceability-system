@@ -1,0 +1,63 @@
+0cbd5e70-4f68-4da5-ba9d-7c5cdd21a561:1 Access to XMLHttpRequest at 'http://localhost:8000/api/projects/0cbd5e70-4f68-4da5-ba9d-7c5cdd21a561' from origin 'http://localhost:5173' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.このエラーを分析
+api.ts:43 API Error: Network Error
+（匿名） @ api.ts:43
+Promise.then
+_request @ axios.js?v=f108df19:2312
+request @ axios.js?v=f108df19:2197
+Axios.<computed> @ axios.js?v=f108df19:2324
+wrap @ axios.js?v=f108df19:8
+get @ api.ts:187
+loadProject @ projectStore.ts:116
+wrappedAction @ pinia.js?v=f108df19:1107
+store.<computed> @ pinia.js?v=f108df19:785
+（匿名） @ ProjectDetail.vue:252
+（匿名） @ chunk-3B4AHPPG.js?v=f108df19:4998
+callWithErrorHandling @ chunk-3B4AHPPG.js?v=f108df19:2296
+callWithAsyncErrorHandling @ chunk-3B4AHPPG.js?v=f108df19:2303
+hook.__weh.hook.__weh @ chunk-3B4AHPPG.js?v=f108df19:4978
+flushPostFlushCbs @ chunk-3B4AHPPG.js?v=f108df19:2481
+flushJobs @ chunk-3B4AHPPG.js?v=f108df19:2523
+Promise.then
+queueFlush @ chunk-3B4AHPPG.js?v=f108df19:2418
+queueJob @ chunk-3B4AHPPG.js?v=f108df19:2413
+effect2.scheduler @ chunk-3B4AHPPG.js?v=f108df19:7639
+trigger @ chunk-3B4AHPPG.js?v=f108df19:533
+endBatch @ chunk-3B4AHPPG.js?v=f108df19:591
+notify @ chunk-3B4AHPPG.js?v=f108df19:853
+trigger @ chunk-3B4AHPPG.js?v=f108df19:827
+set value @ chunk-3B4AHPPG.js?v=f108df19:1706
+finalizeNavigation @ vue-router.js?v=f108df19:2058
+（匿名） @ vue-router.js?v=f108df19:1996
+Promise.then
+pushWithRedirect @ vue-router.js?v=f108df19:1983
+push @ vue-router.js?v=f108df19:1934
+install @ vue-router.js?v=f108df19:2166
+use @ chunk-3B4AHPPG.js?v=f108df19:6041
+（匿名） @ main.ts:33このエラーを分析
+ProjectDetail.vue:271 Failed to load project: AxiosError {message: 'Network Error', name: 'AxiosError', code: 'ERR_NETWORK', config: {…}, request: XMLHttpRequest, …}
+（匿名） @ ProjectDetail.vue:271
+await in （匿名）
+（匿名） @ chunk-3B4AHPPG.js?v=f108df19:4998
+callWithErrorHandling @ chunk-3B4AHPPG.js?v=f108df19:2296
+callWithAsyncErrorHandling @ chunk-3B4AHPPG.js?v=f108df19:2303
+hook.__weh.hook.__weh @ chunk-3B4AHPPG.js?v=f108df19:4978
+flushPostFlushCbs @ chunk-3B4AHPPG.js?v=f108df19:2481
+flushJobs @ chunk-3B4AHPPG.js?v=f108df19:2523
+Promise.then
+queueFlush @ chunk-3B4AHPPG.js?v=f108df19:2418
+queueJob @ chunk-3B4AHPPG.js?v=f108df19:2413
+effect2.scheduler @ chunk-3B4AHPPG.js?v=f108df19:7639
+trigger @ chunk-3B4AHPPG.js?v=f108df19:533
+endBatch @ chunk-3B4AHPPG.js?v=f108df19:591
+notify @ chunk-3B4AHPPG.js?v=f108df19:853
+trigger @ chunk-3B4AHPPG.js?v=f108df19:827
+set value @ chunk-3B4AHPPG.js?v=f108df19:1706
+finalizeNavigation @ vue-router.js?v=f108df19:2058
+（匿名） @ vue-router.js?v=f108df19:1996
+Promise.then
+pushWithRedirect @ vue-router.js?v=f108df19:1983
+push @ vue-router.js?v=f108df19:1934
+install @ vue-router.js?v=f108df19:2166
+use @ chunk-3B4AHPPG.js?v=f108df19:6041
+（匿名） @ main.ts:33このエラーを分析
+api.ts:187  GET http://localhost:8000/api/projects/0cbd5e70-4f68-4da5-ba9d-7c5cdd21a561 net::ERR_FAILED 500 (Internal Server Error)

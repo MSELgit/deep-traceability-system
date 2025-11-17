@@ -852,7 +852,6 @@ function cancelEdgeChanges() {
   }
 }
 
-// 3D OPM image download functionality
 function downloadOPM3DImage() {
   if (!sceneRef.value) {
     console.error('3D scene not available');
@@ -860,7 +859,6 @@ function downloadOPM3DImage() {
   }
 
   try {
-    // Access the Three.js renderer from the exposed scene component
     const sceneComponent = sceneRef.value as any;
     const renderer = sceneComponent.renderer;
     
@@ -868,9 +866,6 @@ function downloadOPM3DImage() {
       console.error('Renderer or canvas not available');
       return;
     }
-
-    // Force a render to ensure the canvas has content
-    // We need to access the scene and camera from the component as well
     const scene = sceneComponent.scene?.();
     const camera = sceneComponent.camera?.();
     
@@ -878,19 +873,13 @@ function downloadOPM3DImage() {
       console.error('Scene or camera not available');
       return;
     }
-
-    // Force render the current frame
     renderer.render(scene, camera);
 
     const canvas = renderer.domElement;
-    
-    // Download canvas as PNG image
     const link = document.createElement('a');
     const caseName = selectedCase.value?.name || 'OPM3D';
     const timestamp = new Date().toISOString().slice(0, 10);
     link.download = `3D-OPM-${caseName}-${timestamp}.png`;
-    
-    // Convert canvas to data URL
     link.href = canvas.toDataURL('image/png');
     link.click();
     
@@ -1651,7 +1640,6 @@ function initializeExisting3DPositions() {
   }
 }
 
-// 3D OPMカメラボタン
 .opm3d-camera-btn {
   position: absolute;
   top: clamp(1rem, 2vh, 1.25rem);

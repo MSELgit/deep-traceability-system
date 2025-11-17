@@ -43,6 +43,7 @@ class Need(NeedBase):
 class StakeholderNeedRelation(BaseModel):
     stakeholder_id: str
     need_id: str
+    relationship_weight: float = 1.0  # 1.0=○, 0.5=△
 
 
 class PerformanceBase(BaseModel):

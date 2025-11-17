@@ -113,11 +113,11 @@
               v-for="stakeholder in stakeholders" 
               :key="stakeholder.id"
               class="matrix-cell"
-              :class="{ active: hasRelation(stakeholder.id, need.id) }"
+              :class="getRelationshipClass(stakeholder.id, need.id)"
               @click="toggleRelation(stakeholder.id, need.id)"
             >
-              <div class="cell-content">
-                {{ hasRelation(stakeholder.id, need.id) ? '○' : '' }}
+              <div class="cell-content" :class="getRelationshipContentClass(stakeholder.id, need.id)">
+                {{ getRelationshipSymbol(stakeholder.id, need.id) }}
               </div>
             </td>
           </tr>
@@ -217,17 +217,50 @@ const newNeed = ref({
   description: ''
 })
 
-function hasRelation(stakeholderId: string, needId: string): boolean {
-  return stakeholderNeedRelations.value.some(
+function getRelationshipWeight(stakeholderId: string, needId: string): number {
+  const relation = stakeholderNeedRelations.value.find(
     r => r.stakeholder_id === stakeholderId && r.need_id === needId
   )
+  return relation?.relationship_weight || 0
+}
+
+function hasRelation(stakeholderId: string, needId: string): boolean {
+  return getRelationshipWeight(stakeholderId, needId) > 0
+}
+
+function getRelationshipSymbol(stakeholderId: string, needId: string): string {
+  const weight = getRelationshipWeight(stakeholderId, needId)
+  if (weight === 1.0) return '○'
+  if (weight === 0.5) return '△'
+  return ''
+}
+
+function getRelationshipClass(stakeholderId: string, needId: string): string {
+  const weight = getRelationshipWeight(stakeholderId, needId)
+  if (weight === 1.0) return 'active full-weight'
+  if (weight === 0.5) return 'active half-weight'
+  return ''
+}
+
+function getRelationshipContentClass(stakeholderId: string, needId: string): string {
+  const weight = getRelationshipWeight(stakeholderId, needId)
+  if (weight === 1.0) return 'full-weight-text'
+  if (weight === 0.5) return 'half-weight-text'
+  return ''
 }
 
 async function toggleRelation(stakeholderId: string, needId: string) {
-  if (hasRelation(stakeholderId, needId)) {
+  const currentWeight = getRelationshipWeight(stakeholderId, needId)
+  
+  if (currentWeight === 0) {
+    // 空白 → 緑○ (1.0)
+    await projectStore.addStakeholderNeedRelation(stakeholderId, needId, 1.0)
+  } else if (currentWeight === 1.0) {
+    // 緑○ → 黄△ (0.5)
+    await projectStore.updateStakeholderNeedRelation(stakeholderId, needId, 0.5)
+  } else if (currentWeight === 0.5) {
+    // 黄△ → 空白 (削除)
     await projectStore.removeStakeholderNeedRelation(stakeholderId, needId)
-  } else {
-    await projectStore.addStakeholderNeedRelation(stakeholderId, needId)
   }
 }
 
@@ -297,6 +330,7 @@ async function updateStakeholderVotes(stakeholder: any) {
   try {
     await projectStore.updateStakeholder(stakeholder.id, {
       name: stakeholder.name,
+      category: stakeholder.category,
       votes: stakeholder.votes
     })
   } catch (error) {
@@ -395,7 +429,8 @@ function downloadMatrixAsExcel() {
     
     // Relationship with each stakeholder
     stakeholders.value.forEach(sh => {
-      row.push(hasRelation(sh.id, need.id) ? '○' : '')
+      const symbol = getRelationshipSymbol(sh.id, need.id)
+      row.push(symbol)
     })
     
     matrixData.push(row)
@@ -568,7 +603,7 @@ function downloadMatrixAsExcel() {
   color: $white;
   padding: 12px;
   border: 1px solid darken($main_1, 10%);
-  min-width: 120px;
+  min-width: 140px;
   font-weight: 600;
   vertical-align: middle;
 }
@@ -729,6 +764,27 @@ function downloadMatrixAsExcel() {
   border-radius: 1vw;
   border: 1px dashed transparentize($main_1, 0.7);
   font-size: clamp(0.9rem, 1.1vw, 1rem);
+}
+
+// 3択システム用のスタイル
+.matrix-cell.full-weight {
+  background: lighten($sub_4, 40%);
+  border-color: $sub_4;
+}
+
+.matrix-cell.half-weight {
+  background: lighten(#FFA500, 40%);
+  border-color: #FFA500;
+}
+
+.cell-content.full-weight-text {
+  color: $sub_4;
+  font-weight: bold;
+}
+
+.cell-content.half-weight-text {
+  color: #FFA500;
+  font-weight: bold;
 }
 
 .modal-overlay {

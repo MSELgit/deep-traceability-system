@@ -127,18 +127,22 @@ def calculate_effective_votes(up_votes: float, down_votes: float) -> float:
 
 
 def distribute_votes_to_needs(project: ProjectModel) -> Dict[str, float]:
-    """ステークホルダーの票をニーズに按分"""
+    """ステークホルダーの票をニーズに按分（重み付き）"""
     need_votes = {}
     
-    
     for stakeholder in project.stakeholders:
-        related_needs = [r.need_id for r in project.stakeholder_need_relations 
-                        if r.stakeholder_id == stakeholder.id]
+        # 重みを含む関係を取得
+        related_needs = [(r.need_id, r.relationship_weight or 1.0) for r in project.stakeholder_need_relations 
+                        if r.stakeholder_id == stakeholder.id and (r.relationship_weight or 1.0) > 0]
         
         if len(related_needs) > 0:
-            votes_per_need = stakeholder.votes / len(related_needs)
-            for need_id in related_needs:
-                need_votes[need_id] = need_votes.get(need_id, 0) + votes_per_need
+            # 総重みを計算
+            total_weight = sum(weight for _, weight in related_needs)
+            
+            # 重みに比例して票を配分
+            for need_id, weight in related_needs:
+                vote_portion = (weight / total_weight) * stakeholder.votes
+                need_votes[need_id] = need_votes.get(need_id, 0) + vote_portion
     
     return need_votes
 
