@@ -2575,6 +2575,7 @@ const insufficientDecompositionAnalysis = computed(() => {
 </script>
 
 <style scoped lang="scss">
+@use 'sass:color';
 @import '../../style/color';
 .need-performance-matrix {
   padding: 2vh;
@@ -2585,10 +2586,10 @@ const insufficientDecompositionAnalysis = computed(() => {
   gap: 1vw;
   margin-bottom: 3vh;
   padding: 1.5vh 1.5vw;
-  background: lighten($gray, 5%);
-  border: 1px solid transparentize($white, 0.9);
+  background: color.scale($gray, $lightness: 5%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 0.8vw;
-  box-shadow: 0 0.3vh 1vh transparentize($black, 0.5);
+  box-shadow: 0 0.3vh 1vh color.adjust($black, $alpha: -0.5);
 }
 
 .toolbar-button {
@@ -2596,8 +2597,8 @@ const insufficientDecompositionAnalysis = computed(() => {
   align-items: center;
   gap: 0.5vw;
   padding: 1.5vh 1.5vw;
-  background: transparentize($gray, 0.3);
-  border: 1px solid transparentize($white, 0.8);
+  background: color.adjust($gray, $alpha: -0.3);
+  border: 1px solid color.adjust($white, $alpha: -0.8);
   border-radius: 0.5vw;
   cursor: pointer;
   font-size: clamp(0.85rem, 1vw, 0.95rem);
@@ -2607,10 +2608,10 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .toolbar-button:hover {
-  background: transparentize($gray, 0.1);
-  border-color: transparentize($white, 0.7);
+  background: color.adjust($gray, $alpha: -0.1);
+  border-color: color.adjust($white, $alpha: -0.7);
   transform: translateY(-2px);
-  box-shadow: 0 0.3vh 1vh transparentize($main_1, 0.6);
+  box-shadow: 0 0.3vh 1vh color.adjust($main_1, $alpha: -0.6);
 }
 
 .toolbar-button .excel-icon {
@@ -2624,41 +2625,41 @@ const insufficientDecompositionAnalysis = computed(() => {
 .toolbar-divider {
   width: 1px;
   align-self: stretch;
-  background: transparentize($white, 0.85);
+  background: color.adjust($white, $alpha: -0.85);
   margin: 0 0.5vw;
 }
 
 .template-download-button {
-  background: linear-gradient(135deg, $sub_4, darken($sub_4, 10%));
+  background: linear-gradient(135deg, $sub_4, color.scale($sub_4, $lightness: -10%));
   border: none;
 }
 
 .template-download-button:hover {
-  background: linear-gradient(135deg, lighten($sub_4, 5%), $sub_4);
+  background: linear-gradient(135deg, color.scale($sub_4, $lightness: 5%), $sub_4);
   transform: translateY(-2px);
-  box-shadow: 0 0.5vh 2vh transparentize($sub_4, 0.6);
+  box-shadow: 0 0.5vh 2vh color.adjust($sub_4, $alpha: -0.6);
 }
 
 .matrix-image-button {
-  background: linear-gradient(135deg, $sub_6, darken($sub_6, 10%));
+  background: linear-gradient(135deg, $sub_6, color.scale($sub_6, $lightness: -10%));
   border: none;
 }
 
 .matrix-image-button:hover {
-  background: linear-gradient(135deg, lighten($sub_6, 5%), $sub_6);
+  background: linear-gradient(135deg, color.scale($sub_6, $lightness: 5%), $sub_6);
   transform: translateY(-2px);
-  box-shadow: 0 0.5vh 2vh transparentize($sub_6, 0.6);
+  box-shadow: 0 0.5vh 2vh color.adjust($sub_6, $alpha: -0.6);
 }
 
 .matrix-excel-button {
-  background: linear-gradient(135deg, #20744A, darken(#20744A, 10%));
+  background: linear-gradient(135deg, #20744A, color.scale(#20744A, $lightness: -10%));
   border: none;
 }
 
 .matrix-excel-button:hover {
-  background: linear-gradient(135deg, lighten(#20744A, 5%), #20744A);
+  background: linear-gradient(135deg, color.scale(#20744A, $lightness: 5%), #20744A);
   transform: translateY(-2px);
-  box-shadow: 0 0.5vh 2vh transparentize(#20744A, 0.6);
+  box-shadow: 0 0.5vh 2vh color.adjust(#20744A, $alpha: -0.6);
 }
 
 .matrix-container {
@@ -3382,7 +3383,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: transparentize($black, 0.2);
+  background: color.adjust($black, $alpha: -0.2);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -3392,14 +3393,14 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .modal-content {
   background: $gray;
-  border: 1px solid transparentize($white, 0.9);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 1vw;
   padding: 3vh 3vw;
   max-width: 800px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 2vh 6vh transparentize($black, 0.5);
+  box-shadow: 0 2vh 6vh color.adjust($black, $alpha: -0.5);
 }
 
 .utility-modal h3 {
@@ -3410,11 +3411,11 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .modal-info {
-  background: transparentize($black, 0.5);
+  background: color.adjust($black, $alpha: -0.5);
   padding: 1.5vh 1.5vw;
   border-radius: 0.5vw;
   margin-bottom: 2vh;
-  border: 1px solid transparentize($white, 0.95);
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .info-row {
@@ -3431,7 +3432,7 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .info-row strong {
   min-width: 60px;
-  color: transparentize($white, 0.3);
+  color: color.adjust($white, $alpha: -0.3);
   font-size: clamp(0.75rem, 0.9vw, 0.85rem);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -3451,17 +3452,17 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .graph-description {
   font-size: clamp(0.75rem, 0.9vw, 0.85rem);
-  color: transparentize($white, 0.4);
+  color: color.adjust($white, $alpha: -0.4);
   margin-bottom: 1.5vh;
   font-style: italic;
 }
 
 .graph-container {
-  background: transparentize($black, 0.3);
-  border: 1px solid transparentize($white, 0.9);
+  background: color.adjust($black, $alpha: -0.3);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 0.5vw;
   padding: 1.5vh 1.5vw;
-  box-shadow: inset 0 0.2vh 0.5vh transparentize($black, 0.7);
+  box-shadow: inset 0 0.2vh 0.5vh color.adjust($black, $alpha: -0.7);
   max-width: 650px;
   margin: 0 auto;
 }
@@ -3476,8 +3477,8 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .graph-control-button {
   padding: 1vh 1vw;
-  background: transparentize($gray, 0.3);
-  border: 1px solid transparentize($white, 0.8);
+  background: color.adjust($gray, $alpha: -0.3);
+  border: 1px solid color.adjust($white, $alpha: -0.8);
   border-radius: 0.5vw;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -3488,8 +3489,8 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .graph-control-button:hover {
-  background: transparentize($gray, 0.1);
-  border-color: transparentize($white, 0.7);
+  background: color.adjust($gray, $alpha: -0.1);
+  border-color: color.adjust($white, $alpha: -0.7);
   transform: translateY(-2px);
 }
 
@@ -3549,9 +3550,9 @@ const insufficientDecompositionAnalysis = computed(() => {
   right: 0;
   margin-top: 1vh;
   background: $gray;
-  border: 1px solid transparentize($white, 0.9);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 0.5vw;
-  box-shadow: 0 0.5vh 1.5vh transparentize($black, 0.4);
+  box-shadow: 0 0.5vh 1.5vh color.adjust($black, $alpha: -0.4);
   min-width: 280px;
   max-width: 320px;
   z-index: 1000;
@@ -3752,9 +3753,9 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .type-button {
   padding: 1.2vh 1.5vw;
-  border: 1px solid transparentize($white, 0.8);
+  border: 1px solid color.adjust($white, $alpha: -0.8);
   border-radius: 0.5vw;
-  background: transparentize($gray, 0.5);
+  background: color.adjust($gray, $alpha: -0.5);
   font-size: clamp(0.8rem, 0.95vw, 0.9rem);
   font-weight: 500;
   color: $white;
@@ -3766,8 +3767,8 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .type-button:hover {
-  background: transparentize($gray, 0.3);
-  border-color: transparentize($white, 0.7);
+  background: color.adjust($gray, $alpha: -0.3);
+  border-color: color.adjust($white, $alpha: -0.7);
   transform: translateY(-2px);
 }
 
@@ -3775,7 +3776,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   background: linear-gradient(135deg, $main_1, $main_2);
   border-color: $main_1;
   color: $white;
-  box-shadow: 0 0.3vh 1vh transparentize($main_1, 0.6);
+  box-shadow: 0 0.3vh 1vh color.adjust($main_1, $alpha: -0.6);
 }
 
 .type-icon {
@@ -3786,17 +3787,17 @@ const insufficientDecompositionAnalysis = computed(() => {
 .axis-range-control {
   margin-top: 2vh;
   padding: 2vh 2vw;
-  background: transparentize($black, 0.5);
+  background: color.adjust($black, $alpha: -0.5);
   border-radius: 0.5vw;
-  border: 1px solid transparentize($white, 0.95);
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .discrete-matrix-control {
   margin-top: 2vh;
   padding: 2vh 2vw;
-  background: transparentize($black, 0.5);
+  background: color.adjust($black, $alpha: -0.5);
   border-radius: 0.5vw;
-  border: 1px solid transparentize($white, 0.95);
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .matrix-header {
@@ -3826,7 +3827,7 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .add-row-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0.3vh 1vh transparentize($main_1, 0.6);
+  box-shadow: 0 0.3vh 1vh color.adjust($main_1, $alpha: -0.6);
 }
 
 .discrete-matrix {
@@ -3836,14 +3837,14 @@ const insufficientDecompositionAnalysis = computed(() => {
 .discrete-table {
   width: 100%;
   border-collapse: collapse;
-  background: transparentize($black, 0.7);
+  background: color.adjust($black, $alpha: -0.7);
   border-radius: 0.5vw;
   overflow: hidden;
-  border: 1px solid transparentize($white, 0.95);
+  border: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .discrete-table thead {
-  background: transparentize($gray, 0.3);
+  background: color.adjust($gray, $alpha: -0.3);
 }
 
 .discrete-table th {
@@ -3852,7 +3853,7 @@ const insufficientDecompositionAnalysis = computed(() => {
   font-size: clamp(0.75rem, 0.9vw, 0.85rem);
   font-weight: 600;
   color: $white;
-  border-bottom: 1px solid transparentize($white, 0.9);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.9);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -3871,7 +3872,7 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .discrete-row {
-  border-bottom: 1px solid transparentize($white, 0.95);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .discrete-row:last-child {
@@ -3879,7 +3880,7 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .discrete-row:hover {
-  background: transparentize($white, 0.97);
+  background: color.adjust($white, $alpha: -0.97);
 }
 
 .label-cell,
@@ -3891,8 +3892,8 @@ const insufficientDecompositionAnalysis = computed(() => {
 .discrete-input {
   width: 100%;
   padding: 1vh 1vw;
-  background: transparentize($black, 0.3);
-  border: 1px solid transparentize($white, 0.9);
+  background: color.adjust($black, $alpha: -0.3);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 0.5vw;
   color: $white;
   font-size: clamp(0.8rem, 0.95vw, 0.9rem);
@@ -3902,12 +3903,12 @@ const insufficientDecompositionAnalysis = computed(() => {
 .discrete-input:focus {
   outline: none;
   border-color: $main_1;
-  background: transparentize($black, 0.1);
+  background: color.adjust($black, $alpha: -0.1);
 }
 
 .remove-row-button {
   padding: 0.8vh 1vw;
-  background: linear-gradient(135deg, $sub_1, darken($sub_1, 10%));
+  background: linear-gradient(135deg, $sub_1, color.scale($sub_1, $lightness: -10%));
   color: $white;
   border: none;
   border-radius: 0.4vw;
@@ -3918,12 +3919,12 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .remove-row-button:hover:not(:disabled) {
   transform: scale(1.05);
-  box-shadow: 0 0.2vh 0.5vh transparentize($sub_1, 0.6);
+  box-shadow: 0 0.2vh 0.5vh color.adjust($sub_1, $alpha: -0.6);
 }
 
 .remove-row-button:disabled {
-  background: transparentize($gray, 0.5);
-  color: transparentize($white, 0.6);
+  background: color.adjust($gray, $alpha: -0.5);
+  color: color.adjust($white, $alpha: -0.6);
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -3931,7 +3932,7 @@ const insufficientDecompositionAnalysis = computed(() => {
 .matrix-hint {
   margin-top: 1.5vh;
   padding: 1vh 1.2vw;
-  background: transparentize($main_1, 0.9);
+  background: color.adjust($main_1, $alpha: -0.9);
   border-left: 3px solid $main_1;
   border-radius: 0.4vw;
   font-size: clamp(0.75rem, 0.9vw, 0.85rem);
@@ -3955,7 +3956,7 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .range-tip {
   font-size: clamp(0.7rem, 0.85vw, 0.8rem);
-  color: transparentize($white, 0.4);
+  color: color.adjust($white, $alpha: -0.4);
   font-style: italic;
 }
 
@@ -3967,8 +3968,8 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .range-input {
   padding: 1vh 1vw;
-  background: transparentize($black, 0.3);
-  border: 1px solid transparentize($white, 0.9);
+  background: color.adjust($black, $alpha: -0.3);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 0.5vw;
   color: $white;
   font-size: clamp(0.85rem, 1vw, 0.95rem);
@@ -3980,7 +3981,7 @@ const insufficientDecompositionAnalysis = computed(() => {
 .range-input:focus {
   outline: none;
   border-color: $main_1;
-  background: transparentize($black, 0.1);
+  background: color.adjust($black, $alpha: -0.1);
 }
 
 .nouislider-container {
@@ -4058,14 +4059,14 @@ const insufficientDecompositionAnalysis = computed(() => {
 }
 
 .modal-actions .secondary {
-  background: transparentize($gray, 0.5);
+  background: color.adjust($gray, $alpha: -0.5);
   color: $white;
-  border: 1px solid transparentize($white, 0.8);
+  border: 1px solid color.adjust($white, $alpha: -0.8);
 }
 
 .modal-actions .secondary:hover {
-  background: transparentize($gray, 0.3);
-  border-color: transparentize($white, 0.7);
+  background: color.adjust($gray, $alpha: -0.3);
+  border-color: color.adjust($white, $alpha: -0.7);
 }
 
 .modal-actions .primary {
@@ -4075,16 +4076,16 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 .modal-actions .primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0.5vh 2vh transparentize($main_2, 0.6);
+  box-shadow: 0 0.5vh 2vh color.adjust($main_2, $alpha: -0.6);
 }
 
 .modal-actions .danger {
-  background: linear-gradient(135deg, $sub_1, darken($sub_1, 10%));
+  background: linear-gradient(135deg, $sub_1, color.scale($sub_1, $lightness: -10%));
   color: $white;
 }
 
 .modal-actions .danger:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0.5vh 2vh transparentize($sub_1, 0.6);
+  box-shadow: 0 0.5vh 2vh color.adjust($sub_1, $alpha: -0.6);
 }
 </style>

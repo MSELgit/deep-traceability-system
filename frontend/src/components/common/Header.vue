@@ -23,11 +23,12 @@ const router = useRouter()
 </script>
 
 <style scoped lang="scss">
+@use 'sass:color';
 @import '../../style/color';
 
 .app-header {
   background: $black;
-  border-bottom: 1px solid transparentize($white, 0.95);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
   backdrop-filter: blur(10px);
   position: sticky;
   top: 0;
@@ -72,7 +73,7 @@ nav {
 .nav-link {
   position: relative;
   padding: 0.8vh 1.5vw;
-  color: lighten($main_1, 10%);
+  color: color.scale($main_1, $lightness: 10%);
   text-decoration: none;
   font-weight: 500;
   font-size: clamp(0.85rem, 1vw, 0.95rem);
@@ -94,7 +95,7 @@ nav {
 
 .nav-link:hover {
   color: $white;
-  background: transparentize($gray, 0.5);
+  background: color.adjust($gray, $alpha: -0.5);
 }
 
 .nav-link:hover::before {
@@ -103,7 +104,7 @@ nav {
 
 .nav-link.router-link-active {
   color: $white;
-  background: transparentize($main_1, 0.8);
+  background: color.adjust($main_1, $alpha: -0.8);
 }
 
 .nav-link.router-link-active::before {

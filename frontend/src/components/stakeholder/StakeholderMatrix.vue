@@ -460,6 +460,7 @@ function downloadMatrixAsExcel() {
 </script>
 
 <style scoped lang="scss">
+@use 'sass:color';
 @import '../../style/color';
 .stakeholder-matrix {
   padding: 2vh;
@@ -487,23 +488,23 @@ function downloadMatrixAsExcel() {
 }
 
 .stakeholder-btn {
-  background: linear-gradient(135deg, $main_3, darken($main_3, 10%));
+  background: linear-gradient(135deg, $main_3, color.scale($main_3, $lightness: -10%));
 }
 
 .stakeholder-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0.5vh 2vh transparentize($main_3, 0.6);
-  background: linear-gradient(135deg, lighten($main_3, 5%), $main_3);
+  box-shadow: 0 0.5vh 2vh color.adjust($main_3, $alpha: -0.6);
+  background: linear-gradient(135deg, color.scale($main_3, $lightness: 5%), $main_3);
 }
 
 .need-btn {
-  background: linear-gradient(135deg, $main_2, darken($main_2, 10%));
+  background: linear-gradient(135deg, $main_2, color.scale($main_2, $lightness: -10%));
 }
 
 .need-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0.5vh 2vh transparentize($main_2, 0.6);
-  background: linear-gradient(135deg, lighten($main_2, 5%), $main_2);
+  box-shadow: 0 0.5vh 2vh color.adjust($main_2, $alpha: -0.6);
+  background: linear-gradient(135deg, color.scale($main_2, $lightness: 5%), $main_2);
 }
 
 .download-buttons {
@@ -518,18 +519,18 @@ function downloadMatrixAsExcel() {
   gap: 0.5vw;
   padding: 1.2vh 1.2vw;
   background: $white;
-  border: 1px solid darken($white, 12%);
+  border: 1px solid color.scale($white, $lightness: -12%);
   border-radius: 0.5vw;
   cursor: pointer;
   font-size: clamp(0.8rem, 0.95vw, 0.9rem);
   font-weight: 500;
-  color: lighten($black, 10%);
+  color: color.scale($black, $lightness: 10%);
   transition: all 0.2s ease;
 }
 
 .download-btn:hover {
-  background: lighten($white, 3%);
-  border-color: transparentize($black, 0.3);
+  background: color.scale($white, $lightness: 3%);
+  border-color: color.adjust($black, $alpha: -0.3);
 }
 
 .download-btn.image:hover {
@@ -545,7 +546,7 @@ function downloadMatrixAsExcel() {
 .matrix-container {
   overflow-x: auto;
   border-radius: 1vw;
-  box-shadow: 0 0.5vh 2vh transparentize($black, 0.5);
+  box-shadow: 0 0.5vh 2vh color.adjust($black, $alpha: -0.5);
   background: $white;
 }
 
@@ -557,10 +558,10 @@ function downloadMatrixAsExcel() {
 }
 
 .corner-cell {
-  background: lighten($white, 2%);
+  background: color.scale($white, $lightness: 2%);
   padding: 0;
   font-weight: 600;
-  border: 1px solid darken($white, 10%);
+  border: 1px solid color.scale($white, $lightness: -10%);
   width: 260px;
   height: 60px;
   position: relative;
@@ -575,7 +576,7 @@ function downloadMatrixAsExcel() {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to top right, transparent 49.5%, transparentize($black, 0.4) 49.5%, transparentize($black, 0.4) 50.5%, transparent 50.5%);
+  background: linear-gradient(to top right, transparent 49.5%, color.adjust($black, $alpha: -0.4) 49.5%, color.adjust($black, $alpha: -0.4) 50.5%, transparent 50.5%);
 }
 
 .corner-cell > div:first-child {
@@ -602,7 +603,7 @@ function downloadMatrixAsExcel() {
   background: $main_1;
   color: $white;
   padding: 12px;
-  border: 1px solid darken($main_1, 10%);
+  border: 1px solid color.scale($main_1, $lightness: -10%);
   min-width: 140px;
   font-weight: 600;
   vertical-align: middle;
@@ -645,9 +646,9 @@ function downloadMatrixAsExcel() {
 }
 
 .need-header {
-  background: lighten($white, 3%);
+  background: color.scale($white, $lightness: 3%);
   padding: 12px;
-  border: 1px solid darken($white, 10%);
+  border: 1px solid color.scale($white, $lightness: -10%);
   min-width: 260px;
   color: $black;
 }
@@ -676,7 +677,7 @@ function downloadMatrixAsExcel() {
 }
 
 .need-header .category-tag {
-  background: darken($white, 8%);
+  background: color.scale($white, $lightness: -8%);
   color: $black;
   padding: 2px 8px;
   min-width: 50px;
@@ -688,7 +689,7 @@ function downloadMatrixAsExcel() {
 }
 
 .matrix-cell {
-  border: 1px solid darken($white, 10%);
+  border: 1px solid color.scale($white, $lightness: -10%);
   padding: 12px;
   text-align: center;
   cursor: pointer;
@@ -699,11 +700,11 @@ function downloadMatrixAsExcel() {
 }
 
 .matrix-cell:hover {
-  background: lighten($white, 1%);
+  background: color.scale($white, $lightness: 1%);
 }
 
 .matrix-cell.active {
-  background: lighten($sub_4, 40%);
+  background: color.scale($sub_4, $lightness: 40%);
 }
 
 .cell-content {
@@ -734,24 +735,24 @@ function downloadMatrixAsExcel() {
 }
 
 .need-header .icon-btn {
-  border-color: darken($white, 10%);
+  border-color: color.scale($white, $lightness: -10%);
   color: $black;
 }
 
 .icon-btn.edit:hover {
-  background: lighten($sub_6, 40%);
+  background: color.scale($sub_6, $lightness: 40%);
   border-color: $sub_6;
   color: $sub_6;
 }
 
 .need-header .icon-btn.edit:hover {
-  background: lighten($sub_6, 40%);
+  background: color.scale($sub_6, $lightness: 40%);
   border-color: $sub_6;
   color: $sub_6;
 }
 
 .icon-btn.danger:hover {
-  background: lighten($sub_1, 45%);
+  background: color.scale($sub_1, $lightness: 45%);
   border-color: $sub_1;
   color: $sub_1;
 }
@@ -759,21 +760,21 @@ function downloadMatrixAsExcel() {
 .empty-matrix {
   text-align: center;
   padding: 8vh 2vw;
-  color: transparentize($white, 0.3);
-  background: lighten($gray, 5%);
+  color: color.adjust($white, $alpha: -0.3);
+  background: color.scale($gray, $lightness: 5%);
   border-radius: 1vw;
-  border: 1px dashed transparentize($main_1, 0.7);
+  border: 1px dashed color.adjust($main_1, $alpha: -0.7);
   font-size: clamp(0.9rem, 1.1vw, 1rem);
 }
 
 // 3択システム用のスタイル
 .matrix-cell.full-weight {
-  background: lighten($sub_4, 40%);
+  background: color.scale($sub_4, $lightness: 40%);
   border-color: $sub_4;
 }
 
 .matrix-cell.half-weight {
-  background: lighten(#FFA500, 40%);
+  background: color.scale(#FFA500, $lightness: 40%);
   border-color: #FFA500;
 }
 
@@ -793,7 +794,7 @@ function downloadMatrixAsExcel() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: transparentize($black, 0.2);
+  background: color.adjust($black, $alpha: -0.2);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -803,14 +804,14 @@ function downloadMatrixAsExcel() {
 
 .modal-content {
   background: $gray;
-  border: 1px solid transparentize($white, 0.9);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 1vw;
   padding: 3vh 3vw;
   max-width: 500px;
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 2vh 6vh transparentize($black, 0.5);
+  box-shadow: 0 2vh 6vh color.adjust($black, $alpha: -0.5);
 }
 
 .modal-content h3 {
@@ -836,8 +837,8 @@ function downloadMatrixAsExcel() {
 .form-group textarea {
   width: 100%;
   padding: 1vh 1vw;
-  background: transparentize($black, 0.3);
-  border: 1px solid transparentize($white, 0.9);
+  background: color.adjust($black, $alpha: -0.3);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 0.5vw;
   color: $white;
   font-size: clamp(0.85rem, 1vw, 0.95rem);
@@ -848,12 +849,12 @@ function downloadMatrixAsExcel() {
 .form-group textarea:focus {
   outline: none;
   border-color: $main_1;
-  background: transparentize($black, 0.1);
+  background: color.adjust($black, $alpha: -0.1);
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: transparentize($main_1, 0.3);
+  color: color.adjust($main_1, $alpha: -0.3);
 }
 
 .form-actions {
@@ -874,13 +875,13 @@ function downloadMatrixAsExcel() {
 }
 
 .form-actions button[type="button"] {
-  background: transparentize($gray, 0.5);
+  background: color.adjust($gray, $alpha: -0.5);
   color: $white;
-  border: 1px solid transparentize($white, 0.8);
+  border: 1px solid color.adjust($white, $alpha: -0.8);
 }
 
 .form-actions button[type="button"]:hover {
-  background: transparentize($gray, 0.3);
-  border-color: transparentize($white, 0.7);
+  background: color.adjust($gray, $alpha: -0.3);
+  border-color: color.adjust($white, $alpha: -0.7);
 }
 </style>

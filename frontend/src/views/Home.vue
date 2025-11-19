@@ -114,6 +114,7 @@ const scrollToFeatures = () => {
 </script>
 
 <style scoped lang="scss">
+@use 'sass:color';
 @import '../style/color';
 
 .home {
@@ -155,7 +156,7 @@ const scrollToFeatures = () => {
 
 .hero-subtitle {
   font-size: clamp(1rem, 2vw, 1.5rem);
-  color: lighten($main_1, 10%);
+  color: color.scale($main_1, $lightness: 10%);
   margin-bottom: 3vh;
   line-height: 1.5;
 }
@@ -192,14 +193,14 @@ const scrollToFeatures = () => {
 }
 
 .btn-secondary {
-  background: transparentize($gray, 0.7);
+  background: color.adjust($gray, $alpha: -0.7);
   color: $white;
-  border: 1px solid transparentize($white, 0.8);
+  border: 1px solid color.adjust($white, $alpha: -0.8);
 }
 
 .btn-secondary:hover {
-  background: transparentize($gray, 0.5);
-  border-color: transparentize($white, 0.7);
+  background: color.adjust($gray, $alpha: -0.5);
+  border-color: color.adjust($white, $alpha: -0.7);
 }
 
 
@@ -218,7 +219,7 @@ const scrollToFeatures = () => {
   height: 15vw;
   background: radial-gradient(circle at 30% 30%, $main_1, $main_2);
   border-radius: 50%;
-  box-shadow: 0 0 60px transparentize($main_1, 0.5);
+  box-shadow: 0 0 60px color.adjust($main_1, $alpha: -0.5);
   animation: pulse 4s ease-in-out infinite;
 }
 
@@ -229,8 +230,8 @@ const scrollToFeatures = () => {
 
 .floating-card {
   position: absolute;
-  background: transparentize($gray, 0.7);
-  border: 1px solid transparentize($white, 0.9);
+  background: color.adjust($gray, $alpha: -0.7);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 1vw;
   padding: 1.5vh 2vw;
   backdrop-filter: blur(10px);
@@ -305,8 +306,8 @@ const scrollToFeatures = () => {
 }
 
 .feature-card {
-  background: transparentize($white, 0.97);
-  border: 1px solid transparentize($white, 0.95);
+  background: color.adjust($white, $alpha: -0.97);
+  border: 1px solid color.adjust($white, $alpha: -0.95);
   border-radius: 1vw;
   padding: 4vh 2vw;
   text-align: center;
@@ -314,8 +315,8 @@ const scrollToFeatures = () => {
 }
 
 .feature-card:hover {
-  background: transparentize($white, 0.95);
-  border-color: transparentize($main_2, 0.7);
+  background: color.adjust($white, $alpha: -0.95);
+  border-color: color.adjust($main_2, $alpha: -0.7);
   transform: translateY(-0.5vh);
 }
 
@@ -328,7 +329,7 @@ const scrollToFeatures = () => {
 
 .feature-card p {
   font-size: clamp(0.8rem, 1vw, 0.95rem);
-  color: lighten($main_1, 10%);
+  color: color.scale($main_1, $lightness: 10%);
   line-height: 1.5;
 }
 
@@ -374,7 +375,7 @@ const scrollToFeatures = () => {
 
 .step-content p {
   font-size: clamp(0.75rem, 0.9vw, 0.85rem);
-  color: lighten($main_1, 10%);
+  color: color.scale($main_1, $lightness: 10%);
 }
 
 .workflow-connector {

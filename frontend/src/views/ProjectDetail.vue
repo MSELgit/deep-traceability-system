@@ -274,6 +274,7 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
+@use 'sass:color';
 @import '../style/color';
 .project-detail {
   min-height: 100vh;
@@ -300,13 +301,13 @@ onMounted(async () => {
 .spinner {
   width: 60px;
   height: 60px;
-  border: 3px solid transparentize($white, 0.95);
+  border: 3px solid color.adjust($white, $alpha: -0.95);
   border-top-color: $main_1;
   border-right-color: $main_2;
   border-radius: 50%;
   margin: 0 auto 3vh;
   animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
-  box-shadow: 0 0 2vh transparentize($main_1, 0.8);
+  box-shadow: 0 0 2vh color.adjust($main_1, $alpha: -0.8);
 }
 
 @keyframes spin {
@@ -314,7 +315,7 @@ onMounted(async () => {
 }
 
 .loading p {
-  color: transparentize($white, 0.2);
+  color: color.adjust($white, $alpha: -0.2);
   font-size: clamp(1rem, 1.2vw, 1.1rem);
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -344,7 +345,7 @@ onMounted(async () => {
 
 .add-view-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0.5vh 2vh transparentize($main_2, 0.6);
+  box-shadow: 0 0.5vh 2vh color.adjust($main_2, $alpha: -0.6);
 }
 .twoaxis-multiview-row {
   display: grid;
@@ -358,7 +359,7 @@ onMounted(async () => {
   align-items: center;
   margin-bottom: 4vh;
   padding-bottom: 2vh;
-  border-bottom: 1px solid transparentize($white, 0.95);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .project-header h1 {
@@ -366,14 +367,14 @@ onMounted(async () => {
   color: $white;
   font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, $white, transparentize($white, 0.15));
+  background: linear-gradient(135deg, $white, color.adjust($white, $alpha: -0.15));
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .description {
-  color: transparentize($white, 0.3);
+  color: color.adjust($white, $alpha: -0.3);
   font-size: clamp(0.95rem, 1.2vw, 1.1rem);
   line-height: 1.6;
 }
@@ -382,7 +383,7 @@ onMounted(async () => {
   display: flex;
   gap: 1vw;
   margin-bottom: 4vh;
-  border-bottom: 1px solid transparentize($white, 0.95);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
   overflow-x: auto;
   padding-bottom: 0;
 }
@@ -394,7 +395,7 @@ onMounted(async () => {
   border-bottom: 3px solid transparent;
   font-size: clamp(0.9rem, 1.1vw, 1rem);
   font-weight: 600;
-  color: transparentize($white, 0.4);
+  color: color.adjust($white, $alpha: -0.4);
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
@@ -403,7 +404,7 @@ onMounted(async () => {
 
 .tabs button:hover {
   color: $white;
-  background: transparentize($gray, 0.8);
+  background: color.adjust($gray, $alpha: -0.8);
 }
 
 .tabs button.active {
@@ -423,7 +424,7 @@ onMounted(async () => {
 
 .tab-content {
   min-height: 60vh;
-  background: lighten($black, 2%);
+  background: color.scale($black, $lightness: 2%);
   border-radius: 1vw;
   padding: 2vh;
 }
@@ -433,19 +434,19 @@ onMounted(async () => {
 }
 
 .placeholder-card {
-  background: lighten($gray, 8%);
-  border: 1px solid transparentize($white, 0.9);
+  background: color.scale($gray, $lightness: 8%);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 1vw;
   padding: 3vh;
-  box-shadow: 0 0.5vh 2vh transparentize($black, 0.5);
+  box-shadow: 0 0.5vh 2vh color.adjust($black, $alpha: -0.5);
 }
 
 .error {
   text-align: center;
   padding: 10vh;
-  background: lighten($gray, 5%);
+  background: color.scale($gray, $lightness: 5%);
   border-radius: 1vw;
-  border: 1px solid transparentize($sub_1, 0.7);
+  border: 1px solid color.adjust($sub_1, $alpha: -0.7);
 }
 
 .error p:first-child {
@@ -456,7 +457,7 @@ onMounted(async () => {
 }
 
 .error p:last-child {
-  color: transparentize($white, 0.3);
+  color: color.adjust($white, $alpha: -0.3);
   font-size: clamp(0.9rem, 1.1vw, 1rem);
 }
 
@@ -467,9 +468,9 @@ onMounted(async () => {
 
 .icon-button {
   padding: 1.2vh 2vw;
-  background: transparentize($black, 0.1);
+  background: color.adjust($black, $alpha: -0.1);
   color: $white;
-  border: 1px solid transparentize($white, 0.85);
+  border: 1px solid color.adjust($white, $alpha: -0.85);
   border-radius: 0.8vw;
   cursor: pointer;
   display: flex;
@@ -482,16 +483,16 @@ onMounted(async () => {
 }
 
 .icon-button.export:hover {
-  background: linear-gradient(135deg, $main_1, darken($main_1, 10%));
+  background: linear-gradient(135deg, $main_1, color.scale($main_1, $lightness: -10%));
   border-color: $main_1;
   transform: translateY(-2px);
-  box-shadow: 0 0.5vh 1.5vh transparentize($main_1, 0.5);
+  box-shadow: 0 0.5vh 1.5vh color.adjust($main_1, $alpha: -0.5);
 }
 
 // 3D OPM
 .opm3d-container {
   padding: 3vh;
-  background: lighten($gray, 5%);
+  background: color.scale($gray, $lightness: 5%);
   border-radius: 1vw;
   min-height: 60vh;
 }
@@ -504,7 +505,7 @@ onMounted(async () => {
 }
 
 .opm3d-container p {
-  color: transparentize($white, 0.3);
+  color: color.adjust($white, $alpha: -0.3);
   margin-bottom: 3vh;
   font-size: clamp(0.9rem, 1.1vw, 1rem);
 }

@@ -769,7 +769,7 @@ async function handleColorChange(designCase: DesignCase, color: string) {
   top: 0;
   height: 100%;
   width: 15%;
-  background: lighten($gray, 8%);
+  background: color.scale($gray, $lightness: 8%);
   transition: all 0.3s ease;
   overflow: hidden;
   display: flex;
@@ -835,7 +835,7 @@ async function handleColorChange(designCase: DesignCase, color: string) {
   top: 0;
   height: 100%;
   width: 15%;
-  background: lighten($gray, 8%);
+  background: color.scale($gray, $lightness: 8%);
   transition: all 0.3s ease;
   overflow: hidden;
   z-index: 10;
@@ -1102,7 +1102,7 @@ async function handleColorChange(designCase: DesignCase, color: string) {
 }
 
 .recalculate-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, lighten($main_1, 10%) 0%, lighten($main_2, 10%) 100%);
+  background: linear-gradient(135deg, color.scale($main_1, $lightness: 10%) 0%, color.scale($main_2, $lightness: 10%) 100%);
   box-shadow: 0 0.5vh 1.5vh color.adjust($main_1, $alpha: -0.5);
   transform: translateY(-0.1vh);
 }

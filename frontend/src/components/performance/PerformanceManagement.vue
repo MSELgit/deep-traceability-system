@@ -215,6 +215,7 @@ function downloadPerformanceTree() {
 </script>
 
 <style scoped lang="scss">
+@use 'sass:color';
 @import '../../style/color';
 .performance-management {
   padding: 2vh;
@@ -246,27 +247,27 @@ function downloadPerformanceTree() {
 
 .primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0.5vh 2vh transparentize($main_2, 0.6);
+  box-shadow: 0 0.5vh 2vh color.adjust($main_2, $alpha: -0.6);
 }
 
 .secondary {
-  background: transparentize($gray, 0.3);
-  border: 1px solid transparentize($white, 0.8);
+  background: color.adjust($gray, $alpha: -0.3);
+  border: 1px solid color.adjust($white, $alpha: -0.8);
 }
 
 .secondary:hover {
-  background: transparentize($gray, 0.1);
-  border-color: transparentize($white, 0.7);
+  background: color.adjust($gray, $alpha: -0.1);
+  border-color: color.adjust($white, $alpha: -0.7);
   transform: translateY(-2px);
 }
 
 .empty-state {
   text-align: center;
   padding: 8vh 2vw;
-  color: transparentize($white, 0.3);
-  background: lighten($gray, 5%);
+  color: color.adjust($white, $alpha: -0.3);
+  background: color.scale($gray, $lightness: 5%);
   border-radius: 1vw;
-  border: 1px dashed transparentize($main_1, 0.7);
+  border: 1px dashed color.adjust($main_1, $alpha: -0.7);
   font-size: clamp(0.9rem, 1.1vw, 1rem);
 }
 
@@ -276,7 +277,7 @@ function downloadPerformanceTree() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: transparentize($black, 0.2);
+  background: color.adjust($black, $alpha: -0.2);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -286,14 +287,14 @@ function downloadPerformanceTree() {
 
 .modal-content {
   background: $gray;
-  border: 1px solid transparentize($white, 0.9);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 1vw;
   padding: 3vh 3vw;
   max-width: 600px;
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 2vh 6vh transparentize($black, 0.5);
+  box-shadow: 0 2vh 6vh color.adjust($black, $alpha: -0.5);
 }
 
 .modal-content h3 {
@@ -319,8 +320,8 @@ function downloadPerformanceTree() {
 .form-group textarea {
   width: 100%;
   padding: 1vh 1vw;
-  background: transparentize($black, 0.3);
-  border: 1px solid transparentize($white, 0.9);
+  background: color.adjust($black, $alpha: -0.3);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 0.5vw;
   color: $white;
   font-size: clamp(0.85rem, 1vw, 0.95rem);
@@ -331,12 +332,12 @@ function downloadPerformanceTree() {
 .form-group textarea:focus {
   outline: none;
   border-color: $main_1;
-  background: transparentize($black, 0.1);
+  background: color.adjust($black, $alpha: -0.1);
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: transparentize($main_1, 0.3);
+  color: color.adjust($main_1, $alpha: -0.3);
 }
 
 .form-group input[disabled] {
@@ -351,7 +352,7 @@ function downloadPerformanceTree() {
 
 .help-text {
   font-size: clamp(0.75rem, 0.9vw, 0.85rem);
-  color: transparentize($white, 0.4);
+  color: color.adjust($white, $alpha: -0.4);
   margin-top: 0.5vh;
 }
 
@@ -373,13 +374,13 @@ function downloadPerformanceTree() {
 }
 
 .form-actions button[type="button"] {
-  background: transparentize($gray, 0.5);
+  background: color.adjust($gray, $alpha: -0.5);
   color: $white;
-  border: 1px solid transparentize($white, 0.8);
+  border: 1px solid color.adjust($white, $alpha: -0.8);
 }
 
 .form-actions button[type="button"]:hover {
-  background: transparentize($gray, 0.3);
-  border-color: transparentize($white, 0.7);
+  background: color.adjust($gray, $alpha: -0.3);
+  border-color: color.adjust($white, $alpha: -0.7);
 }
 </style>
