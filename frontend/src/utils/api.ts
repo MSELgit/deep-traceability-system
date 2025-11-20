@@ -178,6 +178,22 @@ export const calculationApi = {
       match_matrix: { [key: string]: number };
       importance: { [key: string]: number };
     }>(`/calculations/energy/${projectId}/${caseId}`),
+  calculateTradeoff: (projectId: string) => {
+    console.log(`[API] Calling POST /calculations/tradeoff/${projectId}`);
+    console.log(`[API] Full URL: ${API_BASE_URL}/calculations/tradeoff/${projectId}`);
+    return apiClient.post<{ [key: string]: { 
+      ratio: number; 
+      total_paths: number; 
+      tradeoff_paths: number; 
+      is_valid: boolean; 
+    } }>(`/calculations/tradeoff/${projectId}`).then(response => {
+      console.log('[API] Response received:', response.status);
+      return response;
+    }).catch(error => {
+      console.error('[API] Error:', error);
+      throw error;
+    });
+  },
 };
 
 // ========== エクスポート・インポート ==========

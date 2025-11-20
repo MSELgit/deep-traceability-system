@@ -5,21 +5,23 @@
         <label>
           X-axis:
           <select v-model="selectedX">
+            <option value="__height">Height</option>
+            <option value="__energy">Energy</option>
+            <option value="__tradeoff">Performance Tradeoff Ratio</option>
             <option v-for="perf in performances" :key="perf.id" :value="perf.id">
               {{ perf.name }}
             </option>
-            <option value="__height">Height</option>
-            <option value="__energy">Energy</option>
           </select>
         </label>
         <label>
           Y-axis:
           <select v-model="selectedY">
+            <option value="__height">Height</option>
+            <option value="__energy">Energy</option>
+            <option value="__tradeoff">Performance Tradeoff Ratio</option>
             <option v-for="perf in performances" :key="perf.id" :value="perf.id">
               {{ perf.name }}
             </option>
-            <option value="__height">Height</option>
-            <option value="__energy">Energy</option>
           </select>
         </label>
       </div>
@@ -73,7 +75,19 @@
           <tr v-for="dc in designCases" :key="dc.id">
             <td>{{ dc.name }}</td>
             <td>
-              <template v-if="typeof getValue(dc, selectedX) === 'number'">
+              <template v-if="selectedX === '__tradeoff'">
+                <template v-if="tradeoffData[dc.id]">
+                  <template v-if="tradeoffData[dc.id].is_valid">
+                    {{ tradeoffData[dc.id].ratio.toFixed(3) }}
+                    ({{ tradeoffData[dc.id].tradeoff_paths }}/{{ tradeoffData[dc.id].total_paths }})
+                  </template>
+                  <template v-else>
+                    N/A (0/0)
+                  </template>
+                </template>
+                <template v-else>-</template>
+              </template>
+              <template v-else-if="typeof getValue(dc, selectedX) === 'number'">
                 {{ (getValue(dc, selectedX) as number).toFixed(3) }}
               </template>
               <template v-else>
@@ -81,7 +95,19 @@
               </template>
             </td>
             <td>
-              <template v-if="typeof getValue(dc, selectedY) === 'number'">
+              <template v-if="selectedY === '__tradeoff'">
+                <template v-if="tradeoffData[dc.id]">
+                  <template v-if="tradeoffData[dc.id].is_valid">
+                    {{ tradeoffData[dc.id].ratio.toFixed(3) }}
+                    ({{ tradeoffData[dc.id].tradeoff_paths }}/{{ tradeoffData[dc.id].total_paths }})
+                  </template>
+                  <template v-else>
+                    N/A (0/0)
+                  </template>
+                </template>
+                <template v-else>-</template>
+              </template>
+              <template v-else-if="typeof getValue(dc, selectedY) === 'number'">
                 {{ (getValue(dc, selectedY) as number).toFixed(3) }}
               </template>
               <template v-else>
@@ -96,7 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, watch, computed } from 'vue';
 import type { DesignCase, Performance } from '../../types/project';
 import { calculationApi } from '../../utils/api';
 import { useRoute } from 'vue-router';
@@ -121,6 +147,9 @@ const svgWidth = ref(300);
 const svgHeight = ref(280);
 const margin = ref(38);
 const plotSvg = ref<SVGSVGElement>();
+
+// 性能間背反割合のキャッシュ
+const tradeoffData = ref<{ [key: string]: { ratio: number; total_paths: number; tradeoff_paths: number; is_valid: boolean } }>({});
 
 
 const selectedX = ref(props.initialX || props.performances[0]?.id || '');
@@ -159,10 +188,67 @@ const isEnergyAxisSelected = computed(() => {
   return selectedX.value === "__energy" || selectedY.value === "__energy";
 });
 
-// designCasesを監視して、エネルギー軸が選択されていてエネルギーが全部0なら再計算
+// 性能間背反割合軸が選択されているかチェック
+const isTradeoffAxisSelected = computed(() => {
+  return selectedX.value === "__tradeoff" || selectedY.value === "__tradeoff";
+});
+
+// 性能間背反割合を計算する関数
+async function calculateTradeoffRatios() {
+  console.log('=== calculateTradeoffRatios called ===');
+  const projectId = route.params.id as string;
+  console.log('Project ID:', projectId);
+  
+  if (!projectId) {
+    console.log('No project ID, returning');
+    return;
+  }
+  
+  try {
+    console.log('Calling API...');
+    const response = await calculationApi.calculateTradeoff(projectId);
+    console.log('=== Tradeoff API Response ===');
+    console.log('Project ID:', projectId);
+    console.log('Full response:', response.data);
+    
+    // 設計案1のコピーの結果を特に表示
+    const copyCase = Object.entries(response.data).find(([id, data]) => {
+      const dc = props.designCases.find(d => d.id === id);
+      return dc?.name === '設計案1のコピー';
+    });
+    
+    if (copyCase) {
+      console.log('設計案1のコピー:', {
+        id: copyCase[0],
+        data: copyCase[1]
+      });
+    }
+    
+    tradeoffData.value = response.data;
+  } catch (error) {
+    console.error('Failed to calculate tradeoff ratios:', error);
+  }
+}
+
+// designCasesを監視して、必要なデータを再計算
 watch([() => props.designCases, selectedX, selectedY], async ([newDesignCases]) => {
-  if (newDesignCases && newDesignCases.length > 0 && isEnergyAxisSelected.value && allEnergyZero.value) {
-    await recalculateEnergy();
+  console.log('=== Watch triggered ===');
+  console.log('selectedX:', selectedX.value);
+  console.log('selectedY:', selectedY.value);
+  console.log('isTradeoffAxisSelected:', isTradeoffAxisSelected.value);
+  
+  if (newDesignCases && newDesignCases.length > 0) {
+    // エネルギー軸が選択されていてエネルギーが全部0なら再計算
+    if (isEnergyAxisSelected.value && allEnergyZero.value) {
+      console.log('Recalculating energy...');
+      await recalculateEnergy();
+    }
+    
+    // 性能間背反割合軸が選択されていたら計算（常に最新データを取得）
+    if (isTradeoffAxisSelected.value) {
+      console.log('Calculating tradeoff ratios...');
+      await calculateTradeoffRatios();
+    }
   }
 }, { immediate: true });
 
@@ -185,6 +271,7 @@ watch(selectedY, (newVal) => {
 function getPerfName(id: string) {
   if (id === "__height") return "Height";
   if (id === "__energy") return "Energy";
+  if (id === "__tradeoff") return "Performance Tradeoff Ratio";
   return props.performances.find(p => p.id === id)?.name || '';
 }
 function getValue(dc: DesignCase, perfId: string): number | string {
@@ -196,6 +283,12 @@ function getValue(dc: DesignCase, perfId: string): number | string {
       return dc.energy.total_energy;
     }
     return 0;
+  }
+  if (perfId === "__tradeoff") {
+    const data = tradeoffData.value[dc.id];
+    if (!data) return 0;
+    // 無効なデータ（0/0の場合）は-1を返して視覚的に区別
+    return data.is_valid ? data.ratio : -1;
   }
   const val = dc.performance_values[perfId];
   if (typeof val === 'number') return val;
