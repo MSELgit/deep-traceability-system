@@ -1195,7 +1195,8 @@ async function downloadMatrixAsImageVertical() {
       return
     }
     
-    const verticalElements = targetElement.querySelectorAll('.performance-header')
+    // 性能ヘッダーとステークホルダー名の両方を処理
+    const verticalElements = targetElement.querySelectorAll('.performance-header, .stakeholder-name-vertical')
     const originalVisibility: { element: HTMLElement; visibility: string; color: string }[] = []
 
     verticalElements.forEach(el => {
@@ -1250,31 +1251,48 @@ async function downloadMatrixAsImageVertical() {
     
     verticalElements.forEach(el => {
       const htmlEl = el as HTMLElement
-      const rect = htmlEl.getBoundingClientRect()
-      const computedStyle = window.getComputedStyle(htmlEl)
+      
+      // ステークホルダー名の場合は親要素から位置を取得
+      const isStakeholderName = htmlEl.classList.contains('stakeholder-name-vertical')
+      const targetEl = isStakeholderName ? htmlEl.closest('.stakeholder-header') as HTMLElement : htmlEl
+      
+      if (!targetEl) return
+      
+      const rect = targetEl.getBoundingClientRect()
+      const computedStyle = window.getComputedStyle(targetEl)
       
       const x = (rect.left - tableRect.left + scrollLeft) * 2
       const y = (rect.top - tableRect.top + scrollTop) * 2
       const width = rect.width * 2
       const height = rect.height * 2
-      const bgColor = computedStyle.backgroundColor
-      ctx.fillStyle = bgColor
-      ctx.fillRect(x, y, width, height)
       
-      ctx.strokeStyle = '#dee2e6'
-      ctx.lineWidth = 1
-      ctx.strokeRect(x, y, width, height)
-      
-      if (htmlEl.classList.contains('is-leaf')) {
-        const borderColor = computedStyle.borderTopColor || computedStyle.borderColor
-        ctx.strokeStyle = borderColor
-        ctx.lineWidth = 4
-        ctx.strokeRect(x + 2, y + 2, width - 4, height - 4)
+      // 性能ヘッダーの場合のみ背景を描画
+      if (htmlEl.classList.contains('performance-header')) {
+        const bgColor = computedStyle.backgroundColor
+        ctx.fillStyle = bgColor
+        ctx.fillRect(x, y, width, height)
+        
+        ctx.strokeStyle = '#dee2e6'
+        ctx.lineWidth = 1
+        ctx.strokeRect(x, y, width, height)
+        
+        if (htmlEl.classList.contains('is-leaf')) {
+          const borderColor = computedStyle.borderTopColor || computedStyle.borderColor
+          ctx.strokeStyle = borderColor
+          ctx.lineWidth = 4
+          ctx.strokeRect(x + 2, y + 2, width - 4, height - 4)
+        }
       }
       
       const text = htmlEl.textContent?.trim() || ''
       if (text) {
-        drawVerticalText(ctx, text, x, y, width, height)
+        // ステークホルダー名の場合は、votes部分を除外して上部に配置
+        if (isStakeholderName) {
+          const adjustedHeight = height * 0.8 // votesのスペースを除外
+          drawVerticalText(ctx, text, x, y, width, adjustedHeight)
+        } else {
+          drawVerticalText(ctx, text, x, y, width, height)
+        }
       }
     })
     finalCanvas.toBlob((blob: Blob | null) => {
@@ -1458,6 +1476,31 @@ function downloadMatrixAsExcel() {
     pSquaredRow.push(perf.is_leaf ? getPSquaredForPerformance(perf.id).toFixed(4) : '')
   })
   matrixData.push(pSquaredRow)
+  
+  // HHIの行を追加
+  const hhiRow: (string | number)[] = ['HHI = Σp²']
+  stakeholders.value.forEach(() => hhiRow.push(''))
+  hhiRow.push('')
+  
+  // ルートグループごとにHHIを計算して配置
+  let currentIndex = 0
+  rootGroups.value.forEach(group => {
+    const hhi = getHHIForRoot(group.rootIndex)
+    hhiRow.push(hhi.toFixed(4))
+    
+    // colspanに対応するため、残りのセルは空白
+    for (let i = 1; i < group.colspan; i++) {
+      hhiRow.push('')
+    }
+    currentIndex += group.colspan
+  })
+  
+  // 残りのセル（rootGroupsに含まれない場合）も空白で埋める
+  while (hhiRow.length < matrixData[0].length) {
+    hhiRow.push('')
+  }
+  
+  matrixData.push(hhiRow)
   
   const ws = XLSX.utils.aoa_to_sheet(matrixData)
   
@@ -2452,7 +2495,7 @@ async function normalizeUtilityFunctionsByColumn() {
   
   let totalNormalized = 0
   
-  for (const [performanceId, functions] of performanceGroups.entries()) {
+  for (const [, functions] of performanceGroups.entries()) {
     if (functions.length <= 1) continue
     
     const standard = functions[0]
