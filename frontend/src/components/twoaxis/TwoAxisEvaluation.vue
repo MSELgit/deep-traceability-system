@@ -195,34 +195,10 @@ const isTradeoffAxisSelected = computed(() => {
 
 // 性能間背反割合を計算する関数
 async function calculateTradeoffRatios() {
-  console.log('=== calculateTradeoffRatios called ===');
   const projectId = route.params.id as string;
-  console.log('Project ID:', projectId);
-  
-  if (!projectId) {
-    console.log('No project ID, returning');
-    return;
-  }
   
   try {
-    console.log('Calling API...');
     const response = await calculationApi.calculateTradeoff(projectId);
-    console.log('=== Tradeoff API Response ===');
-    console.log('Project ID:', projectId);
-    console.log('Full response:', response.data);
-    
-    // 設計案1のコピーの結果を特に表示
-    const copyCase = Object.entries(response.data).find(([id, data]) => {
-      const dc = props.designCases.find(d => d.id === id);
-      return dc?.name === '設計案1のコピー';
-    });
-    
-    if (copyCase) {
-      console.log('設計案1のコピー:', {
-        id: copyCase[0],
-        data: copyCase[1]
-      });
-    }
     
     tradeoffData.value = response.data;
   } catch (error) {
@@ -232,21 +208,15 @@ async function calculateTradeoffRatios() {
 
 // designCasesを監視して、必要なデータを再計算
 watch([() => props.designCases, selectedX, selectedY], async ([newDesignCases]) => {
-  console.log('=== Watch triggered ===');
-  console.log('selectedX:', selectedX.value);
-  console.log('selectedY:', selectedY.value);
-  console.log('isTradeoffAxisSelected:', isTradeoffAxisSelected.value);
   
   if (newDesignCases && newDesignCases.length > 0) {
     // エネルギー軸が選択されていてエネルギーが全部0なら再計算
     if (isEnergyAxisSelected.value && allEnergyZero.value) {
-      console.log('Recalculating energy...');
       await recalculateEnergy();
     }
     
     // 性能間背反割合軸が選択されていたら計算（常に最新データを取得）
     if (isTradeoffAxisSelected.value) {
-      console.log('Calculating tradeoff ratios...');
       await calculateTradeoffRatios();
     }
   }

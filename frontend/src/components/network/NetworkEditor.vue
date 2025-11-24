@@ -376,7 +376,7 @@
                 v-if="node.layer === 1"
                 :cx="node.x"
                 :cy="node.y"
-                :r="18"
+                :r="nodeRadius"
                 :fill="getNodeColor(node)"
                 :stroke="selectedNode?.id === node.id ? '#FF5722' : '#333'"
                 :stroke-width="selectedNode?.id === node.id ? '2' : '1.5'"
@@ -403,13 +403,13 @@
                 class="node-shape"
               />
               
-              <!-- Layer 4: Object (1:2 rectangle, height 36px, width 72px) -->
+              <!-- Layer 4: Object (1:2 rectangle) -->
               <rect
                 v-else-if="node.layer === 4 && node.type === 'object'"
-                :x="node.x - 36"
-                :y="node.y - 18"
-                :width="72"
-                :height="36"
+                :x="node.x - baseSize"
+                :y="node.y - nodeRadius"
+                :width="baseSize * 2"
+                :height="baseSize"
                 :fill="getNodeColor(node)"
                 :stroke="selectedNode?.id === node.id ? '#FF5722' : '#333'"
                 :stroke-width="selectedNode?.id === node.id ? '2' : '1.5'"
@@ -417,13 +417,13 @@
                 class="node-shape"
               />
               
-              <!-- Layer 4: Environment (square, 36px × 36px) -->
+              <!-- Layer 4: Environment (square) -->
               <rect
                 v-else-if="node.layer === 4 && node.type === 'environment'"
-                :x="node.x - 18"
-                :y="node.y - 18"
-                :width="36"
-                :height="36"
+                :x="node.x - nodeRadius"
+                :y="node.y - nodeRadius"
+                :width="baseSize"
+                :height="baseSize"
                 :fill="getNodeColor(node)"
                 :stroke="selectedNode?.id === node.id ? '#FF5722' : '#333'"
                 :stroke-width="selectedNode?.id === node.id ? '2' : '1.5'"
@@ -436,7 +436,7 @@
                 v-else-if="node.layer === 4"
                 :cx="node.x"
                 :cy="node.y"
-                :r="18"
+                :r="nodeRadius"
                 :fill="getNodeColor(node)"
                 :stroke="selectedNode?.id === node.id ? '#FF5722' : '#333'"
                 :stroke-width="selectedNode?.id === node.id ? '2' : '1.5'"
@@ -446,13 +446,13 @@
               <!-- Node label -->
               <text
                 :x="node.x"
-                :y="node.y + 18 + 15"
+                :y="node.y + nodeRadius + 15"
                 text-anchor="middle"
                 class="node-label"
                 :fill="selectedNode?.id === node.id ? '#FF5722' : '#333'"
               >
                 {{ node.label }}
-              </text>m
+              </text>
             </g>
           </g>
           </g> <!-- End main content group -->
@@ -537,7 +537,21 @@ const emit = defineEmits<{
 // Canvas size
 const canvasWidth = ref(1200);
 const canvasHeight = ref(800);
-const nodeRadius = 18;
+
+// ノードサイズを性能数に応じて動的に計算
+const performanceCount = computed(() => {
+  return network.value.nodes.filter(node => node.layer === 1).length;
+});
+
+// 基準サイズ（性能数が13以上の場合は18px、それ以外は36px）
+const baseSize = computed(() => {
+  return performanceCount.value >= 13 ? 18 : 36;
+});
+
+// ノードの半径（円形用）
+const nodeRadius = computed(() => {
+  return baseSize.value / 2;
+});
 
 // Zoom/pan state
 const zoom = ref(1);
@@ -634,15 +648,15 @@ const canvasStyle = computed(() => {
 // Node shape calculation functions
 // Equilateral triangle coordinates (height 36px, pointing up)
 function getTrianglePoints(cx: number, cy: number): string {
-  const height = 36;
-  const halfBase = height / Math.sqrt(3); // Half of base ≈ 20.8
+  const height = baseSize.value;
+  const halfBase = height / Math.sqrt(3); // Half of base
   return `${cx},${cy - height/2} ${cx - halfBase},${cy + height/2} ${cx + halfBase},${cy + height/2}`;
 }
 
-// Horizontal diamond coordinates (height 36px, width 54px)
+// Horizontal diamond coordinates (height = baseSize, width = baseSize * 1.5)
 function getDiamondPoints(cx: number, cy: number): string {
-  const halfHeight = 18;
-  const halfWidth = 27;
+  const halfHeight = baseSize.value / 2;
+  const halfWidth = baseSize.value * 0.75; // 1.5 ratio
   return `${cx},${cy - halfHeight} ${cx + halfWidth},${cy} ${cx},${cy + halfHeight} ${cx - halfWidth},${cy}`;
 }
 
@@ -772,16 +786,16 @@ function getAdjustedLineEnd(source: NetworkNode, target: NetworkNode): { x: numb
   const distance = Math.sqrt(dx * dx + dy * dy);
   
   // Node radius (adjusted by shape)
-  let targetRadius = 18; // Default (circle)
+  let targetRadius = nodeRadius.value; // Default (circle)
   
   if (target.layer === 2) { // Triangle
-    targetRadius = 20;
+    targetRadius = baseSize.value * 0.56; // Approximate radius for triangle
   } else if (target.layer === 3) { // Diamond
-    targetRadius = 24;
+    targetRadius = baseSize.value * 0.67; // Approximate radius for diamond
   } else if (target.layer === 4 && target.type === 'object') { // Rectangle
-    targetRadius = 36;
+    targetRadius = baseSize.value; // Half width of rectangle
   } else if (target.layer === 4 && target.type === 'environment') { // Square
-    targetRadius = 18;
+    targetRadius = nodeRadius.value;
   }
   
   // Shorten further by arrow size
@@ -1115,8 +1129,8 @@ function handleDragMove(event: MouseEvent) {
   // 境界内に制限（ワールド座標で）
   const maxX = canvasWidth.value / zoom.value;
   const maxY = canvasHeight.value / zoom.value;
-  dragNode.value.x = Math.max(nodeRadius, Math.min(maxX - nodeRadius, dragNode.value.x));
-  dragNode.value.y = Math.max(nodeRadius, Math.min(maxY - nodeRadius, dragNode.value.y));
+  dragNode.value.x = Math.max(nodeRadius.value, Math.min(maxX - nodeRadius.value, dragNode.value.x));
+  dragNode.value.y = Math.max(nodeRadius.value, Math.min(maxY - nodeRadius.value, dragNode.value.y));
 }
 
 // ドラッグ終了
@@ -1158,6 +1172,10 @@ function autoLayout() {
   // レイヤーごとの中央Y座標（キャンバス800を4分割）
   const layerCenterY = [100, 300, 500, 700]; // レイヤー1-4の中央
   
+  // ノード数が多い場合の2段組用のしきい値
+  const twoRowThreshold = 12; // 12個以上で2段組
+  const layerHeight = 120; // 2段の場合の行間隔
+  
   for (let layer = 1; layer <= 4; layer++) {
     if (layer === 4) {
       // レイヤー4は特別な処理：モノを左半分、環境を右半分に配置
@@ -1167,25 +1185,47 @@ function autoLayout() {
       const yCenter = layerCenterY[layer - 1];
       const halfWidth = canvasWidth.value / 2;
       
-      // モノを左半分に配置
+      // モノを左半分に配置（多い場合は2段）
       if (objectNodes.length > 0) {
-        const objectSpacing = halfWidth / (objectNodes.length + 1);
-        objectNodes.forEach((node, index) => {
-          node.x = objectSpacing * (index + 1);
-          node.y = yCenter;
-        });
+        if (objectNodes.length >= twoRowThreshold) {
+          const nodesPerRow = Math.ceil(objectNodes.length / 2);
+          const objectSpacing = halfWidth / (nodesPerRow + 1);
+          objectNodes.forEach((node, index) => {
+            const row = Math.floor(index / nodesPerRow);
+            const col = index % nodesPerRow;
+            node.x = objectSpacing * (col + 1);
+            node.y = yCenter + (row === 0 ? -layerHeight/4 : layerHeight/4);
+          });
+        } else {
+          const objectSpacing = halfWidth / (objectNodes.length + 1);
+          objectNodes.forEach((node, index) => {
+            node.x = objectSpacing * (index + 1);
+            node.y = yCenter;
+          });
+        }
       }
       
-      // 環境を右半分に配置
+      // 環境を右半分に配置（多い場合は2段）
       if (envNodes.length > 0) {
-        const envSpacing = halfWidth / (envNodes.length + 1);
-        envNodes.forEach((node, index) => {
-          node.x = halfWidth + envSpacing * (index + 1);
-          node.y = yCenter;
-        });
+        if (envNodes.length >= twoRowThreshold) {
+          const nodesPerRow = Math.ceil(envNodes.length / 2);
+          const envSpacing = halfWidth / (nodesPerRow + 1);
+          envNodes.forEach((node, index) => {
+            const row = Math.floor(index / nodesPerRow);
+            const col = index % nodesPerRow;
+            node.x = halfWidth + envSpacing * (col + 1);
+            node.y = yCenter + (row === 0 ? -layerHeight/4 : layerHeight/4);
+          });
+        } else {
+          const envSpacing = halfWidth / (envNodes.length + 1);
+          envNodes.forEach((node, index) => {
+            node.x = halfWidth + envSpacing * (index + 1);
+            node.y = yCenter;
+          });
+        }
       }
     } else {
-      // レイヤー1-3は従来通り
+      // レイヤー1-3の処理
       const layerNodes = network.value.nodes.filter(n => n.layer === layer);
       
       if (layerNodes.length === 0) continue;
@@ -1193,13 +1233,27 @@ function autoLayout() {
       // このレイヤーの中央Y座標
       const yCenter = layerCenterY[layer - 1];
       
-      // ノードを横一列に配置
-      const spacing = canvasWidth.value / (layerNodes.length + 1);
-      
-      layerNodes.forEach((node, index) => {
-        node.x = spacing * (index + 1);
-        node.y = yCenter;
-      });
+      // ノード数に応じて1段か2段かを決定
+      if (layerNodes.length >= twoRowThreshold) {
+        // 2段組
+        const nodesPerRow = Math.ceil(layerNodes.length / 2);
+        const spacing = canvasWidth.value / (nodesPerRow + 1);
+        
+        layerNodes.forEach((node, index) => {
+          const row = Math.floor(index / nodesPerRow);
+          const col = index % nodesPerRow;
+          node.x = spacing * (col + 1);
+          node.y = yCenter + (row === 0 ? -layerHeight/4 : layerHeight/4);
+        });
+      } else {
+        // 1段組（従来通り）
+        const spacing = canvasWidth.value / (layerNodes.length + 1);
+        
+        layerNodes.forEach((node, index) => {
+          node.x = spacing * (index + 1);
+          node.y = yCenter;
+        });
+      }
     }
   }
   

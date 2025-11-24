@@ -314,9 +314,34 @@ function downloadMountainImage() {
 }
 
 onUnmounted(() => {
+  // Clean up Three.js resources
   if (renderer) {
     renderer.dispose();
+    renderer.forceContextLoss();
+    if (threeContainer.value && renderer.domElement) {
+      threeContainer.value.removeChild(renderer.domElement);
+    }
   }
+  
+  if (controls) {
+    controls.dispose();
+  }
+  
+  // Clean up geometries and materials
+  casePoints.forEach(mesh => {
+    if (mesh.geometry) mesh.geometry.dispose();
+    if (mesh.material) {
+      if (Array.isArray(mesh.material)) {
+        mesh.material.forEach(mat => mat.dispose());
+      } else {
+        mesh.material.dispose();
+      }
+    }
+  });
+  casePoints.clear();
+  
+  // Remove event listeners
+  window.removeEventListener('resize', onWindowResize);
 });
 
 // Redraw when design cases change
@@ -417,8 +442,38 @@ async function loadAndRenderCases() {
 }
 
 function updateMountainView() {
-  casePoints.forEach(mesh => scene.remove(mesh));
+  // Clean up existing meshes
+  casePoints.forEach(mesh => {
+    scene.remove(mesh);
+    if (mesh.geometry) mesh.geometry.dispose();
+    if (mesh.material) {
+      if (Array.isArray(mesh.material)) {
+        mesh.material.forEach(mat => mat.dispose());
+      } else {
+        mesh.material.dispose();
+      }
+    }
+  });
   casePoints.clear();
+  
+  // Remove existing circles
+  const objectsToRemove: THREE.Mesh[] = [];
+  scene.traverse((child) => {
+    if (child instanceof THREE.Mesh && child.geometry && child.geometry.type === 'CircleGeometry') {
+      objectsToRemove.push(child);
+    }
+  });
+  objectsToRemove.forEach(obj => {
+    scene.remove(obj);
+    if (obj.geometry) obj.geometry.dispose();
+    if (obj.material) {
+      if (Array.isArray(obj.material)) {
+        obj.material.forEach(mat => mat.dispose());
+      } else {
+        obj.material.dispose();
+      }
+    }
+  });
   const energies = designCases.value
     .filter(dc => dc.mountain_position && dc.utility_vector)
     .map(dc => Object.values(dc.utility_vector!).reduce((sum: number, val) => sum + (val as number), 0));
@@ -474,7 +529,8 @@ function updateMountainView() {
       color: designCase.color || '#3357FF',
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.1
+      opacity: 0.1,
+      depthWrite: false
     });
     const circleMesh = new THREE.Mesh(circleGeometry, circleMaterial);
     circleMesh.rotation.x = -Math.PI / 2; // Place horizontally
@@ -535,10 +591,6 @@ function openCreateForm() {
 }
 
 function openEditForm(designCase: DesignCase) {
-  
-  // Log the current performance tree
-  const currentPerformances = currentProject.value?.performances || [];
-  
   editingCase.value = designCase;
   leftPanelState.value = 'level2';
 }

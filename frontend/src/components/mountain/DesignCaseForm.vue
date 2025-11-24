@@ -64,8 +64,8 @@
         <div class="performance-table">
           <div class="table-header">
             <div class="col-performance">Performance</div>
-            <div class="col-unit">Unit</div>
             <div class="col-value">Value</div>
+            <div class="col-unit">Unit</div>
           </div>
 
           <div
@@ -76,9 +76,7 @@
             <div class="col-performance">
               <span class="perf-name">{{ perf.name }}</span>
             </div>
-            <div class="col-unit">
-              <span class="unit-text">{{ perf.unit || '-' }}</span>
-            </div>
+
             <div class="col-value">
               <!-- For discrete values: Select box -->
               <select
@@ -107,8 +105,10 @@
                   :placeholder="'Enter value'"
                   :disabled="isEdit && !isEditable"
                 />
-                <span v-if="perf.unit" class="input-unit">{{ perf.unit }}</span>
               </div>
+            </div>
+            <div class="col-unit">
+              <span class="unit-text">{{ perf.unit || '-' }}</span>
             </div>
           </div>
 
@@ -788,6 +788,7 @@ function getRandomColor(): string {
   align-items: center;
   color: color.adjust($white, $alpha: -0.5);
   font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  padding-left: 0.5vw;
 }
 
 .col-value {
