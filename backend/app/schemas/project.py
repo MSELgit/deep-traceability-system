@@ -27,6 +27,7 @@ class NeedBase(BaseModel):
     name: str
     description: Optional[str] = None
     category: Optional[str] = None
+    priority: float = 1.0  # 優先度（0~1、デフォルト1.0）
 
 
 class NeedCreate(NeedBase):

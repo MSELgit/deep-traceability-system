@@ -223,7 +223,8 @@ def create_need(
         project_id=project_id,
         name=need.name,
         category=need.category,
-        description=need.description
+        description=need.description,
+        priority=need.priority
     )
     db.add(db_need)
     db.commit()
@@ -255,6 +256,7 @@ def update_need(
     db_need.name = need.name
     db_need.category = need.category
     db_need.description = need.description
+    db_need.priority = need.priority
     db.commit()
     db.refresh(db_need)
     return db_need
@@ -1769,12 +1771,12 @@ def get_h_max(project_id: str, db: Session = Depends(get_db)):
         need_votes = distribute_votes_to_needs(project)
         performance_need_votes = distribute_votes_to_performances(project, need_votes)
         
-        # 全末端性能×ニーズペアの重み（票数）を合計
-        # H_max = Σ weight （全効用が1.0の場合、効用関数が設定されているペアのみ）
-        H_max = 0.0
-        performance_h_max = {}  # 性能ごとの部分標高最大値
-        count = 0
-        count_with_utility = 0
+        # 正規化された重みを使用するため、H_maxは1.0
+        # 性能ごとの正規化された最大標高も計算
+        
+        # まず全体の重み合計を計算（正規化用）
+        total_weight = 0.0
+        performance_weights = {}  # 性能ごとの重み
         
         # 効用関数が設定されているペアを確認
         relations_with_utility = {}
@@ -1783,23 +1785,26 @@ def get_h_max(project_id: str, db: Session = Depends(get_db)):
             if rel.utility_function_json:
                 relations_with_utility[key] = True
         
+        # 重みの計算
         for key, votes in performance_need_votes.items():
             perf_id, need_id = key
-            if perf_id in leaf_performance_ids:
-                count += 1
-                # 効用関数が設定されている場合のみカウント
-                if key in relations_with_utility:
-                    up_vote = votes['up']
-                    down_vote = votes['down']
-                    weight = up_vote + down_vote  # この性能×ニーズペアの重み（票数）
-                    H_max += weight
-                    
-                    # 性能ごとの部分標高最大値を集計
-                    if perf_id not in performance_h_max:
-                        performance_h_max[perf_id] = 0.0
-                    performance_h_max[perf_id] += weight
-                    
-                    count_with_utility += 1
+            if perf_id in leaf_performance_ids and key in relations_with_utility:
+                up_vote = votes['up']
+                down_vote = votes['down']
+                weight = up_vote + down_vote
+                total_weight += weight
+                
+                if perf_id not in performance_weights:
+                    performance_weights[perf_id] = 0.0
+                performance_weights[perf_id] += weight
+        
+        # 正規化
+        H_max = 1.0  # 正規化により常に1.0
+        performance_h_max = {}
+        
+        if total_weight > 0:
+            for perf_id, weight in performance_weights.items():
+                performance_h_max[perf_id] = weight / total_weight
         
         return {
             "H_max": float(H_max),

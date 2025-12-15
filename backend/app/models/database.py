@@ -95,6 +95,7 @@ class NeedModel(Base):
     name = Column(String, nullable=False)
     category = Column(String, nullable=True)
     description = Column(Text, nullable=True)
+    priority = Column(Float, default=1.0)  # 優先度（0~1、デフォルト1.0）
     
     project = relationship('ProjectModel', back_populates='needs')
 

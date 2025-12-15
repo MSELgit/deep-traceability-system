@@ -201,7 +201,7 @@ export const useProjectStore = defineStore('project', () => {
     return response.data;
   }
   
-  async function updateNeed(id: string, data: { name: string; category?: string; description?: string }) {
+  async function updateNeed(id: string, data: { name: string; category?: string; description?: string; priority?: number }) {
     if (!currentProject.value) return;
     
     const response = await needApi.update(currentProject.value.id, id, data);

@@ -294,28 +294,45 @@ def calculate_utility_vector(
 def calculate_elevation(
     utility_vector: Dict[tuple, float],
     performance_need_weights: Dict[tuple, float],
-    leaf_performance_ids: set = None
+    leaf_performance_ids: set = None,
+    normalize_weights: bool = True
 ) -> float:
     """
     標高 H を計算
     
-    H = Σ W_(i,j) * U_j(f_i)  （末端性能のみ）
+    H = Σ W'_(i,j) * U_j(f_i)  （末端性能のみ）
+    ここで、W'_(i,j) = W_(i,j) / Σ W_(i,j) （正規化された重み）
     
     Args:
         utility_vector: {(performance_id, need_id): utility_value}
         performance_need_weights: {(performance_id, need_id): weight}
         leaf_performance_ids: 末端性能のIDセット（指定された場合のみフィルタ）
+        normalize_weights: 重みを正規化するかどうか（デフォルトTrue）
     
     Returns:
-        標高値
+        標高値（正規化時は0-1の範囲）
     """
+    # 対象となる重みの合計を計算（正規化用）
+    if normalize_weights:
+        total_weight = 0.0
+        for key in utility_vector.keys():
+            perf_id, need_id = key
+            if leaf_performance_ids is None or perf_id in leaf_performance_ids:
+                total_weight += performance_need_weights.get(key, 0)
+        
+        if total_weight == 0:
+            return 0.0
+    else:
+        total_weight = 1.0  # 正規化しない場合は1で除算（変更なし）
+    
     H = 0.0
     for key, utility in utility_vector.items():
         perf_id, need_id = key
         # 末端性能のみを対象とする
         if leaf_performance_ids is None or perf_id in leaf_performance_ids:
             weight = performance_need_weights.get(key, 0)
-            H += weight * utility
+            normalized_weight = weight / total_weight if total_weight > 0 else 0
+            H += normalized_weight * utility
     
     return H
 
@@ -380,14 +397,9 @@ def calculate_mountain_positions(
         if not has_children:
             current_leaf_performance_ids.add(perf.id)
     
-    # H_maxを計算（最新の性能ツリーの末端性能×ニーズペアが効用1.0の場合）
-    H_max = sum(
-        weight for key, weight in performance_need_weights.items()
-        if key[0] in current_leaf_performance_ids  # key[0]はperformance_id
-    )
-    
-    if H_max == 0:
-        H_max = 1.0  # ゼロ除算回避
+    # 正規化された重みを使用するため、H_maxは常に1.0
+    # （全ての重みの合計が1.0に正規化され、全効用が1.0の場合）
+    H_max = 1.0
     
     # 2. 各設計案の効用ベクトルと標高を計算
     utility_vectors = []

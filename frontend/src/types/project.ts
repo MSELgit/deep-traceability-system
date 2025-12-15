@@ -60,6 +60,7 @@ export interface Need {
   name: string;
   description?: string;
   category?: string;
+  priority?: number; // 優先度（0~1、デフォルト1.0）
 }
 
 /**
@@ -69,6 +70,7 @@ export interface NeedCreate {
   name: string;
   description?: string;
   category?: string;
+  priority?: number;
 }
 
 /**

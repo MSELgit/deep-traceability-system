@@ -71,6 +71,9 @@
             <th :rowspan="maxPerformanceLevel + 1" class="group-header total-votes-header">
               Total Votes
             </th>
+            <th :rowspan="maxPerformanceLevel + 1" class="group-header priority-header">
+              Priority
+            </th>
             <th :colspan="getAllPerformanceColumns().length" class="group-header performance-group">
               Performance (Hierarchical View)
             </th>
@@ -150,6 +153,20 @@
             </td>
 
             
+            <td class="matrix-cell priority-cell">
+              <input 
+                type="number" 
+                class="priority-input"
+                min="0"
+                max="1"
+                step="0.1"
+                :value="need.priority || 1.0"
+                @input="updateNeedPriority(need.id, $event)"
+                placeholder="1.0"
+              />
+            </td>
+
+            
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`perf-${perf.id}`"
@@ -194,6 +211,7 @@
           <tr class="summary-row">
             <td :colspan="stakeholders.length + 1" class="summary-empty"></td>
             <td class="summary-label-cell">↑Votes</td>
+            <td class="summary-empty"></td>
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`up-${perf.id}`"
@@ -207,6 +225,7 @@
           <tr class="summary-row">
             <td :colspan="stakeholders.length + 1" class="summary-empty"></td>
             <td class="summary-label-cell">↓Votes</td>
+            <td class="summary-empty"></td>
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`down-${perf.id}`"
@@ -220,12 +239,13 @@
           <tr class="summary-row effective-votes-row">
             <td :colspan="stakeholders.length + 1" class="summary-empty effective-votes-empty"></td>
             <td class="summary-label-cell effective-votes-label">Valid Votes</td>
+            <td class="summary-empty"></td>
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`effective-${perf.id}`"
               class="summary-cell effective-votes-cell"
             >
-              <span v-if="perf.is_leaf" class="summary-value">{{ getEffectiveVotesForPerformance(perf.id).toFixed(1) }}</span>
+              <span v-if="perf.is_leaf" class="summary-value">{{ getNormalizedEffectiveVotesForPerformance(perf.id).toFixed(3) }}</span>
             </td>
           </tr>
 
@@ -233,6 +253,7 @@
           <tr class="summary-row root-summary-row">
             <td :colspan="stakeholders.length + 1" class="summary-empty root-summary-empty"></td>
             <td class="summary-label-cell root-summary-label">V</td>
+            <td class="summary-empty"></td>
             <td
               v-for="group in rootGroups"
               :key="`root-${group.rootIndex}`"
@@ -247,6 +268,7 @@
           <tr class="summary-row p-value-row">
             <td :colspan="stakeholders.length + 1" class="summary-empty p-value-empty"></td>
             <td class="summary-label-cell p-value-label">p= Σv_i / V</td>
+            <td class="summary-empty"></td>
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`p-${perf.id}`"
@@ -260,6 +282,7 @@
           <tr class="summary-row p-squared-row">
             <td :colspan="stakeholders.length + 1" class="summary-empty p-squared-empty"></td>
             <td class="summary-label-cell p-squared-label">p²</td>
+            <td class="summary-empty"></td>
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`p2-${perf.id}`"
@@ -274,6 +297,7 @@
           <tr class="summary-row hhi-row">
             <td :colspan="stakeholders.length + 1" class="summary-empty hhi-empty"></td>
             <td class="summary-label-cell hhi-label">HHI = Σp²</td>
+            <td class="summary-empty"></td>
             <td
               v-for="group in rootGroups"
               :key="`hhi-${group.rootIndex}`"
@@ -1457,7 +1481,7 @@ function downloadMatrixAsExcel() {
   stakeholders.value.forEach(() => effectiveVotesRow.push(''))
   effectiveVotesRow.push('')
   perfColumns.forEach(perf => {
-    effectiveVotesRow.push(perf.is_leaf ? getEffectiveVotesForPerformance(perf.id).toFixed(1) : '')
+    effectiveVotesRow.push(perf.is_leaf ? getNormalizedEffectiveVotesForPerformance(perf.id).toFixed(3) : '')
   })
   matrixData.push(effectiveVotesRow)
   
@@ -2082,7 +2106,11 @@ function getTotalVotesForNeed(needId: string): number {
     total += getStakeholderVotesForNeed(stakeholder.id, needId)
   })
   
-  return total
+  // 優先度を適用
+  const need = needs.value.find(n => n.id === needId)
+  const priority = need?.priority ?? 1.0
+  
+  return total * priority
 }
 
 function getPerformanceVotesForNeed(needId: string, performanceId: string): number {
@@ -2144,12 +2172,53 @@ function getEffectiveVotesForPerformance(performanceId: string): number {
   return total * (1 + entropy)
 }
 
+// 正規化されたValid Votesを計算
+function getNormalizedEffectiveVotesForPerformance(performanceId: string): number {
+  const effectiveVotes = getEffectiveVotesForPerformance(performanceId)
+  
+  // 全てのリーフパフォーマンスのEffective Votesの合計を計算
+  let totalEffectiveVotes = 0
+  getAllPerformanceColumns().forEach(perf => {
+    if (perf.is_leaf) {
+      totalEffectiveVotes += getEffectiveVotesForPerformance(perf.id)
+    }
+  })
+  
+  if (totalEffectiveVotes === 0) return 0
+  
+  return effectiveVotes / totalEffectiveVotes
+}
+
 async function toggleStakeholderRelation(stakeholderId: string, needId: string) {
   if (hasStakeholderRelation(stakeholderId, needId)) {
     await projectStore.removeStakeholderNeedRelation(stakeholderId, needId)
   } else {
     await projectStore.addStakeholderNeedRelation(stakeholderId, needId)
   }
+}
+
+async function updateNeedPriority(needId: string, event: Event) {
+  const target = event.target as HTMLInputElement
+  const priority = parseFloat(target.value)
+  
+  if (isNaN(priority) || priority < 0 || priority > 1) {
+    // 無効な値の場合は元の値に戻す
+    const need = needs.value.find(n => n.id === needId)
+    if (need) {
+      target.value = String(need.priority || 1.0)
+    }
+    return
+  }
+  
+  const need = needs.value.find(n => n.id === needId)
+  if (!need) return
+  
+  await projectStore.updateNeed(needId, {
+    name: need.name,
+    category: need.category,
+    description: need.description,
+    priority: priority
+  })
 }
 
 function getPerformanceRelation(needId: string, performanceId: string) {
@@ -2749,6 +2818,13 @@ const insufficientDecompositionAnalysis = computed(() => {
   min-width: 100px;
 }
 
+.priority-header {
+  background: #10b981;
+  color: white;
+  font-weight: 700;
+  min-width: 80px;
+}
+
 .performance-group {
   background: #764ba2;
   color: white;
@@ -3041,6 +3117,30 @@ const insufficientDecompositionAnalysis = computed(() => {
   font-weight: 700;
   border-left: 3px solid #f59e0b;
   border-right: 3px solid #f59e0b;
+}
+
+.priority-cell {
+  background: #d1fae5;
+  padding: 4px;
+  border-left: 2px solid #10b981;
+  border-right: 2px solid #10b981;
+}
+
+.priority-input {
+  width: 100%;
+  min-width: 60px;
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.priority-input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 .total-votes-value {

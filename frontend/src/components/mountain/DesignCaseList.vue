@@ -40,7 +40,7 @@
           <div class="case-name">{{ designCase.name }}</div>
           <div class="case-meta">
             <span v-if="designCase.mountain_position" class="case-height">
-              H={{ designCase.mountain_position.H.toFixed(1) }}
+              H={{ designCase.mountain_position.H.toFixed(3) }}
             </span>
             <span class="case-date">
               {{ formatDate(designCase.created_at) }}

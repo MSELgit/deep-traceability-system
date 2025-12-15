@@ -23,7 +23,7 @@
         <!-- Peak elevation display -->
         <div v-if="H_max !== null" class="preview-h-max">
           <span class="preview-h-max-label">H<sub>max</sub>:</span>
-          <span class="preview-h-max-value">{{ H_max.toFixed(1) }}</span>
+          <span class="preview-h-max-value">{{ H_max.toFixed(3) }}</span>
         </div>
         
         
@@ -36,7 +36,7 @@
             <span class="color-indicator" :style="{ background: designCase.color }"></span>
             <span class="preview-item-name">{{ designCase.name }}</span>
             <span v-if="designCase.mountain_position" class="preview-item-height">
-              {{ designCase.mountain_position.H.toFixed(1) }}
+              {{ designCase.mountain_position.H.toFixed(3) }}
             </span>
           </div>
           <div v-if="sortedDesignCases.length > 5" class="preview-more">

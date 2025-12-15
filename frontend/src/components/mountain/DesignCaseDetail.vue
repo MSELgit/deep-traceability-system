@@ -19,7 +19,7 @@
           
           <div class="info-row">
             <span class="info-label">Elevation</span>
-            <span class="info-value">{{ designCase.mountain_position ? designCase.mountain_position.H.toFixed(2) : '-' }}</span>
+            <span class="info-value">{{ designCase.mountain_position ? designCase.mountain_position.H.toFixed(3) : '-' }}</span>
           </div>
           
           <div class="info-row">
