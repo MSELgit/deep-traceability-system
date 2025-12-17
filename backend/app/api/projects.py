@@ -1285,7 +1285,8 @@ def export_project(
                 "id": n.id,
                 "name": n.name,
                 "category": n.category,
-                "description": n.description
+                "description": n.description,
+                "priority": n.priority
             } for n in needs
         ],
         "stakeholder_need_relations": [
