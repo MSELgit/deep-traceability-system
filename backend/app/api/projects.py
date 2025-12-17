@@ -1390,7 +1390,8 @@ def import_project(
                 project_id=new_project_id,
                 name=need["name"],
                 category=need.get("category"),
-                description=need.get("description")
+                description=need.get("description"),
+                priority=need.get("priority", 1.0)  # priorityがあれば使用、なければ1.0
             )
             db.add(db_need)
         
