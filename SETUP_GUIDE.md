@@ -101,7 +101,8 @@ No additional environment variables are required for basic setup. The system use
 
 - **Priority System**: Needs can now have priorities (0-1) that affect vote distribution
 - **Normalized Valid Votes**: Valid votes are normalized to sum to 1.0 for relative comparison
-- **Enhanced Visualization**: Improved 3D mountain view with normalized height calculations
+- **Enhanced Visualization**: Improved 3D mountain view with normalized height calculations (H_max = 1.0)
+- **Import/Export Compatibility**: Full support for priority field in JSON import/export
 
 ## Troubleshooting
 

@@ -1721,7 +1721,8 @@ def recalculate_mountains(
                     'x': pos['x'],
                     'y': pos['y'],
                     'z': pos['z'],
-                    'H': pos['H']
+                    'H': pos['H'],
+                    'total_energy': pos.get('energy', {}).get('total_energy', 0)
                 })
                 # utility_vectorのタプルキーを文字列に変換
                 utility_vec_str_keys = {

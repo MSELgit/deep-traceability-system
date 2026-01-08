@@ -474,30 +474,35 @@ function updateMountainView() {
       }
     }
   });
+  // Use total_energy from mountain_position for plot size
   const energies = designCases.value
-    .filter(dc => dc.mountain_position && dc.utility_vector)
-    .map(dc => Object.values(dc.utility_vector!).reduce((sum: number, val) => sum + (val as number), 0));
-  
-  const minEnergy = Math.min(...energies) || 0;
-  const maxEnergy = Math.max(...energies) || 1;
+    .filter(dc => dc.mountain_position?.total_energy !== undefined)
+    .map(dc => dc.mountain_position!.total_energy as number);
+
+  const minEnergy = energies.length > 0 ? Math.min(...energies) : 0;
+  const maxEnergy = energies.length > 0 ? Math.max(...energies) : 1;
   const energyRange = maxEnergy - minEnergy || 1;
+
+  // Calculate energy variation ratio to determine if enhancement is needed
+  const variationRatio = maxEnergy > 0 ? energyRange / maxEnergy : 0;
+  // If variation is less than 20%, apply power transform to enhance differences
+  const enhancementPower = variationRatio < 0.2 ? 0.5 : 1.0;
 
   // Place each design case as a point
   designCases.value.forEach((designCase: DesignCase) => {
     if (!designCase.mountain_position) {
       return;
     }
-    
-    // Calculate energy (sum of utility_vector values)
-    let energy = 0;
-    if (designCase.utility_vector) {
-      energy = Object.values(designCase.utility_vector).reduce((sum: number, val) => sum + (val as number), 0);
-    }
-    
-    // Determine sphere size based on energy (range 0.2-1.0)
-    const normalizedEnergy = (energy - minEnergy) / energyRange;
+
+    // Get total_energy from mountain_position (calculated by backend)
+    const energy = designCase.mountain_position.total_energy || 0;
+
+    // Determine sphere size based on energy (range 0.35-0.75)
+    let normalizedEnergy = energyRange > 0 ? (energy - minEnergy) / energyRange : 0;
+    // Apply power transform to enhance differences when variation is small
+    normalizedEnergy = Math.pow(normalizedEnergy, enhancementPower);
     const sphereRadius = 0.35 + normalizedEnergy * 0.4;
-    
+
     const geometry = new THREE.SphereGeometry(sphereRadius, 16, 16);
     const material = new THREE.MeshPhongMaterial({
       color: designCase.color || '#3357FF',
@@ -505,13 +510,13 @@ function updateMountainView() {
       emissiveIntensity: 0.2
     });
     const mesh = new THREE.Mesh(geometry, material);
-    
+
     mesh.position.set(
       designCase.mountain_position.x,
       designCase.mountain_position.y,
       designCase.mountain_position.z
     );
-    
+
     mesh.userData = { caseId: designCase.id, energy: energy };
     scene.add(mesh);
     casePoints.set(designCase.id, mesh);

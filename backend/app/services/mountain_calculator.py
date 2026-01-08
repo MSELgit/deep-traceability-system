@@ -556,25 +556,7 @@ def calculate_mountain_positions(
     
     # 7. データベースに座標を保存（オプション）
     for i, case in enumerate(design_cases):
-        case.mountain_position_json = json.dumps({
-            'x': positions[i]['x'],
-            'y': positions[i]['y'],
-            'z': positions[i]['z'],
-            'H': positions[i]['H']
-        })
-        # utility_vectorはタプルキーをJSON化できないので文字列キーに変換
-        utility_vec_str_keys = {
-            f"{k[0]}_{k[1]}": v for k, v in positions[i]['utility_vector'].items()
-        }
-        case.utility_vector_json = json.dumps(utility_vec_str_keys)
-        
-        # 部分標高も保存
-        case.partial_heights_json = json.dumps(positions[i]['partial_heights'])
-        
-        # 性能ごとの合計票数も保存
-        case.performance_weights_json = json.dumps(positions[i]['performance_weights'])
-        
-        # エネルギーを計算して保存（スナップショットがある場合はそれを使用）
+        # エネルギーを計算（スナップショットがある場合はそれを使用）
         if case.performance_snapshot:
             # スナップショットの性能リストをPerformanceオブジェクトに変換（すでにリスト形式）
             from app.schemas.project import Performance
@@ -583,11 +565,31 @@ def calculate_mountain_positions(
         else:
             # スナップショットがない場合は現在の性能ツリーを使用
             energy_result = calculate_energy_for_case(case, project.performances, db)
-        
+
         positions[i]['energy'] = {
             'total_energy': energy_result['total_energy'],
             'partial_energies': energy_result['partial_energies']
         }
+
+        # 座標とエネルギーを保存
+        case.mountain_position_json = json.dumps({
+            'x': positions[i]['x'],
+            'y': positions[i]['y'],
+            'z': positions[i]['z'],
+            'H': positions[i]['H'],
+            'total_energy': energy_result['total_energy']
+        })
+        # utility_vectorはタプルキーをJSON化できないので文字列キーに変換
+        utility_vec_str_keys = {
+            f"{k[0]}_{k[1]}": v for k, v in positions[i]['utility_vector'].items()
+        }
+        case.utility_vector_json = json.dumps(utility_vec_str_keys)
+
+        # 部分標高も保存
+        case.partial_heights_json = json.dumps(positions[i]['partial_heights'])
+
+        # 性能ごとの合計票数も保存
+        case.performance_weights_json = json.dumps(positions[i]['performance_weights'])
     
     db.commit()
     

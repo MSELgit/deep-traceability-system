@@ -201,6 +201,7 @@ export interface MountainPosition {
   y: number;
   z: number;
   H: number; // 標高
+  total_energy?: number; // エネルギー（プロットサイズ用）
 }
 
 /**

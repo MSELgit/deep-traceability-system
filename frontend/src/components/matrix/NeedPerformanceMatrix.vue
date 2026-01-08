@@ -75,7 +75,7 @@
               Priority
             </th>
             <th :colspan="getAllPerformanceColumns().length" class="group-header performance-group">
-              Performance (Hierarchical View)
+              Performances (Hierarchical View)
             </th>
           </tr>
           
@@ -148,7 +148,7 @@
             
             <td class="matrix-cell total-votes-cell">
               <div class="cell-content total-votes-value">
-                {{ getTotalVotesForNeed(need.id).toFixed(1) }}
+                {{ getRawTotalVotesForNeed(need.id).toFixed(1) }}
               </div>
             </td>
 
@@ -209,9 +209,8 @@
 
           
           <tr class="summary-row">
-            <td :colspan="stakeholders.length + 1" class="summary-empty"></td>
+            <td :colspan="stakeholders.length + 2" class="summary-empty"></td>
             <td class="summary-label-cell">↑Votes</td>
-            <td class="summary-empty"></td>
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`up-${perf.id}`"
@@ -223,9 +222,8 @@
 
           
           <tr class="summary-row">
-            <td :colspan="stakeholders.length + 1" class="summary-empty"></td>
+            <td :colspan="stakeholders.length + 2" class="summary-empty"></td>
             <td class="summary-label-cell">↓Votes</td>
-            <td class="summary-empty"></td>
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`down-${perf.id}`"
@@ -235,11 +233,11 @@
             </td>
           </tr>
 
-          
+
+          <!-- Valid Votes行（一時的にコメントアウト）
           <tr class="summary-row effective-votes-row">
-            <td :colspan="stakeholders.length + 1" class="summary-empty effective-votes-empty"></td>
+            <td :colspan="stakeholders.length + 2" class="summary-empty effective-votes-empty"></td>
             <td class="summary-label-cell effective-votes-label">Valid Votes</td>
-            <td class="summary-empty"></td>
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`effective-${perf.id}`"
@@ -248,12 +246,12 @@
               <span v-if="perf.is_leaf" class="summary-value">{{ getNormalizedEffectiveVotesForPerformance(perf.id).toFixed(3) }}</span>
             </td>
           </tr>
+          -->
 
           
           <tr class="summary-row root-summary-row">
-            <td :colspan="stakeholders.length + 1" class="summary-empty root-summary-empty"></td>
+            <td :colspan="stakeholders.length + 2" class="summary-empty root-summary-empty"></td>
             <td class="summary-label-cell root-summary-label">V</td>
-            <td class="summary-empty"></td>
             <td
               v-for="group in rootGroups"
               :key="`root-${group.rootIndex}`"
@@ -266,9 +264,8 @@
 
           
           <tr class="summary-row p-value-row">
-            <td :colspan="stakeholders.length + 1" class="summary-empty p-value-empty"></td>
+            <td :colspan="stakeholders.length + 2" class="summary-empty p-value-empty"></td>
             <td class="summary-label-cell p-value-label">p= Σv_i / V</td>
-            <td class="summary-empty"></td>
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`p-${perf.id}`"
@@ -280,9 +277,8 @@
 
           
           <tr class="summary-row p-squared-row">
-            <td :colspan="stakeholders.length + 1" class="summary-empty p-squared-empty"></td>
+            <td :colspan="stakeholders.length + 2" class="summary-empty p-squared-empty"></td>
             <td class="summary-label-cell p-squared-label">p²</td>
-            <td class="summary-empty"></td>
             <td
               v-for="perf in getAllPerformanceColumns()"
               :key="`p2-${perf.id}`"
@@ -295,9 +291,8 @@
 
           
           <tr class="summary-row hhi-row">
-            <td :colspan="stakeholders.length + 1" class="summary-empty hhi-empty"></td>
+            <td :colspan="stakeholders.length + 2" class="summary-empty hhi-empty"></td>
             <td class="summary-label-cell hhi-label">HHI = Σp²</td>
-            <td class="summary-empty"></td>
             <td
               v-for="group in rootGroups"
               :key="`hhi-${group.rootIndex}`"
@@ -1446,7 +1441,7 @@ function downloadMatrixAsExcel() {
       row.push(hasStakeholderRelation(sh.id, need.id) ? votes.toFixed(1) : '')
     })
     
-    row.push(getTotalVotesForNeed(need.id).toFixed(1))
+    row.push(getRawTotalVotesForNeed(need.id).toFixed(1))
     
     perfColumns.forEach(perf => {
       if (perf.is_leaf) {
@@ -2099,18 +2094,26 @@ function getStakeholderVotesForNeed(stakeholderId: string, needId: string): numb
   return stakeholder.votes / relatedNeedsCount
 }
 
-function getTotalVotesForNeed(needId: string): number {
+// 優先度適用前の元の合計票数（表示用）
+function getRawTotalVotesForNeed(needId: string): number {
   let total = 0
-  
+
   stakeholders.value.forEach(stakeholder => {
     total += getStakeholderVotesForNeed(stakeholder.id, needId)
   })
-  
+
+  return total
+}
+
+// 優先度適用後の合計票数（計算用）
+function getTotalVotesForNeed(needId: string): number {
+  const rawTotal = getRawTotalVotesForNeed(needId)
+
   // 優先度を適用
   const need = needs.value.find(n => n.id === needId)
   const priority = need?.priority ?? 1.0
-  
-  return total * priority
+
+  return rawTotal * priority
 }
 
 function getPerformanceVotesForNeed(needId: string, performanceId: string): number {

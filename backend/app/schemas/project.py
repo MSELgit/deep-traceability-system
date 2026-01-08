@@ -134,6 +134,7 @@ class MountainPosition(BaseModel):
     y: float
     z: float
     H: float
+    total_energy: Optional[float] = None
 
 
 class DesignCaseBase(BaseModel):
