@@ -50,11 +50,11 @@
           />
         </pattern>
         
-        <!-- Arrow marker definition (for each color) -->
+        <!-- Arrow marker definition (for each unique edge color) -->
         <marker
-          v-for="(color, weight) in edgeWeightColors"
-          :key="`arrow-${weight}`"
-          :id="`arrow-viewer-${weight}`"
+          v-for="color in uniqueEdgeColors"
+          :key="`arrow-${color}`"
+          :id="`arrow-viewer-${encodeColor(color)}`"
           markerWidth="10"
           markerHeight="10"
           refX="8"
@@ -80,59 +80,59 @@
           fill="url(#grid-viewer)" 
         />
 
-        <!-- Layer backgrounds (4 divisions) -->
+        <!-- PAVE Layer backgrounds (4 divisions) -->
         <g class="layer-backgrounds">
-          <!-- Performance layer (Level 1: Y=0-200) -->
-          <rect 
-            :x="0" 
-            :y="0" 
-            :width="canvasWidth" 
+          <!-- Performance Layer (P: Y=0-200) -->
+          <rect
+            :x="0"
+            :y="0"
+            :width="canvasWidth"
             :height="200"
             :fill="layers[0].color"
             opacity="0.1"
           />
-          <!-- Property layer (Level 2: Y=200-400) -->
-          <rect 
-            :x="0" 
-            :y="200" 
-            :width="canvasWidth" 
+          <!-- Attribute Layer (A: Y=200-400) -->
+          <rect
+            :x="0"
+            :y="200"
+            :width="canvasWidth"
             :height="200"
             :fill="layers[1].color"
             opacity="0.1"
           />
-          <!-- Variable layer (Level 3: Y=400-600) -->
-          <rect 
-            :x="0" 
-            :y="400" 
-            :width="canvasWidth" 
+          <!-- Variable Layer (V: Y=400-600) -->
+          <rect
+            :x="0"
+            :y="400"
+            :width="canvasWidth"
             :height="200"
             :fill="layers[2].color"
             opacity="0.1"
           />
-          <!-- Object/Environment layer (Level 4: Y=600-800) -->
-          <rect 
-            :x="0" 
-            :y="600" 
-            :width="canvasWidth" 
+          <!-- Entity Layer (E: Y=600-800) -->
+          <rect
+            :x="0"
+            :y="600"
+            :width="canvasWidth"
             :height="200"
             :fill="layers[3].color"
             opacity="0.1"
           />
         </g>
 
-      <!-- Edges -->
+      <!-- Edges (no arrow marker for undirected V↔E edges) -->
       <g class="edges-layer">
         <line
           v-for="edge in network.edges"
           :key="edge.id"
           :x1="getNodeById(edge.source_id)?.x"
           :y1="getNodeById(edge.source_id)?.y"
-          :x2="getNodeById(edge.source_id) && getNodeById(edge.target_id) ? getAdjustedLineEnd(getNodeById(edge.source_id)!, getNodeById(edge.target_id)!).x : getNodeById(edge.target_id)?.x"
-          :y2="getNodeById(edge.source_id) && getNodeById(edge.target_id) ? getAdjustedLineEnd(getNodeById(edge.source_id)!, getNodeById(edge.target_id)!).y : getNodeById(edge.target_id)?.y"
+          :x2="getNodeById(edge.source_id) && getNodeById(edge.target_id) ? getAdjustedLineEnd(getNodeById(edge.source_id)!, getNodeById(edge.target_id)!, isUndirectedEdge(edge)).x : getNodeById(edge.target_id)?.x"
+          :y2="getNodeById(edge.source_id) && getNodeById(edge.target_id) ? getAdjustedLineEnd(getNodeById(edge.source_id)!, getNodeById(edge.target_id)!, isUndirectedEdge(edge)).y : getNodeById(edge.target_id)?.y"
           :stroke="getEdgeColor(edge)"
           stroke-width="1.5"
           stroke-linecap="round"
-          :marker-end="`url(#arrow-viewer-${edge.weight ?? 0})`"
+          :marker-end="isUndirectedEdge(edge) ? undefined : `url(#arrow-viewer-${encodeColor(getEdgeColor(edge))})`"
         />
       </g>
 
@@ -154,7 +154,7 @@
             stroke-width="1.5"
           />
           
-          <!-- Layer 2: Property (equilateral triangle, height 36px) -->
+          <!-- Layer 2: Attribute (equilateral triangle, height 36px) -->
           <polygon
             v-else-if="node.layer === 2"
             :points="getTrianglePoints(node.x, node.y)"
@@ -227,12 +227,21 @@
 
     <!-- Layer guide (outside network display area) -->
     <div class="layer-legend">
-      <div 
+      <div
         v-for="layer in layers"
         :key="layer.id"
         class="legend-item"
       >
-        <span class="legend-color" :style="{ background: layer.color }"></span>
+        <svg class="legend-icon" width="14" height="14" viewBox="0 0 14 14">
+          <!-- Performance: circle -->
+          <circle v-if="layer.id === 1" cx="7" cy="7" r="5" :fill="layer.color" stroke="#333" stroke-width="1"/>
+          <!-- Attribute: triangle -->
+          <polygon v-else-if="layer.id === 2" points="7,2 12,12 2,12" :fill="layer.color" stroke="#333" stroke-width="1"/>
+          <!-- Variable: diamond -->
+          <polygon v-else-if="layer.id === 3" points="7,2 12,7 7,12 2,7" :fill="layer.color" stroke="#333" stroke-width="1"/>
+          <!-- Entity: square -->
+          <rect v-else x="2" y="2" width="10" height="10" :fill="layer.color" stroke="#333" stroke-width="1"/>
+        </svg>
         <span class="legend-label">{{ layer.label }}</span>
       </div>
     </div>
@@ -240,7 +249,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import type { NetworkStructure, NetworkNode, Performance } from '../../types/project';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
@@ -269,28 +278,119 @@ const panStart = ref({ x: 0, y: 0 });
 const svgCanvas = ref<SVGSVGElement>();
 const viewerContainer = ref<HTMLDivElement>();
 
+// Layer definition (PAVE model)
 const layers = [
   { id: 1, label: 'Performance', color: '#4CAF50' },
-  { id: 2, label: 'Property', color: '#2196F3' },
+  { id: 2, label: 'Attribute', color: '#2196F3' },
   { id: 3, label: 'Variable', color: '#FFC107' },
-  { id: 4, label: 'Object/Environment', color: '#9C27B0' }
+  { id: 4, label: 'Entity', color: '#9C27B0' }
 ];
 
-// Edge weight and color mapping
-const edgeWeightColors = {
-  3: '#004563',
-  1: '#588da2', 
-  0.33: '#c3dde2',
-  0: 'silver',
-  [-0.33]: '#e9c1c9',
-  [-1]: '#c94c62',
-  [-3]: '#9f1e35'
+// Edge weight and color mapping (supports both new ±5 and legacy ±0.33 formats)
+const edgeWeightColors: Record<number, string> = {
+  5: '#002040',      // Strong positive (7-level)
+  3: '#004563',      // Strong positive (5-level) / Medium-strong (7-level)
+  1: '#588da2',      // Moderate positive
+  0.33: '#c3dde2',   // Weak positive (legacy)
+  0: 'silver',       // No correlation
+  [-0.33]: '#e9c1c9', // Weak negative (legacy)
+  [-1]: '#c94c62',   // Moderate negative
+  [-3]: '#9f1e35',   // Strong negative (5-level) / Medium-strong (7-level)
+  [-5]: '#6f0020'    // Strong negative (7-level)
 };
 
-// Get edge color
+// Infer maxWeight from actual edge data
+// - If any |weight| > 3: 7-level mode (maxWeight = 5)
+// - If any |weight| > 1: 5-level mode (maxWeight = 3)
+// - Otherwise: 3-level or continuous mode (maxWeight = 1)
+const inferredMaxWeight = computed(() => {
+  if (!props.network?.edges) return 1;
+  let maxAbsWeight = 0;
+  for (const edge of props.network.edges) {
+    const absWeight = Math.abs(edge.weight ?? 0);
+    if (absWeight > maxAbsWeight) maxAbsWeight = absWeight;
+  }
+  if (maxAbsWeight > 3) return 5;  // 7-level
+  if (maxAbsWeight > 1) return 3;  // 5-level
+  return 1;  // 3-level or continuous
+});
+
+// Get edge color - supports both discrete and continuous values
 function getEdgeColor(edge: any): string {
+  // Undirected edges (V↔E, E↔E) are always black - no weight concept
+  if (isUndirectedEdge(edge)) {
+    return '#333';
+  }
   const weight = edge.weight ?? 0;
-  return edgeWeightColors[weight as keyof typeof edgeWeightColors] || 'silver';
+
+  // For discrete values, use the predefined colors
+  if (weight in edgeWeightColors) {
+    return edgeWeightColors[weight as keyof typeof edgeWeightColors];
+  }
+
+  // For continuous values, interpolate between colors
+  // maxWeight is inferred from actual edge data
+  const maxWeight = inferredMaxWeight.value;
+  const clampedWeight = Math.max(-maxWeight, Math.min(maxWeight, weight));
+
+  if (clampedWeight > 0) {
+    // Positive: interpolate from light blue (#c3dde2) to dark blue (#002040)
+    const t = clampedWeight / maxWeight;
+    const r = Math.round(195 * (1 - t) + 0 * t);
+    const g = Math.round(221 * (1 - t) + 32 * t);
+    const b = Math.round(226 * (1 - t) + 64 * t);
+    return `rgb(${r}, ${g}, ${b})`;
+  } else if (clampedWeight < 0) {
+    // Negative: interpolate from light red (#e9c1c9) to dark red (#6f0020)
+    const t = Math.abs(clampedWeight) / maxWeight;
+    const r = Math.round(233 * (1 - t) + 111 * t);
+    const g = Math.round(193 * (1 - t) + 0 * t);
+    const b = Math.round(201 * (1 - t) + 32 * t);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  // weight = 0: neutral gray
+  return '#c0c0c0';
+}
+
+// Compute unique edge colors for marker definitions
+const uniqueEdgeColors = computed(() => {
+  if (!props.network?.edges) return ['#c0c0c0'];
+  const colors = new Set<string>();
+  for (const edge of props.network.edges) {
+    colors.add(getEdgeColor(edge));
+  }
+  // Always include default colors
+  colors.add('#c0c0c0');
+  colors.add('#333');
+  return Array.from(colors);
+});
+
+// Encode color string for use in SVG ID (remove special characters)
+function encodeColor(color: string): string {
+  return color.replace(/[^a-zA-Z0-9]/g, '_');
+}
+
+/**
+ * Check if an edge should be rendered as undirected (no arrow marker)
+ * According to PAVE model: V ↔ E and E ↔ E are undirected
+ */
+function isUndirectedEdge(edge: any): boolean {
+  const source = getNodeById(edge.source_id);
+  const target = getNodeById(edge.target_id);
+  if (!source || !target) return false;
+
+  // V ↔ E (layer 3 ↔ layer 4) is undirected
+  if ((source.layer === 3 && target.layer === 4) || (source.layer === 4 && target.layer === 3)) {
+    return true;
+  }
+
+  // E ↔ E (layer 4 ↔ layer 4) is undirected
+  if (source.layer === 4 && target.layer === 4) {
+    return true;
+  }
+
+  return false;
 }
 
 // Node shape calculation functions
@@ -318,14 +418,14 @@ function getNodeById(id: string): NetworkNode | undefined {
 }
 
 // Adjust edge endpoint (prevent arrow overlapping with node)
-function getAdjustedLineEnd(source: NetworkNode, target: NetworkNode): { x: number, y: number } {
+function getAdjustedLineEnd(source: NetworkNode, target: NetworkNode, isUndirected: boolean = false): { x: number, y: number } {
   const dx = target.x - source.x;
   const dy = target.y - source.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
-  
+
   // Node radius (adjusted by shape)
   let targetRadius = 18; // Default (circle)
-  
+
   if (target.layer === 2) { // Triangle
     targetRadius = 20;
   } else if (target.layer === 3) { // Diamond
@@ -335,11 +435,13 @@ function getAdjustedLineEnd(source: NetworkNode, target: NetworkNode): { x: numb
   } else if (target.layer === 4 && target.type === 'environment') { // Square
     targetRadius = 18;
   }
-  
-  // Shorten further by arrow size
-  const adjustment = targetRadius + 10;
+
+  // For directed edges, shorten further by arrow size (10px)
+  // For undirected edges, no arrow adjustment needed
+  const arrowAdjustment = isUndirected ? 0 : 10;
+  const adjustment = targetRadius + arrowAdjustment;
   const ratio = (distance - adjustment) / distance;
-  
+
   return {
     x: source.x + dx * ratio,
     y: source.y + dy * ratio
@@ -765,10 +867,9 @@ onUnmounted(() => {
   font-size: clamp(0.7rem, 0.9vw, 0.8rem);
 }
 
-.legend-color {
-  width: clamp(0.7rem, 1.2vw, 0.8rem);
-  height: clamp(0.7rem, 1.2vw, 0.8rem);
-  border-radius: 50%;
+.legend-icon {
+  width: clamp(0.8rem, 1.4vw, 1rem);
+  height: clamp(0.8rem, 1.4vw, 1rem);
   flex-shrink: 0;
 }
 

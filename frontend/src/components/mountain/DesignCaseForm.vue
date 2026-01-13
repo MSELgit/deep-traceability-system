@@ -164,7 +164,7 @@
     </div>
 
     <!-- Network Edit Modal -->
-    <div v-if="showNetworkEditor" class="network-editor-modal" @click.self="showNetworkEditor = false">
+    <div v-if="showNetworkEditor" class="network-editor-modal">
       <div class="modal-content">
         <div class="modal-header">
           <h2>Edit Network</h2>
@@ -176,9 +176,26 @@
           </div>
         </div>
         <div class="modal-body">
+          <!-- SCC Warning Banner -->
+          <SCCWarningBanner
+            v-if="showSccWarning"
+            :scc-result="sccResult"
+            :show-info="false"
+            @continue="handleSccContinue"
+            @dismiss="handleSccDismiss"
+          />
+
+          <!-- SCC Checking Indicator -->
+          <div v-if="sccChecking" class="scc-checking">
+            <div class="spinner"></div>
+            <span>Checking for loops...</span>
+          </div>
+
           <NetworkEditor
             v-model="formData.network"
             :performances="performances"
+            :weight-mode="formData.weight_mode"
+            @update:weight-mode="formData.weight_mode = $event"
           />
         </div>
       </div>
@@ -188,11 +205,15 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue';
-import type { DesignCase, Performance, DesignCaseCreate, NeedPerformanceRelation, UtilityFunction, NetworkStructure } from '../../types/project';
+import type { DesignCase, Performance, DesignCaseCreate, NeedPerformanceRelation, UtilityFunction, NetworkStructure, WeightMode } from '../../types/project';
+import { migrateNetworkEdges, needsEdgeMigration } from '../../types/project';
 import { useProjectStore } from '../../stores/projectStore';
 import { storeToRefs } from 'pinia';
 import NetworkEditor from '../network/NetworkEditor.vue';
 import NetworkViewer from '../network/NetworkViewer.vue';
+import SCCWarningBanner from '../analysis/SCCWarningBanner.vue';
+import { sccApi } from '../../utils/api';
+import type { SCCAnalysisResult } from '../../utils/api';
 import { isDesignCaseEditable, getPerformanceMismatchMessage, createPerformanceIdMapping, remapNetworkPerformanceIds } from '../../utils/performanceComparison';
 
 const props = defineProps<{
@@ -201,6 +222,11 @@ const props = defineProps<{
 }>();
 
 const showNetworkEditor = ref(false);
+
+// SCC analysis state
+const sccResult = ref<SCCAnalysisResult | null>(null);
+const sccChecking = ref(false);
+const showSccWarning = ref(false);
 
 // Control scroll by monitoring network editor modal show/hide
 watch(showNetworkEditor, (isOpen) => {
@@ -314,12 +340,14 @@ const formData = ref<{
   color: string;
   performance_values: { [key: string]: number | string };
   network: NetworkStructure;
+  weight_mode: WeightMode;
 }>({
   name: '',
   description: '',
   color: '#3357FF',
   performance_values: {},
-  network: { nodes: [], edges: [] } 
+  network: { nodes: [], edges: [] },
+  weight_mode: 'discrete_7'
 });
 
 // Get utility function information for each performance
@@ -394,13 +422,26 @@ function initializeForm() {
       const idMapping = createPerformanceIdMapping(allCurrentPerformances, props.designCase.performance_snapshot);
       mappedNetwork = remapNetworkPerformanceIds(props.designCase.network, idMapping);
     }
-    
+
+    // Migrate old 7-level edge weights if needed
+    // 旧7段階モード {-3,-1,-1/3,0,1/3,1,3} → 新7段階モード {-5,-3,-1,0,1,3,5}
+    const hasWeightMode = !!props.designCase.weight_mode;
+    let weight_mode: WeightMode = (props.designCase.weight_mode as WeightMode) || 'discrete_7';
+    if (!hasWeightMode && needsEdgeMigration(mappedNetwork.edges)) {
+      mappedNetwork = {
+        ...mappedNetwork,
+        edges: migrateNetworkEdges(mappedNetwork.edges, false)
+      };
+      weight_mode = 'discrete_7'; // After migration, use new 7-level mode
+    }
+
     formData.value = {
       name: props.designCase.name,
       description: props.designCase.description || '',
       color: props.designCase.color || '#3357FF',
       performance_values: mappedPerformanceValues,
-      network: mappedNetwork
+      network: mappedNetwork,
+      weight_mode: weight_mode
     };
   } else {
     // Create mode
@@ -409,7 +450,8 @@ function initializeForm() {
       description: '',
       color: getRandomColor(),
       performance_values: {},
-      network: { nodes: [], edges: [] }
+      network: { nodes: [], edges: [] },
+      weight_mode: 'discrete_7'
     };
     
     // Initialize performance values (for current leaf performances)
@@ -493,7 +535,8 @@ function prepareSaveData() {
     description: formData.value.description || undefined,
     color: formData.value.color,
     performance_values: performanceValues,
-    network: networkStructure
+    network: networkStructure,
+    weight_mode: formData.value.weight_mode
   };
   
   // Add performance_snapshot only when creating new
@@ -522,15 +565,56 @@ function handleSave() {
   emit('save', data);
 }
 
-function handleNetworkSave() {
+async function handleNetworkSave() {
   if (!isValid.value) {
     alert('Please enter name and all performance values');
     return;
   }
 
+  // Check SCC before saving
+  try {
+    sccChecking.value = true;
+    const network = formData.value.network;
+
+    if (network && network.nodes.length > 0) {
+      const response = await sccApi.analyzeDirect(network);
+      sccResult.value = response.data;
+
+      // Check if there are divergent loops (ρ >= 1)
+      const hasDivergentLoop = response.data.components?.some(c => !c.converges) || false;
+
+      if (hasDivergentLoop) {
+        showSccWarning.value = true;
+        sccChecking.value = false;
+        return; // Don't save, wait for user decision
+      }
+    }
+  } catch (error) {
+    console.error('SCC check failed:', error);
+    // Continue with save even if SCC check fails
+  } finally {
+    sccChecking.value = false;
+  }
+
+  // Proceed with save
+  proceedWithNetworkSave();
+}
+
+function proceedWithNetworkSave() {
   const data = prepareSaveData();
   emit('save', data);
   showNetworkEditor.value = false;
+  showSccWarning.value = false;
+  sccResult.value = null;
+}
+
+function handleSccContinue() {
+  // User chose to continue despite divergent loop warning
+  proceedWithNetworkSave();
+}
+
+function handleSccDismiss() {
+  showSccWarning.value = false;
 }
 
 function getRandomColor(): string {
@@ -1102,6 +1186,34 @@ function getRandomColor(): string {
 .network-editor-modal .save-network-btn:disabled {
   background: color.adjust($gray, $lightness: 15%);
   cursor: not-allowed;
+}
+
+/* SCC Checking Indicator */
+.scc-checking {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(25, 118, 210, 0.1);
+  border: 1px solid rgba(25, 118, 210, 0.3);
+  border-radius: 6px;
+  margin: 8px 16px;
+  color: #1976d2;
+  font-size: 13px;
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(25, 118, 210, 0.3);
+    border-top-color: #1976d2;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 }
 
 .network-editor-modal .modal-body {

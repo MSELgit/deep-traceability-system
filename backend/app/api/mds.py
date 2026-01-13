@@ -1,11 +1,17 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Literal
 import numpy as np
 from scipy.linalg import eigh
 from scipy.optimize import minimize
 from concurrent.futures import ProcessPoolExecutor
 import multiprocessing
+
+# Weighted WLカーネルのインポート
+from app.services.weighted_wl_kernel import (
+    compute_weighted_wl_kernel,
+    kernel_to_distance as weighted_kernel_to_distance,
+)
 
 router = APIRouter()
 
@@ -16,6 +22,9 @@ class NetworkComparisonRequest(BaseModel):
     n_init: int = 50
     compare_methods: bool = True
     n_workers: Optional[int] = None  # 追加：並列ワーカー数（Noneで自動）
+    # Phase 2拡張: カーネルタイプ選択
+    kernel_type: Literal['classic_wl', 'weighted_wl'] = 'classic_wl'
+    weight_mode: Literal['discrete', 'continuous'] = 'continuous'  # weighted_wl用
 
 class NetworkComparisonResponse(BaseModel):
     success: bool
@@ -353,14 +362,30 @@ def kernel_to_distance(kernel: np.ndarray) -> np.ndarray:
 
 @router.post("/compute_network_comparison", response_model=NetworkComparisonResponse)
 async def compute_network_comparison(request: NetworkComparisonRequest):
-    """ネットワーク構造比較の全計算を一括実行"""
-    
+    """ネットワーク構造比較の全計算を一括実行
+
+    カーネルタイプ:
+    - classic_wl: 従来のWLカーネル（ラベル文字列ベース）
+    - weighted_wl: 連続値エッジ重み対応WLカーネル
+
+    weight_mode (weighted_wl用):
+    - discrete: 5段階離散値 {-3, -1, 0, +1, +3}
+    - continuous: 連続値 [-1, +1]
+    """
+
     try:
-        # WLカーネル計算
-        kernel_matrix = compute_wl_kernel(request.networks, request.iterations)
-        
-        # 距離行列計算
-        distance_matrix = kernel_to_distance(kernel_matrix)
+        # WLカーネル計算（kernel_typeで切り替え）
+        if request.kernel_type == 'weighted_wl':
+            kernel_matrix = compute_weighted_wl_kernel(
+                request.networks,
+                iterations=request.iterations,
+                weight_mode=request.weight_mode
+            )
+            distance_matrix = weighted_kernel_to_distance(kernel_matrix)
+        else:
+            # 従来のWLカーネル（デフォルト）
+            kernel_matrix = compute_wl_kernel(request.networks, request.iterations)
+            distance_matrix = kernel_to_distance(kernel_matrix)
         
         # ユニークラベル数
         label_count = len(set(

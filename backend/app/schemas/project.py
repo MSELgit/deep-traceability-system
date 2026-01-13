@@ -107,7 +107,7 @@ class NeedPerformanceRelation(BaseModel):
 class NetworkNode(BaseModel):
     id: str
     layer: Literal[1, 2, 3, 4]
-    type: Literal['performance', 'property', 'variable', 'object', 'environment']
+    type: Literal['performance', 'property', 'attribute', 'variable', 'object', 'environment']  # 'property' deprecated, use 'attribute' (PAVE model)
     label: str
     x: float
     y: float
@@ -121,7 +121,7 @@ class NetworkEdge(BaseModel):
     source_id: str
     target_id: str
     type: Literal['type1', 'type2', 'type3', 'type4']
-    weight: Optional[float] = None  # 3, 1, 0.33, 0, -0.33, -1, -3
+    weight: Optional[float] = None  # 7-level: ±5, ±3, ±1, 0 / 5-level: ±3, ±1, 0 / 3-level: ±1, 0
 
 
 class NetworkStructure(BaseModel):
@@ -143,6 +143,7 @@ class DesignCaseBase(BaseModel):
     color: Optional[str] = '#3357FF'
     performance_values: Dict[str, Union[float, str]]  # 離散値の場合は文字列
     network: NetworkStructure
+    weight_mode: Optional[str] = 'discrete_7'  # エッジ重みモード（3/5/7段階・連続）
 
 
 class DesignCaseCreate(DesignCaseBase):
@@ -162,10 +163,17 @@ class DesignCase(DesignCaseBase):
     utility_vector: Optional[Dict[str, float]] = None
     partial_heights: Optional[Dict[str, float]] = None  # 性能ごとの部分標高
     performance_weights: Optional[Dict[str, float]] = None  # 性能ごとの合成票数
-    
+
+    # Phase 4: 新規追加フィールド
+    structural_analysis: Optional[Dict] = None  # 構造的トレードオフ分析結果
+    paper_metrics: Optional[Dict] = None  # 論文準拠指標（H, E等）
+    scc_analysis: Optional[Dict] = None  # SCC分解（ループ検出）結果
+    kernel_type: Optional[str] = 'classic_wl'  # WLカーネルタイプ
+    weight_mode: Optional[str] = 'discrete'  # エッジ重みモード
+
     class Config:
         from_attributes = True
-    
+
     @classmethod
     def model_validate(cls, obj, **kwargs):
         """ORM モデルから Pydantic モデルへの変換"""
@@ -176,7 +184,7 @@ class DesignCase(DesignCaseBase):
             snapshot = obj.performance_snapshot
         else:
             snapshot = None
-            
+
         data = {
             'id': obj.id,
             'name': obj.name,
@@ -191,6 +199,12 @@ class DesignCase(DesignCaseBase):
             'utility_vector': obj.utility_vector,
             'partial_heights': obj.partial_heights,
             'performance_weights': obj.performance_weights,
+            # Phase 4: 新規追加フィールド
+            'structural_analysis': obj.structural_analysis if hasattr(obj, 'structural_analysis') else None,
+            'paper_metrics': obj.paper_metrics if hasattr(obj, 'paper_metrics') else None,
+            'scc_analysis': obj.scc_analysis if hasattr(obj, 'scc_analysis') else None,
+            'kernel_type': obj.kernel_type if hasattr(obj, 'kernel_type') else 'classic_wl',
+            'weight_mode': obj.weight_mode if hasattr(obj, 'weight_mode') else 'discrete',
         }
         return super().model_validate(data, **kwargs)
 

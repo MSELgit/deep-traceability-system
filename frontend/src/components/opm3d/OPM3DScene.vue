@@ -502,16 +502,19 @@ function createNodeLabel(text: string, color: string = '#000'): THREE.Sprite {
 }
 
 function getEdgeColor(weight?: number): number {
+  // Edge weight colors supporting both old (0.33) and new (±5) formats
   const colorMap: { [key: number]: string } = {
-    3: '#004563',
-    1: '#588da2',
-    0.33: '#c3dde2',
-    0: 'silver',
-    [-0.33]: '#e9c1c9',
-    [-1]: '#c94c62',
-    [-3]: '#9f1e35'
+    5: '#002040',      // Strong positive (new discrete_7)
+    3: '#004563',      // Moderate-strong positive
+    1: '#588da2',      // Moderate positive
+    0.33: '#c3dde2',   // Weak positive (legacy)
+    0: 'silver',       // No correlation
+    [-0.33]: '#e9c1c9', // Weak negative (legacy)
+    [-1]: '#c94c62',   // Moderate negative
+    [-3]: '#9f1e35',   // Moderate-strong negative
+    [-5]: '#6f0020'    // Strong negative (new discrete_7)
   };
-  
+
   const colorHex = colorMap[weight || 0] || 'silver';
   return new THREE.Color(colorHex).getHex();
 }

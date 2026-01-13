@@ -12,19 +12,18 @@ import numpy as np
 from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
 
+# 統一重み正規化モジュールをインポート
+from app.services.weight_normalization import (
+    normalize_weight as _normalize_weight_impl,
+    discrete_to_continuous,
+    WEIGHT_SCHEMES,
+    WeightModeType
+)
+
 
 # =============================================================================
 # 定数・マッピング
 # =============================================================================
-
-# 離散値weight → 連続値への変換（論文6章の5段階均等分割）
-DISCRETE_TO_CONTINUOUS = {
-    -3: -0.8,   # 強い負
-    -1: -0.4,   # 弱い負
-    0: 0.0,     # なし
-    1: 0.4,     # 弱い正
-    3: 0.8,     # 強い正
-}
 
 # レイヤー番号 → PAVEカテゴリ
 LAYER_TO_PAVE = {
@@ -34,33 +33,40 @@ LAYER_TO_PAVE = {
     4: 'E',  # Entity（実体）= Object/Environment
 }
 
+# 後方互換性のため、旧定数も維持（非推奨）
+# 新コードでは weight_normalization.py を直接使用すること
+DISCRETE_TO_CONTINUOUS = WEIGHT_SCHEMES['discrete_5']['discrete_values'] and {
+    d: c for d, c in zip(
+        WEIGHT_SCHEMES['discrete_5']['discrete_values'],
+        WEIGHT_SCHEMES['discrete_5']['continuous_values']
+    )
+} or {}
+
 
 # =============================================================================
 # Step 1: 隣接行列の構築
 # =============================================================================
 
-def normalize_weight(weight: float) -> float:
+def normalize_weight(weight: float, mode: WeightModeType = 'discrete_7') -> float:
     """
-    離散値weight (-3,-1,0,+1,+3) を連続値 (-1~+1) に正規化
+    離散値weightを連続値 (-1~+1) に正規化
 
-    論文6章: 5段階均等分割の代表値
-    連続値がそのまま渡された場合はそのまま返す
+    論文6章: 各離散化スキームの均等分割
+    - 3段階: {-1, 0, +1} → {-2/3, 0, +2/3}
+    - 5段階: {-3, -1, 0, +1, +3} → {-4/5, -2/5, 0, +2/5, +4/5}
+    - 7段階: {-5, -3, -1, 0, +1, +3, +5} → {-6/7, -4/7, -2/7, 0, +2/7, +4/7, +6/7}
 
     Args:
         weight: エッジの重み（離散値または連続値）
+        mode: 離散化モード ('discrete_3', 'discrete_5', 'discrete_7', 'continuous')
 
     Returns:
         正規化された重み（-1.0 ~ +1.0）
     """
-    # 離散値の場合はマッピング
-    if weight in DISCRETE_TO_CONTINUOUS:
-        return DISCRETE_TO_CONTINUOUS[weight]
-
-    # 連続値の場合はクリップして返す
-    return np.clip(weight / 3.0 if abs(weight) > 1.0 else weight, -1.0, 1.0)
+    return _normalize_weight_impl(weight, mode)
 
 
-def build_adjacency_matrices(network: Dict) -> Dict:
+def build_adjacency_matrices(network: Dict, weight_mode: WeightModeType = 'discrete_7') -> Dict:
     """
     ネットワークから隣接行列を構築
 
@@ -147,29 +153,27 @@ def build_adjacency_matrices(network: Dict) -> Dict:
         if weight == 0:
             continue
 
-        # 重みを正規化
-        normalized_weight = normalize_weight(weight)
+        # 重みを正規化（設計案のweight_modeを使用）
+        normalized_weight = normalize_weight(weight, weight_mode)
 
         # エッジの方向を判定して適切な行列に格納
-        # Attribute → Performance
+        # PAVEモデルに準拠した有効なエッジのみ処理
+        # 無効なエッジ (P→X, V→V, A→V, V→P, E→A, E→P) は無視される
+        #
+        # Attribute → Performance (A→P)
         if source_id in a_idx and target_id in p_idx:
             B_PA[p_idx[target_id], a_idx[source_id]] = normalized_weight
-        # Performance → Attribute（逆方向も考慮）
-        elif source_id in p_idx and target_id in a_idx:
-            # 論文では A→P だが、エディタでは P→A もありうる
-            # この場合は転置して格納
-            B_PA[p_idx[source_id], a_idx[target_id]] = normalized_weight
 
-        # Attribute → Attribute
+        # Attribute → Attribute (A→A, ループ構造)
         elif source_id in a_idx and target_id in a_idx:
             B_AA[a_idx[target_id], a_idx[source_id]] = normalized_weight
 
-        # Variable → Attribute
+        # Variable → Attribute (V→A)
         elif source_id in v_idx and target_id in a_idx:
             B_AV[a_idx[target_id], v_idx[source_id]] = normalized_weight
-        # Attribute → Variable（逆方向も考慮）
-        elif source_id in a_idx and target_id in v_idx:
-            B_AV[a_idx[source_id], v_idx[target_id]] = normalized_weight
+
+        # その他のエッジは無視（V→V, A→V, P→X, E→X 等）
+        # バリデーションは NetworkEditor.vue と data_migration.py で実施
 
     return {
         'B_PA': B_PA,
@@ -303,8 +307,63 @@ def compute_total_effect_matrix(
 
 
 # =============================================================================
-# Step 3: 構造的トレードオフ指標（cos θ）の計算
+# Step 3: 内積行列・構造的トレードオフ指標の計算
 # =============================================================================
+
+def compute_inner_products(T: np.ndarray) -> Dict:
+    """
+    総効果行列から内積行列を計算（論文Chapter 7のエネルギー計算用）
+
+    論文5788行の重要な指摘:
+    > 些細なトレードオフ（cos θ ≈ -1 だがノルムが小さい）と
+    > 重大なトレードオフ（ノルムも大きい）を区別するため、
+    > エネルギーの計算には内積 C_ij を用いる
+
+    C_ij = ⟨T_i·, T_j·⟩ = ||T_i·|| × ||T_j·|| × cos θ_ij
+
+    Args:
+        T: 総効果行列 (n_perf × n_var)
+
+    Returns:
+        {
+            'C': np.ndarray,  # 内積行列 C_ij = T_i· · T_j· (n_perf × n_perf)
+            'norms': np.ndarray,  # 各行のノルム ||T_i·|| (n_perf,)
+            'cos_theta': np.ndarray,  # 正規化された cos θ (n_perf × n_perf)
+        }
+    """
+    if T.size == 0:
+        return {
+            'C': np.array([]),
+            'norms': np.array([]),
+            'cos_theta': np.array([]),
+        }
+
+    n_perf = T.shape[0]
+
+    # 各行のノルムを計算
+    norms = np.linalg.norm(T, axis=1)
+
+    # 内積行列 C_ij = T_i · T_j (正規化なし)
+    # 効率的に計算: C = T @ T.T
+    C = T @ T.T
+
+    # cos θ 行列（正規化版）
+    cos_theta = np.zeros((n_perf, n_perf))
+    for i in range(n_perf):
+        for j in range(n_perf):
+            if norms[i] > 1e-10 and norms[j] > 1e-10:
+                cos_theta[i, j] = C[i, j] / (norms[i] * norms[j])
+            elif i == j:
+                cos_theta[i, j] = 1.0  # 自分自身
+            else:
+                cos_theta[i, j] = 0.0  # 効果なし→独立
+
+    return {
+        'C': C,
+        'norms': norms,
+        'cos_theta': cos_theta,
+    }
+
 
 def compute_structural_tradeoff(T: np.ndarray) -> Dict:
     """
@@ -403,7 +462,7 @@ def _interpret_cos_theta(value: float) -> str:
 # 統合関数
 # =============================================================================
 
-def analyze_network_structure(network: Dict) -> Dict:
+def analyze_network_structure(network: Dict, weight_mode: WeightModeType = 'discrete_7') -> Dict:
     """
     ネットワークの構造的トレードオフ分析を実行
 
@@ -411,11 +470,13 @@ def analyze_network_structure(network: Dict) -> Dict:
 
     Args:
         network: ネットワーク構造 {'nodes': [...], 'edges': [...]}
+        weight_mode: 重みモード ('discrete_3', 'discrete_5', 'discrete_7', 'continuous')
 
     Returns:
         {
             'matrices': {...},  # build_adjacency_matrices の結果
             'total_effect': {...},  # compute_total_effect_matrix の結果
+            'inner_products': {...},  # compute_inner_products の結果（内積 C_ij）
             'tradeoff': {...},  # compute_structural_tradeoff の結果
             'summary': {
                 'n_performances': int,
@@ -425,7 +486,7 @@ def analyze_network_structure(network: Dict) -> Dict:
         }
     """
     # Step 1: 隣接行列の構築
-    matrices = build_adjacency_matrices(network)
+    matrices = build_adjacency_matrices(network, weight_mode)
 
     # Step 2: 総効果行列の計算
     total_effect = compute_total_effect_matrix(
@@ -434,7 +495,10 @@ def analyze_network_structure(network: Dict) -> Dict:
         matrices['B_AV']
     )
 
-    # Step 3: 構造的トレードオフの計算
+    # Step 3a: 内積行列の計算（論文Chapter 7のエネルギー計算用）
+    inner_products = compute_inner_products(total_effect['T'])
+
+    # Step 3b: 構造的トレードオフの計算（cos θ）
     tradeoff = compute_structural_tradeoff(total_effect['T'])
 
     # サマリー
@@ -456,10 +520,17 @@ def analyze_network_structure(network: Dict) -> Dict:
         # performance_id も追加
         pair['perf_i_performance_id'] = matrices['performance_id_map'].get(pair['perf_i_id'])
         pair['perf_j_performance_id'] = matrices['performance_id_map'].get(pair['perf_j_id'])
+        # 内積 C_ij も追加（エネルギー計算用）
+        i, j = pair['i'], pair['j']
+        if inner_products['C'].size > 0:
+            pair['inner_product'] = float(inner_products['C'][i, j])
+            pair['norm_i'] = float(inner_products['norms'][i])
+            pair['norm_j'] = float(inner_products['norms'][j])
 
     return {
         'matrices': matrices,
         'total_effect': total_effect,
+        'inner_products': inner_products,
         'tradeoff': tradeoff,
         'summary': summary,
     }

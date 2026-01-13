@@ -125,17 +125,17 @@
             </div>
             <div class="property-row">
               <label>Weight</label>
-              <select 
+              <select
                 v-model="edgeEditData.weight"
                 class="property-select"
               >
-                <option :value="3">3 (Strong positive relationship)</option>
-                <option :value="1">1 (Weak positive relationship)</option>
-                <option :value="0.33">0.33 (Very weak positive relationship)</option>
-                <option :value="0">0 (No relationship)</option>
-                <option :value="-0.33">-0.33 (Very weak negative relationship)</option>
-                <option :value="-1">-1 (Weak negative relationship)</option>
-                <option :value="-3">-3 (Strong negative relationship)</option>
+                <option
+                  v-for="(value, index) in weightOptions.values"
+                  :key="index"
+                  :value="value"
+                >
+                  {{ weightOptions.labels[index] }}
+                </option>
               </select>
             </div>
             <div class="property-row">
@@ -182,9 +182,9 @@
                 <label>Layer:</label>
                 <select v-model="newNodeData.layer" class="form-select">
                   <option value="">-- Select Layer --</option>
-                  <option value="2">Properties</option>
-                  <option value="3">Variables</option>
-                  <option value="4">Objects/Environment</option>
+                  <option value="2">Attribute (A)</option>
+                  <option value="3">Variable (V)</option>
+                  <option value="4">Entity (E)</option>
                 </select>
               </div>
               <div class="form-group">
@@ -243,13 +243,13 @@
                 <label>Weight:</label>
                 <select v-model="newEdgeData.weight" class="form-select">
                   <option value="">-- Select Weight --</option>
-                  <option :value="3">3 (Strong positive relationship)</option>
-                  <option :value="1">1 (Weak positive relationship)</option>
-                  <option :value="0.33">0.33 (Very weak positive relationship)</option>
-                  <option :value="0">0 (No relationship)</option>
-                  <option :value="-0.33">-0.33 (Very weak negative relationship)</option>
-                  <option :value="-1">-1 (Weak negative relationship)</option>
-                  <option :value="-3">-3 (Strong negative relationship)</option>
+                  <option
+                    v-for="(value, index) in weightOptions.values"
+                    :key="index"
+                    :value="value"
+                  >
+                    {{ weightOptions.labels[index] }}
+                  </option>
                 </select>
               </div>
               <button 
@@ -380,7 +380,8 @@
 import { ref, computed, watch } from 'vue';
 import { useProjectStore } from '../../stores/projectStore';
 import { storeToRefs } from 'pinia';
-import type { NetworkNode, NetworkEdge } from '../../types/project';
+import type { NetworkNode, NetworkEdge, WeightMode } from '../../types/project';
+import { WEIGHT_MODE_OPTIONS } from '../../types/project';
 import OPM3DScene from './OPM3DScene.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { networkApi } from '../../utils/api';
@@ -389,10 +390,10 @@ const projectStore = useProjectStore();
 const { currentProject } = storeToRefs(projectStore);
 
 const layers = [
-  { id: 1, label: 'Performance', color: '#4CAF50' },
-  { id: 2, label: 'Properties', color: '#2196F3' },
-  { id: 3, label: 'Variables', color: '#FFC107' },
-  { id: 4, label: 'Objects/Environment', color: '#9C27B0' }
+  { id: 1, label: 'Performance (P)', color: '#4CAF50', type: 'performance' },
+  { id: 2, label: 'Attribute (A)', color: '#2196F3', type: 'attribute' },
+  { id: 3, label: 'Variable (V)', color: '#FFC107', type: 'variable' },
+  { id: 4, label: 'Entity (E)', color: '#9C27B0', type: 'object' }
 ];
 
 const LAYER_COLORS: { [key: number]: string } = {
@@ -407,9 +408,24 @@ const sceneRef = ref<InstanceType<typeof OPM3DScene>>();
 const designCases = computed(() => currentProject.value?.design_cases || []);
 
 const selectedCaseId = ref<string>('');
-const selectedCase = computed(() => 
+const selectedCase = computed(() =>
   designCases.value.find(dc => dc.id === selectedCaseId.value)
 );
+
+// Get current weight mode from selected design case
+const currentWeightMode = computed<WeightMode>(() => {
+  return selectedCase.value?.network?.weight_mode || selectedCase.value?.weight_mode || 'discrete_7';
+});
+
+// Get weight options based on current weight mode
+const weightOptions = computed(() => {
+  const mode = currentWeightMode.value;
+  if (mode === 'continuous') {
+    // For continuous mode, return default discrete_7 options for UI
+    return WEIGHT_MODE_OPTIONS.discrete_7;
+  }
+  return WEIGHT_MODE_OPTIONS[mode] || WEIGHT_MODE_OPTIONS.discrete_7;
+});
 
 const visibleLayers = ref<number[]>([1, 2, 3, 4]);
 
@@ -679,8 +695,8 @@ async function addNode() {
   }
   
   try {
-    const layerTypeMap: { [key: number]: 'property' | 'variable' | 'object' } = {
-      2: 'property',
+    const layerTypeMap: { [key: number]: 'attribute' | 'variable' | 'object' } = {
+      2: 'attribute',
       3: 'variable',
       4: 'object'
     };

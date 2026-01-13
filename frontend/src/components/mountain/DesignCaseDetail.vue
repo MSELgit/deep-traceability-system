@@ -24,7 +24,7 @@
           
           <div class="info-row">
             <span class="info-label">Energy</span>
-            <span class="info-value">{{ energyData ? energyData.total_energy.toFixed(2) : '-' }}</span>
+            <span class="info-value">{{ energyData ? formatEnergy(energyData.total_energy, 2) : '-' }}</span>
           </div> 
 
           <div class="info-row">
@@ -115,73 +115,104 @@
           <FontAwesomeIcon :icon="['fas', sectionStates.remaining ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
           Performance Analysis
         </h3>
-        
+
         <div v-show="sectionStates.remaining" class="section-content">
-          <div class="remaining-heights-list">
-          <div 
-            v-for="item in remainingHeights" 
-            :key="item.perfId"
-            class="remaining-height-item"
-            :class="{ expanded: expandedPerfId === item.perfId }"
-          >
-            <div 
-              class="remaining-height-content"
-              @click="togglePerfExpand(item.perfId)"
+          <!-- Sort buttons -->
+          <div class="sort-buttons">
+            <button
+              class="sort-btn achievement"
+              :class="{ active: perfSortKey === 'achievement' }"
+              @click="perfSortKey = 'achievement'"
             >
-              <div class="remaining-height-header">
-                <div class="header-left">
-                  <FontAwesomeIcon 
-                    :icon="['fas', expandedPerfId === item.perfId ? 'chevron-down' : 'chevron-right']" 
-                    class="expand-indicator"
-                  />
-                  <span class="remaining-height-name">{{ item.perfName }}</span>
-                </div>
-                <span class="performance-importance">Importance: {{ getPerformanceImportance(item.perfId).toFixed(1) }}</span>
-              </div>
-              <div class="remaining-height-values">
-                <span class="remaining-value">Remaining: {{ item.remaining.toFixed(2) }}</span>
-                <span class="detail-values">
-                  (Actual: {{ item.actual.toFixed(2) }} / Max: {{ item.hMax.toFixed(2) }})
-                </span>
-                <span v-if="energyData" class="energy-value">
-                  Partial Energy: {{ (energyData.partial_energies[item.perfId] || 0).toFixed(3) }}
-                </span>
-              </div>
+              Achievement
+            </button>
+            <button
+              class="sort-btn weight"
+              :class="{ active: perfSortKey === 'importance' }"
+              @click="perfSortKey = 'importance'"
+            >
+              Weight
+            </button>
+            <button
+              class="sort-btn energy"
+              :class="{ active: perfSortKey === 'energy' }"
+              @click="perfSortKey = 'energy'"
+            >
+              Energy
+            </button>
+          </div>
+
+          <!-- Performance list (table-style) -->
+          <div class="perf-analysis-table">
+            <!-- Header -->
+            <div class="perf-analysis-header">
+              <span class="col-name">Performance</span>
+              <span class="col-bar">Achievement</span>
+              <span class="col-importance">Weight</span>
+              <span class="col-energy">Energy</span>
             </div>
-            
-            <!-- Expanded section: Energy details -->
-            <div v-if="expandedPerfId === item.perfId && energyData" class="energy-details">
-              <!-- Network view -->
-              <div class="perf-network-view">
-                <NetworkHighlightViewer 
-                  v-if="designCase.network.nodes.length > 0"
-                  :network="designCase.network"
-                  :performances="performances"
-                  :highlighted-perf-id="item.perfId"
-                  :height="300"
-                />
-              </div>
-              
-              <h5>Compatibility with Other Performances (Match Value)</h5>
-              <div class="match-details">
-                <div 
-                  v-for="(matchData, index) in getMatchDetailsForPerformance(item.perfId)"
-                  :key="index"
-                  class="match-item"
-                >
-                  <span class="match-perf-name">
-                    {{ matchData.perfName }}
-                    <span class="match-perf-importance">(Importance: {{ matchData.perfImportance.toFixed(1) }})</span>
-                  </span>
-                  <span class="match-value">Match: {{ matchData.match.toFixed(4) }}</span>
-                  <span class="partial-partial-energy">Energy: {{ matchData.energy.toFixed(4) }}</span>
+            <!-- Rows -->
+            <div
+              v-for="item in sortedRemainingHeights"
+              :key="item.perfId"
+              class="perf-analysis-row"
+            >
+              <span class="col-name">{{ item.perfName }}</span>
+              <span class="col-bar">
+                <div class="bar-wrapper">
+                  <div class="bar-bg">
+                    <div
+                      class="bar-fill"
+                      :style="{ width: `${item.hMax > 0 ? Math.min(item.actual / item.hMax * 100, 100) : 0}%` }"
+                    ></div>
+                  </div>
+                  <span class="bar-value">{{ item.achievementRate.toFixed(0) }}%</span>
                 </div>
-                <div v-if="getMatchDetailsForPerformance(item.perfId).length === 0" class="no-matches">
-                  No compatibility data with other performances
-                </div>
-              </div>
+              </span>
+              <span class="col-importance">{{ item.importance.toFixed(1) }}</span>
+              <span class="col-energy">{{ formatEnergy(item.partialEnergy, 3) }}</span>
             </div>
           </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- Tradeoff Analysis -->
+      <section class="detail-section">
+        <h3 @click="toggleSection('tradeoff')" class="section-header">
+          <FontAwesomeIcon :icon="['fas', sectionStates.tradeoff ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
+          Tradeoff Analysis
+        </h3>
+
+        <div v-show="sectionStates.tradeoff" class="section-content">
+          <div v-if="!designCase.network || designCase.network.nodes.length === 0" class="empty-state">
+            Configure network structure to analyze tradeoffs
+          </div>
+          <div v-else-if="tradeoffLoading" class="loading-state">
+            <div class="spinner"></div>
+            <span>Loading analysis...</span>
+          </div>
+          <div v-else-if="tradeoffError" class="error-state">
+            {{ tradeoffError }}
+            <button @click="loadTradeoffData">Retry</button>
+          </div>
+          <div v-else>
+            <!-- Mini Matrix Preview -->
+            <TradeoffMatrixMini
+              v-if="tradeoffData"
+              :cos-theta-matrix="tradeoffData.cos_theta_matrix"
+              :inner-product-matrix="tradeoffData.inner_product_matrix"
+              :energy-matrix="tradeoffData.energy_matrix"
+              :performance-names="tradeoffData.performance_names"
+              :performance-ids="tradeoffData.performance_ids"
+              :total-energy="tradeoffData.total_energy"
+              @expand="openTradeoffModal"
+              @cell-click="handleTradeoffCellClick"
+            />
+            <div v-else class="empty-state">
+              Click recalculate button to generate tradeoff analysis
+            </div>
           </div>
         </div>
       </section>
@@ -194,11 +225,11 @@
           <FontAwesomeIcon :icon="['fas', sectionStates.network ? 'chevron-down' : 'chevron-right']" class="toggle-icon" />
           Network Structure
         </h3>
-        
+
         <div v-show="sectionStates.network" class="section-content">
           <div class="network-viewer-wrapper">
 
-          <NetworkViewer 
+          <NetworkViewer
             v-if="designCase.network.nodes.length > 0"
             :network="designCase.network"
             :performances="performances"
@@ -210,6 +241,28 @@
         </div>
       </section>
     </div>
+
+    <!-- Tradeoff Analysis Modal -->
+    <TradeoffAnalysisModal
+      v-if="tradeoffData"
+      :show="showTradeoffModal"
+      :project-id="projectStore.currentProject?.id || ''"
+      :case-id="designCase.id"
+      :case-name="designCase.name"
+      :cos-theta-matrix="tradeoffData.cos_theta_matrix"
+      :inner-product-matrix="tradeoffData.inner_product_matrix"
+      :energy-matrix="tradeoffData.energy_matrix"
+      :performance-names="tradeoffData.performance_names"
+      :performance-ids="tradeoffData.performance_ids"
+      :performance-id-map="tradeoffData.performance_id_map"
+      :performance-weights="designCase.performance_weights"
+      :total-energy="tradeoffData.total_energy"
+      :spectral-radius="tradeoffData.spectral_radius"
+      :network="designCase.network"
+      :performances="performances"
+      @close="closeTradeoffModal"
+      @update:show="showTradeoffModal = $event"
+    />
   </div>
 </template>
 
@@ -217,12 +270,14 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import type { DesignCase, Performance } from '../../types/project';
 import NetworkViewer from '../network/NetworkViewer.vue';
-import NetworkHighlightViewer from '../network/NetworkHighlightViewer.vue';
+import TradeoffMatrixMini from '../analysis/TradeoffMatrixMini.vue';
+import TradeoffAnalysisModal from '../analysis/TradeoffAnalysisModal.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { calculationApi } from '../../utils/api';
+import { calculationApi, structuralTradeoffApi } from '../../utils/api';
 import { useProjectStore } from '../../stores/projectStore';
 import { Radar } from 'vue-chartjs';
 import { isDesignCaseEditable } from '../../utils/performanceComparison';
+import { formatEnergy } from '../../utils/energyFormat';
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -310,6 +365,7 @@ const emit = defineEmits<{
   edit: [designCase: DesignCase];
   copy: [designCase: DesignCase];
   delete: [designCase: DesignCase];
+  tradeoffCellClick: [payload: { i: number; j: number; perfIId?: string; perfJId?: string }];
 }>();
 
 const projectStore = useProjectStore();
@@ -327,28 +383,106 @@ const isStructureMismatch = computed(() => {
   return !isDesignCaseEditable(currentPerformances, props.designCase.performance_snapshot);
 });
 
-// Energy data
+// Energy data (論文準拠式: E = Σ W_i × W_j × L(C_ij) / (Σ W_k)²)
 const energyData = ref<{
   total_energy: number;
   partial_energies: { [key: string]: number };
-  match_matrix?: { [key: string]: number }; // "perfId1_perfId2": value format
+  inner_product_matrix: number[][];  // C_ij 行列
+  cos_theta_matrix: number[][];  // cos θ 行列
+  energy_contributions: Array<{
+    perf_i_id: string;
+    perf_j_id: string;
+    perf_i_label: string;
+    perf_j_label: string;
+    W_i: number;
+    W_j: number;
+    C_ij: number;
+    cos_theta: number;
+    L_ij: number;
+    contribution: number;
+  }>;
+  performance_ids: string[];
+  performance_labels: string[];
 } | null>(null);
 
-// Expanded performance ID
-const expandedPerfId = ref<string | null>(null);
-
+// Performance analysis sort key
+const perfSortKey = ref<'achievement' | 'importance' | 'energy'>('achievement');
 
 // Section open/close states (basic info is always open so excluded)
 const sectionStates = ref({
   performance: true,
   utility: true,
   remaining: true,
-  network: true
+  network: true,
+  tradeoff: true
 });
+
+// Tradeoff modal state
+const showTradeoffModal = ref(false);
+
+function openTradeoffModal() {
+  showTradeoffModal.value = true;
+}
+
+function closeTradeoffModal() {
+  showTradeoffModal.value = false;
+}
+
+// Tradeoff analysis state
+interface TradeoffData {
+  cos_theta_matrix: number[][];
+  inner_product_matrix: number[][];
+  energy_matrix: number[][];
+  performance_names: string[];
+  performance_ids: string[];
+  performance_id_map?: { [networkNodeId: string]: string };  // network_node_id -> db_performance_id
+  total_energy?: number;
+  spectral_radius?: number;
+}
+const tradeoffData = ref<TradeoffData | null>(null);
+const tradeoffLoading = ref(false);
+const tradeoffError = ref<string | null>(null);
 
 // Toggle section open/close
 function toggleSection(section: keyof typeof sectionStates.value) {
   sectionStates.value[section] = !sectionStates.value[section];
+}
+
+// Load tradeoff analysis data
+async function loadTradeoffData() {
+  if (!props.designCase.network || props.designCase.network.nodes.length === 0) {
+    return;
+  }
+
+  tradeoffLoading.value = true;
+  tradeoffError.value = null;
+
+  try {
+    const response = await structuralTradeoffApi.getForCase(
+      projectStore.currentProject!.id,
+      props.designCase.id
+    );
+
+    tradeoffData.value = {
+      cos_theta_matrix: response.data.cos_theta_matrix,
+      inner_product_matrix: response.data.inner_product_matrix || [],
+      energy_matrix: response.data.energy_matrix || [],
+      performance_names: response.data.performance_labels,  // API returns performance_labels
+      performance_ids: response.data.performance_ids,
+      performance_id_map: response.data.performance_id_map,
+    };
+  } catch (error: any) {
+    console.error('Failed to load tradeoff data:', error);
+    tradeoffError.value = error.response?.data?.detail || 'Failed to load tradeoff analysis';
+  } finally {
+    tradeoffLoading.value = false;
+  }
+}
+
+// Handle cell click in tradeoff matrix
+function handleTradeoffCellClick(payload: { i: number; j: number; perfIId?: string; perfJId?: string }) {
+  // Emit to parent for expanded analysis view
+  emit('tradeoffCellClick', payload);
 }
 
 // Only performances with values (from snapshot)
@@ -473,7 +607,6 @@ function formatValue(value: number | string): string {
   return Number(value).toFixed(2);
 }
 
-
 // Calculate average utility (partial height / total votes)
 function getAverageUtilityForPerf(perfId: string): number {
   if (!props.designCase.partial_heights || !props.designCase.performance_weights) return 0;
@@ -485,34 +618,66 @@ function getAverageUtilityForPerf(perfId: string): number {
   return partialHeight / totalWeight;
 }
 
-// Calculate remaining height for each performance (max value - actual partial height)
+// Calculate achievement rate for each performance
 const remainingHeights = computed(() => {
   if (!props.designCase.partial_heights || !props.performanceHMax) return [];
-  
-  const results: Array<{ perfId: string; perfName: string; remaining: number; hMax: number; actual: number }> = [];
-  
+
+  // Total weight for normalization
+  const totalWeight = Object.values(props.designCase.performance_weights || {}).reduce((a, b) => a + b, 0);
+
+  const results: Array<{
+    perfId: string;
+    perfName: string;
+    hMax: number;
+    actual: number;
+    achievementRate: number;
+    importance: number;
+    partialEnergy: number;
+  }> = [];
+
   performancesWithValues.value.forEach(perf => {
-    const hMax = props.performanceHMax[perf.id] || 0;
-    const actual = props.designCase.partial_heights![perf.id] || 0;
-    const remaining = hMax - actual;
-    
+    const hMax = props.performanceHMax[perf.id] || 0;  // Normalized: W_i / Σ W_k
+    const rawActual = props.designCase.partial_heights![perf.id] || 0;  // Unnormalized: Σ (w × u)
+    // Normalize actual to match hMax scale
+    const actual = totalWeight > 0 ? rawActual / totalWeight : 0;
+    const achievementRate = hMax > 0 ? (actual / hMax) * 100 : 0;
+    const importance = getPerformanceImportance(perf.id);
+    const partialEnergy = energyData.value?.partial_energies[perf.id] || 0;
+
     results.push({
       perfId: perf.id,
       perfName: perf.name,
-      remaining,
       hMax,
-      actual
+      actual,
+      achievementRate,
+      importance,
+      partialEnergy
     });
   });
-  
-  // Sort by remaining height in descending order
-  return results.sort((a, b) => b.remaining - a.remaining);
+
+  return results;
 });
 
-// Fetch energy data
+// Sorted performance analysis based on selected sort key
+const sortedRemainingHeights = computed(() => {
+  const items = [...remainingHeights.value];
+
+  switch (perfSortKey.value) {
+    case 'achievement':
+      return items.sort((a, b) => a.achievementRate - b.achievementRate);  // Low achievement first
+    case 'importance':
+      return items.sort((a, b) => b.importance - a.importance);
+    case 'energy':
+      return items.sort((a, b) => b.partialEnergy - a.partialEnergy);
+    default:
+      return items;
+  }
+});
+
+// Fetch energy data (論文準拠式)
 async function fetchEnergyData() {
   if (!projectStore.currentProject || !props.designCase) return;
-  
+
   try {
     const response = await calculationApi.calculateCaseEnergy(
       projectStore.currentProject.id,
@@ -521,26 +686,15 @@ async function fetchEnergyData() {
     energyData.value = {
       total_energy: response.data.total_energy,
       partial_energies: response.data.partial_energies,
-      match_matrix: response.data.match_matrix
+      inner_product_matrix: response.data.inner_product_matrix || [],
+      cos_theta_matrix: response.data.cos_theta_matrix || [],
+      energy_contributions: response.data.energy_contributions || [],
+      performance_ids: response.data.performance_ids || [],
+      performance_labels: response.data.performance_labels || [],
     };
   } catch (error) {
     console.error('Energy calculation error:', error);
   }
-}
-
-// Get performance name (prioritize from snapshot)
-function getPerformanceName(perfId: string | number): string {
-  const perfIdStr = String(perfId);
-  
-  // First search from snapshot
-  if (props.designCase.performance_snapshot) {
-    const snapPerf = props.designCase.performance_snapshot.find(p => p.id === perfIdStr);
-    if (snapPerf) return snapPerf.name;
-  }
-  
-  // If not in snapshot, get from current performance tree (backward compatibility)
-  const perf = props.performances.find(p => p.id === perfIdStr);
-  return perf ? perf.name : perfIdStr;
 }
 
 // Get performance importance
@@ -551,69 +705,6 @@ function getPerformanceImportance(perfId: string | number): number {
     return props.designCase.performance_weights[perfIdStr];
   }
   return 0.0; // Default value
-}
-
-// Expand/collapse performance card
-function togglePerfExpand(perfId: string) {
-  if (expandedPerfId.value === perfId) {
-    expandedPerfId.value = null;
-  } else {
-    expandedPerfId.value = perfId;
-  }
-}
-
-// Get Match details for specific performance
-function getMatchDetailsForPerformance(perfId: string): Array<{perfName: string, perfImportance: number, match: number, energy: number}> {
-  if (!energyData.value?.match_matrix || !props.designCase.performance_values) {
-    return [];
-  }
-  
-  const matrix = energyData.value.match_matrix;
-  const details: Array<{perfName: string, perfImportance: number, match: number, energy: number}> = [];
-  
-  // Get Match values with other performances
-  const perfIds = Object.keys(props.designCase.performance_values);
-  
-  // Need conversion to get node_id from match_matrix
-  // Backend stores with node_id, but frontend uses performance_id
-  // Here we simply search for performance_id pairs
-  
-  for (const otherPerfId of perfIds) {
-    if (otherPerfId === perfId) continue; // Exclude self
-    
-    // Get Match value (key is in "perfId1_perfId2" format)
-    let matchValue = 0;
-    
-    // Try both orders (since it's a symmetric matrix)
-    const key1 = `${perfId}_${otherPerfId}`;
-    const key2 = `${otherPerfId}_${perfId}`;
-    
-    if (matrix[key1] !== undefined) {
-      matchValue = matrix[key1];
-    } else if (matrix[key2] !== undefined) {
-      matchValue = matrix[key2];
-    }
-    
-    // Get importance
-    const qi = getPerformanceImportance(perfId);
-    const qj = getPerformanceImportance(otherPerfId);
-    
-    // r = √2(1-Match)
-    const r = Math.sqrt(2 * (1 - matchValue));
-    
-    // Partial energy = qi * qj / r / 2 (half since calculated from both directions)
-    const partialEnergy = r > 0 ? (qi * qj) / r / 2 : 0;
-    
-    details.push({
-      perfName: getPerformanceName(otherPerfId),
-      perfImportance: qj,
-      match: matchValue,
-      energy: partialEnergy
-    });
-  }
-  
-  // Sort by energy in descending order
-  return details.sort((a, b) => b.energy - a.energy);
 }
 
 // Download radar chart as image
@@ -641,11 +732,28 @@ function downloadRadarChart() {
 // Recalculate energy when design case changes
 watch(() => props.designCase.id, () => {
   fetchEnergyData();
+  // Reset tradeoff data for new case
+  tradeoffData.value = null;
+  tradeoffError.value = null;
+  if (sectionStates.value.tradeoff) {
+    loadTradeoffData();
+  }
+});
+
+// Load tradeoff data when section opens
+watch(() => sectionStates.value.tradeoff, (isOpen) => {
+  if (isOpen && !tradeoffData.value && !tradeoffLoading.value) {
+    loadTradeoffData();
+  }
 });
 
 // Fetch energy data on initial load
 onMounted(() => {
   fetchEnergyData();
+  // Load tradeoff data if section is open by default
+  if (sectionStates.value.tradeoff) {
+    loadTradeoffData();
+  }
 });
 
 </script>
@@ -1008,104 +1116,148 @@ onMounted(() => {
   }
 }
 
-/* Remaining height list */
-.remaining-heights-list {
+/* Performance Analysis - Sort buttons */
+.sort-buttons {
   display: flex;
-  flex-direction: column;
-  gap: 0.8vh;
+  gap: 0.5vw;
+  margin-bottom: 1vh;
 }
 
-.remaining-height-item {
-  display: flex;
-  flex-direction: column;
+.sort-btn {
+  padding: clamp(0.3rem, 0.6vh, 0.4rem) clamp(0.6rem, 1vw, 0.8rem);
   background: $gray;
-  border-radius: 0.8vw;
-  border-left: 0.4vw solid $main_1;
-  transition: all 0.3s ease;
-  margin-bottom: 1.2vh;
-}
-
-.remaining-height-item.expanded {
-  background: color.adjust($main_1, $alpha: -0.95);
-  box-shadow: 0 0.3vh 1vh color.adjust($main_1, $alpha: -0.8);
-}
-
-.remaining-height-content {
-  padding: clamp(0.6rem, 1.2vh, 0.8rem);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
+  border-radius: 0.4vw;
+  color: color.adjust($white, $alpha: -0.4);
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
   cursor: pointer;
-  user-select: none;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    background: lighten($gray, 5%);
+    color: $white;
+  }
+
+  &.achievement.active {
+    background: rgba($sub_4, 0.2);
+    border-color: $sub_4;
+    color: $sub_4;
+  }
+
+  &.weight.active {
+    background: rgba($sub_6, 0.2);
+    border-color: $sub_6;
+    color: $sub_6;
+  }
+
+  &.energy.active {
+    background: rgba($sub_1, 0.2);
+    border-color: $sub_1;
+    color: $sub_1;
+  }
 }
 
-.remaining-height-content:hover {
-  background: color.adjust($main_1, $alpha: -0.95);
-}
-
-.remaining-height-header {
+/* Performance Analysis - Table */
+.perf-analysis-table {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.3vh;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
+.perf-analysis-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 3.5vw 4.5vw;
   gap: 0.8vw;
-}
-
-.expand-indicator {
+  padding: clamp(0.4rem, 0.8vh, 0.5rem) clamp(0.6rem, 1.2vw, 0.8rem);
   font-size: clamp(0.7rem, 0.9vw, 0.8rem);
-  color: $main_1;
-  transition: transform 0.3s ease;
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.9);
+
+  .col-name {
+    color: color.adjust($white, $alpha: -0.5) !important;
+  }
+  .col-bar {
+    color: $sub_4 !important;
+  }
+  .col-importance {
+    color: $sub_6 !important;
+  }
+  .col-energy {
+    color: $sub_1 !important;
+  }
 }
 
-.remaining-height-name {
+.perf-analysis-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 3.5vw 4.5vw;
+  gap: 0.8vw;
+  padding: clamp(0.5rem, 1vh, 0.7rem) clamp(0.6rem, 1.2vw, 0.8rem);
+  background: $gray;
+  border-radius: 0.4vw;
+  align-items: center;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: lighten($gray, 3%);
+  }
+}
+
+.col-name {
   font-weight: 600;
-  color: $white;
-  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
-}
-
-.performance-importance {
-  color: color.adjust($white, $alpha: -0.4);
-  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
-}
-
-.remaining-height-values {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.2vw;
+  color: $white !important;
   font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* Additional effects on hover */
-.remaining-height-content:hover .expand-indicator {
-  transform: scale(1.2);
-  color: lighten($main_1, 10%);
+.col-bar {
+  display: flex;
+  align-items: center;
 }
 
-.remaining-height-item:not(.expanded) .remaining-height-content:hover::after {
-  opacity: 1;
+.bar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5vw;
+  width: 100%;
 }
 
-.remaining-height-item {
-  position: relative;
+.bar-bg {
+  flex: 1;
+  height: 0.5vh;
+  background: color.adjust($white, $alpha: -0.9);
+  border-radius: 0.3vw;
+  overflow: hidden;
+  max-width: 5vw;
 }
 
-.remaining-value {
-  color: $main_1;
-  font-weight: 700;
-  font-size: clamp(0.8rem, 1vw, 0.9rem);
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, $sub_4, lighten($sub_4, 10%));
+  border-radius: 0.3vw;
+  transition: width 0.3s ease;
 }
 
-.detail-values {
-  color: color.adjust($white, $alpha: -0.4);
-  font-size: clamp(0.8rem, 1vw, 0.9rem);
+.bar-value {
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+  font-weight: 500;
+  color: $sub_4 !important;
+  min-width: 2.5vw;
+  text-align: right;
 }
 
-.energy-value {
-  color: $main_1;
-  font-weight: 700;
-  font-size: clamp(0.8rem, 1vw, 0.9rem);
-  margin-left: auto;
+.col-importance {
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  font-weight: 600;
+  color: $sub_6 !important;
+  text-align: right;
+}
+
+.col-energy {
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  font-weight: 600;
+  color: $sub_1 !important;
+  text-align: right;
 }
 
 .utility-item {
@@ -1171,6 +1323,58 @@ onMounted(() => {
   text-align: center;
   color: color.adjust($white, $alpha: -0.5);
   font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+}
+
+/* Loading state */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8vw;
+  padding: clamp(2rem, 4vh, 2.5rem);
+  color: color.adjust($white, $alpha: -0.5);
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+}
+
+.spinner {
+  width: clamp(1rem, 1.5vw, 1.2rem);
+  height: clamp(1rem, 1.5vw, 1.2rem);
+  border: 2px solid color.adjust($white, $alpha: -0.8);
+  border-top-color: $main_1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error state */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8vh;
+  padding: clamp(1.5rem, 3vh, 2rem);
+  text-align: center;
+  color: $sub_1;
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+}
+
+.error-state button {
+  margin-top: 0.8vh;
+  padding: clamp(0.4rem, 0.8vh, 0.5rem) clamp(0.8rem, 1.5vw, 1rem);
+  background: color.adjust($sub_1, $alpha: -0.8);
+  border: 1px solid $sub_1;
+  border-radius: 0.4vw;
+  color: $white;
+  cursor: pointer;
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+  transition: all 0.2s;
+}
+
+.error-state button:hover {
+  background: color.adjust($sub_1, $alpha: -0.6);
 }
 
 /* Footer */
@@ -1270,90 +1474,4 @@ onMounted(() => {
   color: $sub_2;
 }
 
-/* Energy details expansion part */
-.energy-details {
-  padding: clamp(0.8rem, 1.5vh, 1rem);
-  background: color.adjust($gray, $lightness: 10%);
-  border-top: 1px solid color.adjust($main_1, $alpha: -0.8);
-  animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    max-height: 50vh;
-  }
-}
-
-.energy-details h5 {
-  margin: 0 0 clamp(0.6rem, 1.2vh, 0.75rem) 0;
-  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
-  font-weight: 600;
-  color: color.adjust($white, $alpha: -0.3);
-}
-
-.match-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8vh;
-}
-
-.match-item {
-  display: flex;
-  align-items: center;
-  gap: 1.6vw;
-  padding: clamp(0.4rem, 0.8vh, 0.5rem) clamp(0.6rem, 1.2vw, 0.75rem);
-  background: lighten($gray, 5%);
-  border-radius: 0.5vw;
-  font-size: clamp(0.7rem, 0.9vw, 0.75rem);
-  border: 1px solid color.adjust($white, $alpha: -0.95);
-}
-
-.match-perf-name {
-  flex: 1;
-  font-weight: 500;
-  color: $white;
-  display: flex;
-  align-items: center;
-  gap: 0.8vw;
-}
-
-.match-perf-importance {
-  font-size: clamp(0.65rem, 0.85vw, 0.7rem);
-  color: color.adjust($white, $alpha: -0.4);
-  font-weight: 400;
-}
-
-.match-value {
-  color: color.adjust($white, $alpha: -0.4);
-  font-family: 'Courier New', monospace;
-}
-
-.partial-partial-energy {
-  color: $sub_1;
-  font-weight: 600;
-  font-family: 'Courier New', monospace;
-}
-
-.no-matches {
-  font-size: clamp(0.7rem, 0.9vw, 0.75rem);
-  color: color.adjust($white, $alpha: -0.5);
-  text-align: center;
-  padding: clamp(0.8rem, 1.5vh, 1rem);
-  font-style: italic;
-}
-
-/* Performance network view */
-.perf-network-view {
-  margin-bottom: clamp(1rem, 2vh, 1.25rem);
-  padding: clamp(0.6rem, 1.2vh, 0.75rem);
-  background: $gray;
-  border-radius: 0.8vw;
-  border: 1px solid color.adjust($white, $alpha: -0.95);
-  overflow: hidden;
-}
 </style>

@@ -153,16 +153,16 @@ class NeedPerformanceRelationModel(Base):
 
 class DesignCaseModel(Base):
     __tablename__ = 'design_cases'
-    
+
     id = Column(String, primary_key=True)
     project_id = Column(String, ForeignKey('projects.id'), nullable=False)
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
-    color = Column(String, default='#3357FF') 
+    color = Column(String, default='#3357FF')
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # JSON形式で保存
+
+    # JSON形式で保存（既存）
     performance_values_json = Column(Text, nullable=False)
     network_json = Column(Text, nullable=False)
     performance_snapshot_json = Column(Text, nullable=False, default='[]')
@@ -170,7 +170,14 @@ class DesignCaseModel(Base):
     utility_vector_json = Column(Text, nullable=True)
     partial_heights_json = Column(Text, nullable=True)  # 性能ごとの部分標高
     performance_weights_json = Column(Text, nullable=True)  # 性能ごとの合計票数
-    
+
+    # Phase 4: 新規追加フィールド（全てOptional、既存データとの互換性維持）
+    structural_analysis_json = Column(Text, nullable=True)  # 構造的トレードオフ分析結果
+    paper_metrics_json = Column(Text, nullable=True)  # 論文準拠指標（H, E等）
+    scc_analysis_json = Column(Text, nullable=True)  # SCC分解（ループ検出）結果
+    kernel_type = Column(String(50), nullable=True, default='classic_wl')  # WLカーネルタイプ
+    weight_mode = Column(String(20), nullable=True, default='discrete_7')  # エッジ重みモード
+
     project = relationship('ProjectModel', back_populates='design_cases')
     
     @property
@@ -215,8 +222,64 @@ class DesignCaseModel(Base):
         import json
         return json.loads(self.performance_weights_json) if self.performance_weights_json else None
 
+    @property
+    def structural_analysis(self):
+        """structural_analysis_jsonをパース"""
+        import json
+        return json.loads(self.structural_analysis_json) if self.structural_analysis_json else None
+
+    @property
+    def paper_metrics(self):
+        """paper_metrics_jsonをパース"""
+        import json
+        return json.loads(self.paper_metrics_json) if self.paper_metrics_json else None
+
+    @property
+    def scc_analysis(self):
+        """scc_analysis_jsonをパース"""
+        import json
+        return json.loads(self.scc_analysis_json) if self.scc_analysis_json else None
+
 
 # テーブル作成
 def init_db():
     """データベーステーブルを初期化"""
     Base.metadata.create_all(bind=engine)
+    # 既存テーブルに不足カラムを追加（自動マイグレーション）
+    _auto_migrate()
+
+
+def _auto_migrate():
+    """
+    既存テーブルに不足しているカラムを自動追加するマイグレーション
+
+    SQLiteの場合、ALTER TABLE ADD COLUMNでカラムを追加できる。
+    既存データは新カラムにNULLまたはデフォルト値が設定される。
+    """
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(engine)
+
+    # design_cases テーブルのマイグレーション
+    if 'design_cases' in inspector.get_table_names():
+        existing_columns = {col['name'] for col in inspector.get_columns('design_cases')}
+
+        # Phase 4で追加したカラム
+        new_columns = [
+            ('structural_analysis_json', 'TEXT'),
+            ('paper_metrics_json', 'TEXT'),
+            ('scc_analysis_json', 'TEXT'),
+            ('kernel_type', "VARCHAR(50) DEFAULT 'classic_wl'"),
+            ('weight_mode', "VARCHAR(20) DEFAULT 'discrete_7'"),
+        ]
+
+        with engine.connect() as conn:
+            for col_name, col_type in new_columns:
+                if col_name not in existing_columns:
+                    try:
+                        conn.execute(text(f'ALTER TABLE design_cases ADD COLUMN {col_name} {col_type}'))
+                        conn.commit()
+                        print(f'[Migration] Added column: design_cases.{col_name}')
+                    except Exception as e:
+                        # カラムが既に存在する場合などはスキップ
+                        print(f'[Migration] Skipped {col_name}: {e}')

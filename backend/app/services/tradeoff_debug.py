@@ -107,8 +107,8 @@ def debug_tradeoff_calculation(
         # 順方向: perf1 -> property -> perf2
         for edge1 in edges_by_source.get(perf_node_1, []):
             property_node = edge1['target_id']
-            
-            if node_type_dict.get(property_node) != 'property':
+
+            if node_type_dict.get(property_node) not in ('property', 'attribute'):
                 continue
             
             for edge2 in edges_by_source.get(property_node, []):
@@ -131,8 +131,8 @@ def debug_tradeoff_calculation(
         # 逆方向: property -> perf1 and property -> perf2
         for edge1 in edges_by_target.get(perf_node_1, []):
             property_node = edge1['source_id']
-            
-            if node_type_dict.get(property_node) != 'property':
+
+            if node_type_dict.get(property_node) not in ('property', 'attribute'):
                 continue
             
             for edge2 in edges_by_target.get(perf_node_2, []):

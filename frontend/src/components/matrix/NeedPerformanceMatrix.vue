@@ -154,12 +154,12 @@
 
             
             <td class="matrix-cell priority-cell">
-              <input 
-                type="number" 
+              <input
+                type="number"
                 class="priority-input"
                 min="0"
                 max="1"
-                step="0.1"
+                step="0.01"
                 :value="need.priority || 1.0"
                 @input="updateNeedPriority(need.id, $event)"
                 placeholder="1.0"

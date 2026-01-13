@@ -81,3 +81,12 @@ simulation
 # Papers and documents (not tracked)
 *.tex
 *.pdf
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.aux
+*.bbl
+*.blg
+*.log*.fdb_latexmk
+*.fls
+log.txt

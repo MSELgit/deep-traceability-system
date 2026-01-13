@@ -105,11 +105,11 @@
         <div class="preview-header">
           <div class="preview-title">Details</div>
         </div>
-        
+
         <!-- Open button (left edge center) -->
-        <button 
+        <button
           v-if="selectedCase"
-          class="panel-expand-btn left" 
+          class="panel-expand-btn left"
           @click="rightPanelOpen = true"
         >
           <span class="expand-icon">‹</span>
@@ -126,13 +126,14 @@
         @copy="handleCopy"
         @delete="handleDelete"
         @color-change="handleColorChange"
+        @tradeoff-cell-click="handleTradeoffCellClick"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { useProjectStore } from '../../stores/projectStore';
 import { storeToRefs } from 'pinia';
@@ -170,6 +171,8 @@ let renderer: THREE.WebGLRenderer;
 let controls: OrbitControls;
 let mountainMesh: THREE.Mesh;
 const casePoints = new Map<string, THREE.Mesh>();
+let animationFrameId: number | null = null;
+let isDisposed = false;
 
 // Design case list
 const designCases = computed(() => {
@@ -246,8 +249,22 @@ onMounted(() => {
 watch(() => props.isActive, async (isActive, wasActive) => {
   // When changed from inactive to active
   if (isActive && !wasActive && currentProject.value) {
+    // Re-initialize Three.js if needed (container might have had 0 size when mounted)
+    if (!renderer || !threeContainer.value) {
+      await nextTick();
+      initThreeJS();
+    } else if (threeContainer.value) {
+      // Resize renderer to actual container size
+      const width = threeContainer.value.clientWidth;
+      const height = threeContainer.value.clientHeight;
+      if (width > 0 && height > 0) {
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+      }
+    }
+
     await handleRecalculate();
-    updateMountainView();
   }
 });
 
@@ -314,6 +331,13 @@ function downloadMountainImage() {
 }
 
 onUnmounted(() => {
+  // Stop animation loop first
+  isDisposed = true;
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+
   // Clean up Three.js resources
   if (renderer) {
     renderer.dispose();
@@ -354,6 +378,25 @@ watch(designCases, () => {
 function initThreeJS() {
   if (!threeContainer.value) return;
 
+  // Check if container has valid dimensions (skip if hidden/0 size)
+  const width = threeContainer.value.clientWidth;
+  const height = threeContainer.value.clientHeight;
+  if (width <= 0 || height <= 0) {
+    console.log('initThreeJS: Container has no size, skipping initialization');
+    return;
+  }
+
+  // Clean up existing renderer if re-initializing
+  if (renderer) {
+    renderer.dispose();
+    if (threeContainer.value && renderer.domElement && renderer.domElement.parentNode) {
+      renderer.domElement.parentNode.removeChild(renderer.domElement);
+    }
+  }
+
+  // Reset disposed flag
+  isDisposed = false;
+
   // Scene
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf5f5f5);
@@ -361,7 +404,7 @@ function initThreeJS() {
   // Camera
   camera = new THREE.PerspectiveCamera(
     60,
-    threeContainer.value.clientWidth / threeContainer.value.clientHeight,
+    width / height,
     0.1,
     1000
   );
@@ -369,7 +412,7 @@ function initThreeJS() {
 
   // Renderer
   renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(threeContainer.value.clientWidth, threeContainer.value.clientHeight);
+  renderer.setSize(width, height);
   threeContainer.value.appendChild(renderer.domElement);
 
   // Controls
@@ -421,7 +464,8 @@ function initThreeJS() {
 }
 
 function animate() {
-  requestAnimationFrame(animate);
+  if (isDisposed || !renderer || !scene || !camera) return;
+  animationFrameId = requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
 }
@@ -442,6 +486,12 @@ async function loadAndRenderCases() {
 }
 
 function updateMountainView() {
+  // Guard: ensure Three.js is initialized
+  if (!scene || !renderer || isDisposed) {
+    console.warn('updateMountainView: Three.js not initialized yet');
+    return;
+  }
+
   // Clean up existing meshes
   casePoints.forEach(mesh => {
     scene.remove(mesh);
@@ -659,12 +709,16 @@ async function handleDelete(designCase: DesignCase) {
 
 async function handleRecalculate() {
   if (!currentProject.value) return;
-  
+
   isRecalculating.value = true;
   recalculateMessage.value = '';
-  
+
+  const timings: Record<string, number> = {};
+  const totalStart = performance.now();
+
   try {
     // Collect network information for each design case
+    const prepStart = performance.now();
     const networks = designCases.value.map(designCase => {
       return {
         nodes: designCase.network?.nodes || [],
@@ -674,7 +728,9 @@ async function handleRecalculate() {
         }))
       };
     });
-    
+    timings['1_prepare_networks'] = performance.now() - prepStart;
+
+    const apiStart = performance.now();
     const response = await fetch(
       `http://localhost:8000/api/projects/${currentProject.value.id}/recalculate-mountains`,
       {
@@ -683,27 +739,49 @@ async function handleRecalculate() {
         body: JSON.stringify({ networks })  // Send network information
       }
     );
-    
+    timings['2_api_call'] = performance.now() - apiStart;
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
       console.error('Recalculation error details:', errorData);
       throw new Error(errorData.detail || 'Recalculation failed');
     }
-    
+
     const result = await response.json();
     recalculateMessage.value = result.message;
-    
+
     // Save H_max
     if (result.H_max !== undefined) {
       H_max.value = result.H_max;
     }
-    
-    // Reload project to reflect latest coordinates
-    await projectStore.loadProject(currentProject.value.id);
-    
-    // Verify coordinates after reload
+
+    // Reload design cases and re-render (uses lighter API than full project reload)
+    const reloadStart = performance.now();
     await loadAndRenderCases();
-    
+    timings['3_reload_and_render'] = performance.now() - reloadStart;
+
+    timings['total'] = performance.now() - totalStart;
+
+    // Log timing report
+    console.log('\n========================================');
+    console.log('⏱️  Frontend Timing Report (handleRecalculate)');
+    console.log('========================================');
+    console.log('  Frontend:');
+    Object.entries(timings).forEach(([key, value]) => {
+      console.log(`    ${key}: ${value.toFixed(2)} ms`);
+    });
+    if (result.timings) {
+      console.log('  Backend:');
+      console.log(`    API total: ${result.timings.api_total_ms} ms`);
+      console.log(`    Calculation: ${result.timings.calculation_ms} ms`);
+      if (result.timings.breakdown) {
+        Object.entries(result.timings.breakdown).forEach(([key, value]) => {
+          console.log(`      ${key}: ${(value as number).toFixed(2)} ms`);
+        });
+      }
+    }
+    console.log('========================================\n');
+
     setTimeout(() => {
       recalculateMessage.value = '';
     }, 3000);
@@ -736,6 +814,11 @@ function handleSortChange(newSortBy: string) {
 function closeRightPanel() {
   rightPanelOpen.value = false;
   selectedCase.value = null;
+}
+
+function handleTradeoffCellClick(payload: { i: number; j: number; perfIId?: string; perfJId?: string }) {
+  // Log cell click for debugging - modal is handled by DesignCaseDetail
+  console.log('Tradeoff cell clicked:', payload);
 }
 
 function closeAllPanels() {

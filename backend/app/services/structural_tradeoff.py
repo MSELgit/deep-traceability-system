@@ -26,14 +26,24 @@ class StructuralTradeoffCalculator:
     より理論的に厳密なトレードオフ指標を提供
     """
 
-    def __init__(self, network: Dict, performances: List[Dict] = None):
+    def __init__(
+        self,
+        network: Dict,
+        performances: List[Dict] = None,
+        weight_mode: str = 'discrete_7',
+        performance_weights: Dict[str, float] = None
+    ):
         """
         Args:
             network: ネットワーク構造 {'nodes': [...], 'edges': [...]}
             performances: 性能リスト（オプション、ラベル情報の補完用）
+            weight_mode: 重みモード ('discrete_3', 'discrete_5', 'discrete_7', 'continuous')
+            performance_weights: 性能の重み {performance_id: W_i}（E_ij計算用）
         """
         self.network = network
         self.performances = performances or []
+        self.weight_mode = weight_mode
+        self.performance_weights = performance_weights or {}
         self._analysis_result = None
 
     def analyze(self) -> Dict:
@@ -44,6 +54,7 @@ class StructuralTradeoffCalculator:
             {
                 'total_effect_matrix': List[List[float]],
                 'cos_theta_matrix': List[List[float]],
+                'inner_product_matrix': List[List[float]],  # C_ij = T_i · T_j
                 'performance_ids': List[str],
                 'performance_labels': List[str],
                 'variable_ids': List[str],
@@ -74,12 +85,13 @@ class StructuralTradeoffCalculator:
         if self._analysis_result is not None:
             return self._analysis_result
 
-        # 基本分析を実行
-        raw_result = analyze_network_structure(self.network)
+        # 基本分析を実行（weight_modeを渡す）
+        raw_result = analyze_network_structure(self.network, self.weight_mode)
 
         # 結果を整形
         matrices = raw_result['matrices']
         total_effect = raw_result['total_effect']
+        inner_products = raw_result['inner_products']
         tradeoff = raw_result['tradeoff']
 
         # シナジーペアも抽出
@@ -110,11 +122,46 @@ class StructuralTradeoffCalculator:
         # シナジーの強い順にソート
         synergy_pairs.sort(key=lambda x: -x['cos_theta'])
 
+        # 構造的エネルギー行列を計算
+        # E_ij = W_i × W_j × L(C_ij) / (Σ W_k)²
+        # L(C_ij) = |C_ij| if C_ij < 0, else 0
+        C = inner_products['C']
+        n_perf = matrices['dimensions']['n_perf']
+        perf_ids = matrices['node_ids']['P']
+        perf_id_map = matrices.get('performance_id_map', {})
+
+        if C.size > 0 and self.performance_weights:
+            # 重みベクトルを構築
+            W = np.array([
+                self.performance_weights.get(perf_id_map.get(pid, pid), 0.0)
+                for pid in perf_ids
+            ])
+            total_weight = np.sum(W)
+            normalization = total_weight ** 2 if total_weight > 0 else 1.0
+
+            # L(C_ij) = max(0, -C_ij)
+            L = np.maximum(0, -C)
+
+            # E_ij = W_i × W_j × L(C_ij) / (Σ W_k)²
+            energy_matrix = np.zeros((n_perf, n_perf))
+            for i in range(n_perf):
+                for j in range(n_perf):
+                    if i != j:
+                        energy_matrix[i, j] = W[i] * W[j] * L[i, j] / normalization
+        elif C.size > 0:
+            # 重みがない場合はL(C_ij)のみ（フォールバック）
+            energy_matrix = np.maximum(0, -C)
+        else:
+            energy_matrix = np.array([])
+
         self._analysis_result = {
             'total_effect_matrix': total_effect['T'].tolist() if total_effect['T'].size > 0 else [],
             'cos_theta_matrix': tradeoff['cos_theta'].tolist() if tradeoff['cos_theta'].size > 0 else [],
+            'inner_product_matrix': inner_products['C'].tolist() if inner_products['C'].size > 0 else [],
+            'energy_matrix': energy_matrix.tolist() if energy_matrix.size > 0 else [],
             'performance_ids': matrices['node_ids']['P'],
             'performance_labels': matrices['node_labels']['P'],
+            'performance_id_map': matrices.get('performance_id_map', {}),  # network_node_id -> db_performance_id
             'variable_ids': matrices['node_ids']['V'],
             'variable_labels': matrices['node_labels']['V'],
             'attribute_ids': matrices['node_ids']['A'],
@@ -228,7 +275,9 @@ class StructuralTradeoffCalculator:
 
 def calculate_structural_tradeoff_for_case(
     network: Dict,
-    performances: List[Dict] = None
+    performances: List[Dict] = None,
+    weight_mode: str = 'discrete_7',
+    performance_weights: Dict[str, float] = None
 ) -> Dict:
     """
     設計案の構造的トレードオフを計算する便利関数
@@ -236,17 +285,22 @@ def calculate_structural_tradeoff_for_case(
     Args:
         network: ネットワーク構造
         performances: 性能リスト（オプション）
+        weight_mode: 重みモード ('discrete_3', 'discrete_5', 'discrete_7', 'continuous')
+        performance_weights: 性能の重み {performance_id: W_i}（E_ij計算用）
 
     Returns:
         StructuralTradeoffCalculator.analyze() の結果
     """
-    calculator = StructuralTradeoffCalculator(network, performances)
+    calculator = StructuralTradeoffCalculator(
+        network, performances, weight_mode, performance_weights
+    )
     return calculator.analyze()
 
 
 def calculate_with_both_methods(
     network: Dict,
-    performances: List[Dict]
+    performances: List[Dict],
+    weight_mode: str = 'discrete_7'
 ) -> Dict:
     """
     既存の手法と構造的手法の両方でトレードオフを計算
@@ -256,6 +310,7 @@ def calculate_with_both_methods(
     Args:
         network: ネットワーク構造
         performances: 性能リスト
+        weight_mode: 重みモード ('discrete_3', 'discrete_5', 'discrete_7', 'continuous')
 
     Returns:
         {
@@ -272,7 +327,7 @@ def calculate_with_both_methods(
     )
 
     # 構造的分析
-    structural_calculator = StructuralTradeoffCalculator(network, performances)
+    structural_calculator = StructuralTradeoffCalculator(network, performances, weight_mode)
     structural_result = structural_calculator.analyze()
 
     # 比較

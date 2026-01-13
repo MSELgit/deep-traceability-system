@@ -175,11 +175,11 @@ class TradeoffCalculator:
         # perf_node_1から出るエッジを探す
         for edge1 in edges_by_source.get(perf_node_1, []):
             property_node = edge1['target_id']
-            
-            # 特性ノードかチェック
-            if node_types.get(property_node) != 'property':
+
+            # 特性ノードかチェック（'attribute' is PAVE model, 'property' is legacy)
+            if node_types.get(property_node) not in ('property', 'attribute'):
                 continue
-            
+
             # property_nodeからperf_node_2へのエッジを探す
             for edge2 in edges_by_source.get(property_node, []):
                 if edge2['target_id'] == perf_node_2:
@@ -200,10 +200,10 @@ class TradeoffCalculator:
         # 特性 -> 性能1 かつ 特性 -> 性能2
         for edge1 in edges_by_target.get(perf_node_1, []):
             property_node = edge1['source_id']
-            
-            if node_types.get(property_node) != 'property':
+
+            if node_types.get(property_node) not in ('property', 'attribute'):
                 continue
-            
+
             for edge2 in edges_by_target.get(perf_node_2, []):
                 if edge2['source_id'] == property_node:
                     weight1 = edge1.get('weight', 1.0)
@@ -225,10 +225,10 @@ class TradeoffCalculator:
         # 混合パターン2: 特性 -> 性能1 かつ 性能2 -> 特性
         for edge1 in edges_by_target.get(perf_node_1, []):
             property_node = edge1['source_id']
-            
-            if node_types.get(property_node) != 'property':
+
+            if node_types.get(property_node) not in ('property', 'attribute'):
                 continue
-                
+
             for edge2 in edges_by_source.get(perf_node_2, []):
                 if edge2['target_id'] == property_node:
                     weight1 = edge1.get('weight', 1.0)

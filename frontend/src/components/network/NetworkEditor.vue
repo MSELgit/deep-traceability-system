@@ -58,7 +58,7 @@
           <span class="tool-icon">—</span>
           Connect
         </button>
-        <button 
+        <button
           class="tool-btn danger"
           @click="deleteSelected"
           :disabled="!selectedNode && !selectedEdge"
@@ -67,6 +67,23 @@
           <span class="tool-icon"><FontAwesomeIcon :icon="['fas', 'trash']" /></span>
           Delete
         </button>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <div class="tool-group weight-mode-group">
+        <label class="weight-mode-label">Weight Mode:</label>
+        <select
+          ref="weightModeSelectRef"
+          :value="currentWeightMode"
+          @change="handleWeightModeChange(($event.target as HTMLSelectElement).value as WeightMode)"
+          class="weight-mode-select"
+        >
+          <option value="discrete_3">3-level (±1, 0)</option>
+          <option value="discrete_5">5-level (±3, ±1, 0)</option>
+          <option value="discrete_7">7-level (±5, ±3, ±1, 0)</option>
+          <option value="continuous">Continuous (-1 ~ +1)</option>
+        </select>
       </div>
 
     </div>
@@ -92,30 +109,30 @@
 
         <div class="property-group">
           <label>Layer</label>
-          <select 
-            v-model.number="tempNodeData.layer" 
+          <select
+            v-model.number="tempNodeData.layer"
             class="property-select"
             :disabled="isPerformanceNode(selectedNode)"
           >
-            <option :value="1">Layer 1 - Performance</option>
-            <option :value="2">Layer 2 - Property</option>
-            <option :value="3">Layer 3 - Variable</option>
-            <option :value="4">Layer 4 - Object/Environment</option>
+            <option :value="1">Layer 1 - Performance (P)</option>
+            <option :value="2">Layer 2 - Attribute (A)</option>
+            <option :value="3">Layer 3 - Variable (V)</option>
+            <option :value="4">Layer 4 - Entity (E)</option>
           </select>
         </div>
 
         <div class="property-group">
           <label>Type</label>
-          <select 
-            v-model="tempNodeData.type" 
+          <select
+            v-model="tempNodeData.type"
             class="property-select"
             :disabled="isPerformanceNode(selectedNode)"
           >
             <option value="performance">Performance</option>
-            <option value="property">Property</option>
+            <option value="attribute">Attribute</option>
             <option value="variable">Variable</option>
-            <option value="object">Object</option>
-            <option value="environment">Environment</option>
+            <option value="object">Entity (Object)</option>
+            <option value="environment">Entity (Environment)</option>
           </select>
         </div>
 
@@ -150,18 +167,39 @@
       <template v-else-if="selectedEdge">
         <div class="property-group">
           <label>Weight (Causal Strength)</label>
-          <select 
-            v-model.number="tempEdgeWeight" 
+          <!-- Discrete mode: dropdown -->
+          <select
+            v-if="currentWeightMode !== 'continuous'"
+            v-model.number="tempEdgeWeight"
             class="property-select"
           >
-            <option :value="3">+3 (Strong positive causality)</option>
-            <option :value="1">+1 (Moderate positive causality)</option>
-            <option :value="0.33">+1/3 (Weak positive causality)</option>
-            <option :value="0">0 (No correlation)</option>
-            <option :value="-0.33">-1/3 (Weak negative causality)</option>
-            <option :value="-1">-1 (Moderate negative causality)</option>
-            <option :value="-3">-3 (Strong negative causality)</option>
+            <option
+              v-for="opt in currentWeightOptions"
+              :key="opt.value"
+              :value="opt.value"
+            >{{ opt.label }}</option>
           </select>
+          <!-- Continuous mode: number input -->
+          <div v-else class="continuous-weight-input">
+            <input
+              type="number"
+              v-model.number="tempEdgeWeight"
+              class="property-input"
+              step="0.01"
+              min="-1"
+              max="1"
+              placeholder="-1 ~ +1"
+            />
+            <input
+              type="range"
+              v-model.number="tempEdgeWeight"
+              class="weight-slider"
+              step="0.01"
+              min="-1"
+              max="1"
+            />
+            <div class="weight-value-display">{{ tempEdgeWeight.toFixed(2) }}</div>
+          </div>
         </div>
         
         <div class="property-group">
@@ -215,11 +253,11 @@
               />
             </pattern>
             
-            <!-- Arrow Marker Definition (for each color) -->
+            <!-- Arrow Marker Definition (for each unique edge color) -->
             <marker
-              v-for="(color, weight) in edgeWeightColors"
-              :key="`arrow-${weight}`"
-              :id="`arrow-${weight}`"
+              v-for="color in uniqueEdgeColors"
+              :key="`arrow-${color}`"
+              :id="`arrow-editor-${encodeColor(color)}`"
               markerWidth="10"
               markerHeight="10"
               refX="8"
@@ -232,7 +270,7 @@
                 :fill="color"
               />
             </marker>
-            
+
             <!-- Red arrow when selected -->
             <marker
               id="arrow-selected"
@@ -261,40 +299,40 @@
               fill="url(#grid)" 
             />
 
-            <!-- Layer Background (4 layers) -->
+            <!-- PAVE Layer Backgrounds (4 layers) -->
             <g class="layer-backgrounds">
-              <!-- Performance Layer (Level 1: Y=0-200) -->
-              <rect 
-                :x="0" 
-                :y="0" 
-                :width="canvasWidth" 
+              <!-- Performance Layer (P: Y=0-200) -->
+              <rect
+                :x="0"
+                :y="0"
+                :width="canvasWidth"
                 :height="200"
                 :fill="layers[0].color"
                 opacity="0.1"
               />
-              <!-- Property Layer (Level 2: Y=200-400) -->
-              <rect 
-                :x="0" 
-                :y="200" 
-                :width="canvasWidth" 
+              <!-- Attribute Layer (A: Y=200-400) -->
+              <rect
+                :x="0"
+                :y="200"
+                :width="canvasWidth"
                 :height="200"
                 :fill="layers[1].color"
                 opacity="0.1"
               />
-              <!-- Variable Layer (Level 3: Y=400-600) -->
-              <rect 
-                :x="0" 
-                :y="400" 
-                :width="canvasWidth" 
+              <!-- Variable Layer (V: Y=400-600) -->
+              <rect
+                :x="0"
+                :y="400"
+                :width="canvasWidth"
                 :height="200"
                 :fill="layers[2].color"
                 opacity="0.1"
               />
-              <!-- Object/Environment Layer (Level 4: Y=600-800) -->
-              <rect 
-                :x="0" 
-                :y="600" 
-                :width="canvasWidth" 
+              <!-- Entity Layer (E: Y=600-800) -->
+              <rect
+                :x="0"
+                :y="600"
+                :width="canvasWidth"
                 :height="200"
                 :fill="layers[3].color"
                 opacity="0.1"
@@ -320,16 +358,16 @@
                 stroke-width="10"
                 style="cursor: pointer"
               />
-              <!-- Display line -->
+              <!-- Display line (no arrow marker for undirected V↔E edges) -->
               <line
                 :x1="getNodeById(edge.source_id)?.x"
                 :y1="getNodeById(edge.source_id)?.y"
-                :x2="getNodeById(edge.source_id) && getNodeById(edge.target_id) ? getAdjustedLineEnd(getNodeById(edge.source_id)!, getNodeById(edge.target_id)!).x : getNodeById(edge.target_id)?.x"
-                :y2="getNodeById(edge.source_id) && getNodeById(edge.target_id) ? getAdjustedLineEnd(getNodeById(edge.source_id)!, getNodeById(edge.target_id)!).y : getNodeById(edge.target_id)?.y"
+                :x2="getNodeById(edge.source_id) && getNodeById(edge.target_id) ? getAdjustedLineEnd(getNodeById(edge.source_id)!, getNodeById(edge.target_id)!, isUndirectedEdge(edge)).x : getNodeById(edge.target_id)?.x"
+                :y2="getNodeById(edge.source_id) && getNodeById(edge.target_id) ? getAdjustedLineEnd(getNodeById(edge.source_id)!, getNodeById(edge.target_id)!, isUndirectedEdge(edge)).y : getNodeById(edge.target_id)?.y"
                 :stroke="selectedEdge?.id === edge.id ? '#FF5722' : getEdgeColor(edge)"
                 :stroke-width="selectedEdge?.id === edge.id ? '3' : '2'"
                 stroke-linecap="round"
-                :marker-end="selectedEdge?.id === edge.id ? 'url(#arrow-selected)' : `url(#arrow-${edge.weight ?? 0})`"
+                :marker-end="isUndirectedEdge(edge) ? undefined : (selectedEdge?.id === edge.id ? 'url(#arrow-selected)' : `url(#arrow-editor-${encodeColor(getEdgeColor(edge))})`)"
                 style="pointer-events: none"
               />
               <!-- Delete button at edge midpoint -->
@@ -383,7 +421,7 @@
                 class="node-shape"
               />
               
-              <!-- Layer 2: Property (equilateral triangle, height 36px) -->
+              <!-- Layer 2: Attribute (equilateral triangle, height 36px) -->
               <polygon
                 v-else-if="node.layer === 2"
                 :points="getTrianglePoints(node.x, node.y)"
@@ -460,7 +498,7 @@
 
         <!-- Help text -->
         <div class="canvas-help" v-if="network.nodes.length === 0">
-          <p><FontAwesomeIcon :icon="['fas', 'expand']" /> Select "Performance", "Property", "Variable", or "Object/Environment" from the toolbar above</p>
+          <p><FontAwesomeIcon :icon="['fas', 'expand']" /> Select "Attribute", "Variable", or "Entity (Object/Environment)" from the toolbar above</p>
           <p>Click on the canvas to place nodes</p>
         </div>
       </div>
@@ -468,12 +506,21 @@
       <!-- Layer Guide (Right Side) -->
       <div class="layer-legend">
         <h3>Legend</h3>
-        <div 
+        <div
           v-for="layer in layers"
           :key="layer.id"
           class="legend-item"
         >
-          <span class="legend-color" :style="{ background: layer.color }"></span>
+          <svg class="legend-icon" width="14" height="14" viewBox="0 0 14 14">
+            <!-- Performance: circle -->
+            <circle v-if="layer.id === 1" cx="7" cy="7" r="5" :fill="layer.color" stroke="#333" stroke-width="1"/>
+            <!-- Attribute: triangle -->
+            <polygon v-else-if="layer.id === 2" points="7,2 12,12 2,12" :fill="layer.color" stroke="#333" stroke-width="1"/>
+            <!-- Variable: diamond -->
+            <polygon v-else-if="layer.id === 3" points="7,2 12,7 7,12 2,7" :fill="layer.color" stroke="#333" stroke-width="1"/>
+            <!-- Entity: square -->
+            <rect v-else x="2" y="2" width="10" height="10" :fill="layer.color" stroke="#333" stroke-width="1"/>
+          </svg>
           <span class="legend-label">{{ layer.label }}</span>
         </div>
 
@@ -523,16 +570,149 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
-import type { NetworkStructure, NetworkNode, NetworkEdge, Performance } from '../../types/project';
+import type { NetworkStructure, NetworkNode, NetworkEdge, Performance, WeightMode } from '../../types/project';
+import { WEIGHT_MODE_OPTIONS, migrateNodeType } from '../../types/project';
+
+/**
+ * Migrate network data: 'property' → 'attribute' for PAVE compliance
+ */
+function migrateNetworkData(network: NetworkStructure): void {
+  network.nodes.forEach(node => {
+    if (node.type === 'property') {
+      node.type = 'attribute';
+    }
+  });
+}
+
+/**
+ * PAVE Edge Direction Validation
+ *
+ * Valid connections (source → target):
+ * - A → P: Attribute → Performance (layer 2 → 1)
+ * - V → A: Variable → Attribute (layer 3 → 2)
+ * - A → A: Attribute ↔ Attribute (layer 2 → 2, for loops)
+ * - V ↔ E: Variable ↔ Entity (layer 3 ↔ 4, bidirectional/undirected)
+ * - E ↔ E: Entity ↔ Entity (layer 4 ↔ 4, for object-environment links)
+ *
+ * Invalid connections:
+ * - P → X: Performance → anything (layer 1 → X) - FORBIDDEN
+ * - V → P: Variable → Performance (layer 3 → 1) - FORBIDDEN
+ * - E → P: Entity → Performance (layer 4 → 1) - FORBIDDEN
+ * - E → A: Entity → Attribute (layer 4 → 2) - FORBIDDEN
+ * - V → V: Variable → Variable (layer 3 → 3) - FORBIDDEN
+ * - A → V: Attribute → Variable (layer 2 → 3) - FORBIDDEN
+ */
+interface EdgeValidationResult {
+  valid: boolean;
+  reason?: string;
+}
+
+function validateEdgeDirection(from: NetworkNode, to: NetworkNode): EdgeValidationResult {
+  const fromLayer = from.layer;
+  const toLayer = to.layer;
+
+  // Performance (layer 1) cannot be a source
+  if (fromLayer === 1) {
+    return {
+      valid: false,
+      reason: 'Performance nodes cannot be the source of edges. They can only receive effects.'
+    };
+  }
+
+  // Variable → Performance (layer 3 → 1) is FORBIDDEN
+  if (fromLayer === 3 && toLayer === 1) {
+    return {
+      valid: false,
+      reason: 'Variable cannot connect directly to Performance. Use Attribute as an intermediate layer (V → A → P).'
+    };
+  }
+
+  // Entity → Performance (layer 4 → 1) is FORBIDDEN
+  if (fromLayer === 4 && toLayer === 1) {
+    return {
+      valid: false,
+      reason: 'Entity cannot connect directly to Performance. The path must go through Variable and Attribute (E → V → A → P).'
+    };
+  }
+
+  // Entity → Attribute (layer 4 → 2) is FORBIDDEN
+  if (fromLayer === 4 && toLayer === 2) {
+    return {
+      valid: false,
+      reason: 'Entity cannot connect directly to Attribute. Use Variable as an intermediate (E → V → A).'
+    };
+  }
+
+  // Variable → Variable (layer 3 → 3) is FORBIDDEN
+  if (fromLayer === 3 && toLayer === 3) {
+    return {
+      valid: false,
+      reason: 'Variable cannot connect to another Variable. Variables are independent design parameters.'
+    };
+  }
+
+  // Attribute → Variable (layer 2 → 3) is FORBIDDEN
+  if (fromLayer === 2 && toLayer === 3) {
+    return {
+      valid: false,
+      reason: 'Attribute cannot connect to Variable. The causal flow is V → A → P (Variable affects Attribute, not the reverse).'
+    };
+  }
+
+  // Valid connections:
+  // A → P (2 → 1): OK
+  // V → A (3 → 2): OK
+  // A → A (2 → 2): OK (loops)
+  // V ↔ E (3 ↔ 4): OK (bidirectional)
+  // E ↔ E (4 ↔ 4): OK
+
+  return { valid: true };
+}
+
+/**
+ * Check if an edge should be rendered as undirected (no arrow marker)
+ * According to PAVE model:
+ * - V ↔ E (layer 3 ↔ layer 4): undirected
+ * - E ↔ E (layer 4 ↔ layer 4): undirected
+ */
+function isUndirectedEdge(edge: NetworkEdge): boolean {
+  const source = network.value.nodes.find(n => n.id === edge.source_id);
+  const target = network.value.nodes.find(n => n.id === edge.target_id);
+  if (!source || !target) return false;
+
+  // V ↔ E (layer 3 ↔ layer 4) is undirected
+  if ((source.layer === 3 && target.layer === 4) || (source.layer === 4 && target.layer === 3)) {
+    return true;
+  }
+
+  // E ↔ E (layer 4 ↔ layer 4) is undirected
+  if (source.layer === 4 && target.layer === 4) {
+    return true;
+  }
+
+  return false;
+}
 
 const props = defineProps<{
   modelValue: NetworkStructure;
   performances: Performance[];
+  weightMode?: WeightMode;
 }>();
 
 const emit = defineEmits<{
   'update:modelValue': [value: NetworkStructure];
+  'update:weightMode': [value: WeightMode];
 }>();
+
+// 現在の重みモード
+const currentWeightMode = ref<WeightMode>(props.weightMode || 'discrete_7');
+
+// props.weightModeの変更を監視
+watch(() => props.weightMode, (newMode) => {
+  if (newMode && newMode !== currentWeightMode.value) {
+    currentWeightMode.value = newMode;
+  }
+}, { immediate: true });
 
 // Canvas size
 const canvasWidth = ref(1200);
@@ -588,47 +768,195 @@ const tempEdgeEnd = ref<{ x: number; y: number } | null>(null);
 const tempNodeData = ref({
   label: '',
   layer: 1 as 1 | 2 | 3 | 4,
-  type: 'property' as NetworkNode['type'],
+  type: 'attribute' as NetworkNode['type'],
   performance_id: undefined as string | undefined
 });
-const tempEdgeWeight = ref<3 | 1 | 0.33 | 0 | -0.33 | -1 | -3>(0);
+const tempEdgeWeight = ref<number>(0);  // Now supports continuous values
+
+// 重みモード変更時のハンドラ（確認ダイアログ付き）
+function handleWeightModeChange(newMode: WeightMode) {
+  const edgeCount = network.value.edges.length;
+  const oldMode = currentWeightMode.value;
+
+  // エッジがない場合は確認なしで変更
+  if (edgeCount === 0) {
+    currentWeightMode.value = newMode;
+    emit('update:weightMode', newMode);
+    return;
+  }
+
+  // 同じモードへの変更は無視
+  if (newMode === oldMode) {
+    return;
+  }
+
+  // 確認メッセージを作成
+  let message = `Change weight mode from "${getWeightModeLabel(oldMode)}" to "${getWeightModeLabel(newMode)}"?\n\n`;
+  message += `${edgeCount} edge(s) will be affected.\n\n`;
+  message += `Click OK to proceed, then choose how to handle existing weights.`;
+
+  // 確認ダイアログを表示
+  if (!confirm(message)) {
+    // キャンセルされた場合、セレクターを元の値に戻す
+    if (weightModeSelectRef.value) {
+      weightModeSelectRef.value.value = oldMode;
+    }
+    return;
+  }
+
+  // 重み処理オプションを選択
+  const resetToZero = confirm(
+    `How should existing weights be handled?\n\n` +
+    `[OK] = Reset all weights to 0 (recommended for fresh start)\n` +
+    `[Cancel] = Adjust to nearest valid values (preserve approximate relationships)`
+  );
+
+  // モードを変更
+  currentWeightMode.value = newMode;
+  emit('update:weightMode', newMode);
+
+  if (resetToZero) {
+    // 全エッジの重みを0にリセット
+    network.value.edges.forEach(edge => {
+      edge.weight = 0;
+    });
+    emitUpdate();
+  } else if (newMode !== 'continuous') {
+    // 重みモード変更時、既存エッジの重みを最も近い有効値に丸める
+    const validValues = WEIGHT_MODE_OPTIONS[newMode].values;
+    network.value.edges.forEach(edge => {
+      const weight = edge.weight ?? 0;
+      // 最も近い有効値を見つける
+      const closest = validValues.reduce((prev, curr) =>
+        Math.abs(curr - weight) < Math.abs(prev - weight) ? curr : prev
+      );
+      edge.weight = closest;
+    });
+    emitUpdate();
+  }
+}
+
+// 重みモードのラベルを取得
+function getWeightModeLabel(mode: WeightMode): string {
+  const labels: Record<WeightMode, string> = {
+    discrete_3: '3-level (±1, 0)',
+    discrete_5: '5-level (±3, ±1, 0)',
+    discrete_7: '7-level (±5, ±3, ±1, 0)',
+    continuous: 'Continuous (-1 ~ +1)'
+  };
+  return labels[mode] || mode;
+}
+
+// 現在の重みモードで有効な選択肢を取得
+const currentWeightOptions = computed(() => {
+  if (currentWeightMode.value === 'continuous') {
+    return [];
+  }
+  const options = WEIGHT_MODE_OPTIONS[currentWeightMode.value];
+  return options.values.map((val, idx) => ({
+    value: val,
+    label: options.labels[idx]
+  }));
+});
 
 const svgCanvas = ref<SVGSVGElement>();
 const canvasContainer = ref<HTMLDivElement>();
+const weightModeSelectRef = ref<HTMLSelectElement>();
 
-// Layer definition
+// Layer definition (PAVE model)
 const layers = [
   { id: 1, label: 'Performance', color: '#4CAF50', type: 'performance' },
-  { id: 2, label: 'Property', color: '#2196F3', type: 'property' },
+  { id: 2, label: 'Attribute', color: '#2196F3', type: 'attribute' },
   { id: 3, label: 'Variable', color: '#FFC107', type: 'variable' },
-  { id: 4, label: 'Object/Environment', color: '#9C27B0', type: 'object' }
+  { id: 4, label: 'Entity', color: '#9C27B0', type: 'object' }  // Entity has subtypes: object, environment
 ];
 
-// Edge weight and color mapping
-const edgeWeightColors = {
-  3: '#004563',      // Strong positive causality
-  1: '#588da2',      // Moderate positive causality
-  0.33: '#c3dde2',   // Weak positive causality
+// Edge weight and color mapping (supports both new ±5 and legacy ±0.33 formats)
+const edgeWeightColors: Record<number, string> = {
+  5: '#002040',      // Strong positive (7-level)
+  3: '#004563',      // Strong positive (5-level) / Medium-strong (7-level)
+  1: '#588da2',      // Moderate positive
+  0.33: '#c3dde2',   // Weak positive (legacy)
   0: 'silver',       // No correlation
-  [-0.33]: '#e9c1c9', // Weak negative causality
-  [-1]: '#c94c62',   // Moderate negative causality
-  [-3]: '#9f1e35'    // Strong negative causality
+  [-0.33]: '#e9c1c9', // Weak negative (legacy)
+  [-1]: '#c94c62',   // Moderate negative
+  [-3]: '#9f1e35',   // Strong negative (5-level) / Medium-strong (7-level)
+  [-5]: '#6f0020'    // Strong negative (7-level)
 };
 
-const edgeWeightLabels = {
-  3: '+3 (Strong positive causality)',
+const edgeWeightLabels: Record<number, string> = {
+  5: '+5 (Strong positive causality)',
+  3: '+3 (Medium-strong positive causality)',
   1: '+1 (Moderate positive causality)',
-  0.33: '+1/3 (Weak positive causality)',
+  0.33: '+1/3 (Weak positive causality - legacy)',
   0: '0 (No correlation)',
-  [-0.33]: '-1/3 (Weak negative causality)',
+  [-0.33]: '-1/3 (Weak negative causality - legacy)',
   [-1]: '-1 (Moderate negative causality)',
-  [-3]: '-3 (Strong negative causality)'
+  [-3]: '-3 (Medium-strong negative causality)',
+  [-5]: '-5 (Strong negative causality)'
 };
 
-// Get edge color
+// Compute unique edge colors for marker definitions
+const uniqueEdgeColors = computed(() => {
+  const colors = new Set<string>();
+  for (const edge of network.value.edges) {
+    colors.add(getEdgeColor(edge));
+  }
+  colors.add('#333'); // Default for undirected edges
+  colors.add('silver'); // Fallback
+  return Array.from(colors);
+});
+
+// Encode color string for use in SVG ID
+function encodeColor(color: string): string {
+  return color.replace(/[^a-zA-Z0-9]/g, '_');
+}
+
+// Get edge color - supports both discrete and continuous values
 function getEdgeColor(edge: NetworkEdge): string {
+  // Undirected edges (V↔E, E↔E) are always black - no weight concept
+  if (isUndirectedEdge(edge)) {
+    return '#333';
+  }
+
   const weight = edge.weight ?? 0;
-  return edgeWeightColors[weight] || 'silver';
+
+  // For discrete values, use the predefined colors
+  if (weight in edgeWeightColors) {
+    return edgeWeightColors[weight as keyof typeof edgeWeightColors];
+  }
+
+  // For continuous values, interpolate between colors
+  // Use gradient colors for all values including weight=0
+  // maxWeight depends on current weight mode:
+  // - discrete_7: ±5, discrete_5: ±3, discrete_3: ±1, continuous: ±1
+  const maxWeightMap: Record<string, number> = {
+    discrete_7: 5,
+    discrete_5: 3,
+    discrete_3: 1,
+    continuous: 1
+  };
+  const maxWeight = maxWeightMap[currentWeightMode.value] || 5;
+  const clampedWeight = Math.max(-maxWeight, Math.min(maxWeight, weight));
+
+  if (clampedWeight > 0) {
+    // Positive: interpolate from light blue (#c3dde2) to dark blue (#002040)
+    const t = clampedWeight / maxWeight;
+    const r = Math.round(195 * (1 - t) + 0 * t);
+    const g = Math.round(221 * (1 - t) + 32 * t);
+    const b = Math.round(226 * (1 - t) + 64 * t);
+    return `rgb(${r}, ${g}, ${b})`;
+  } else if (clampedWeight < 0) {
+    // Negative: interpolate from light red (#e9c1c9) to dark red (#6f0020)
+    const t = Math.abs(clampedWeight) / maxWeight;
+    const r = Math.round(233 * (1 - t) + 111 * t);
+    const g = Math.round(193 * (1 - t) + 0 * t);
+    const b = Math.round(201 * (1 - t) + 32 * t);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  // weight = 0: neutral gray
+  return '#c0c0c0';
 }
 
 // Canvas cursor style (computed)
@@ -664,7 +992,10 @@ function getDiamondPoints(cx: number, cy: number): string {
 onMounted(() => {
   if (props.modelValue) {
     network.value = JSON.parse(JSON.stringify(props.modelValue));
-    
+
+    // Migrate 'property' → 'attribute' for PAVE compliance
+    migrateNetworkData(network.value);
+
     // Set default weight for existing edges without weight
     network.value.edges.forEach(edge => {
       if (edge.weight === undefined) {
@@ -677,7 +1008,7 @@ onMounted(() => {
   } else {
     ensurePerformanceNodes(false); // Don't emit
   }
-  
+
   // Reset view if there are nodes
   if (network.value.nodes.length > 0) {
     nextTick(() => resetView());
@@ -686,16 +1017,19 @@ onMounted(() => {
 
 // Watch
 watch(() => props.modelValue, (newVal, oldVal) => {
-  
+
   // Ignore changes from our own updates
   if (isUpdating.value) {
     return;
   }
-  
+
   if (newVal) {
     // Copy new data
     network.value = JSON.parse(JSON.stringify(newVal));
-    
+
+    // Migrate 'property' → 'attribute' for PAVE compliance
+    migrateNetworkData(network.value);
+
     // Set default weight for existing edges without weight
     network.value.edges.forEach(edge => {
       if (edge.weight === undefined) {
@@ -780,14 +1114,14 @@ function getNodeColor(node: NetworkNode): string {
 }
 
 // Adjust edge endpoint (prevent arrow overlapping with node)
-function getAdjustedLineEnd(source: NetworkNode, target: NetworkNode): { x: number, y: number } {
+function getAdjustedLineEnd(source: NetworkNode, target: NetworkNode, isUndirected: boolean = false): { x: number, y: number } {
   const dx = target.x - source.x;
   const dy = target.y - source.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
-  
+
   // Node radius (adjusted by shape)
   let targetRadius = nodeRadius.value; // Default (circle)
-  
+
   if (target.layer === 2) { // Triangle
     targetRadius = baseSize.value * 0.56; // Approximate radius for triangle
   } else if (target.layer === 3) { // Diamond
@@ -797,11 +1131,13 @@ function getAdjustedLineEnd(source: NetworkNode, target: NetworkNode): { x: numb
   } else if (target.layer === 4 && target.type === 'environment') { // Square
     targetRadius = nodeRadius.value;
   }
-  
-  // Shorten further by arrow size
-  const adjustment = targetRadius + 10;
+
+  // For directed edges, shorten further by arrow size (10px)
+  // For undirected edges, no arrow adjustment needed
+  const arrowAdjustment = isUndirected ? 0 : 10;
+  const adjustment = targetRadius + arrowAdjustment;
   const ratio = (distance - adjustment) / distance;
-  
+
   return {
     x: source.x + dx * ratio,
     y: source.y + dy * ratio
@@ -830,21 +1166,22 @@ function isPerformanceNode(node: NetworkNode | null): boolean {
 // Handle type change
 function handleTypeChange() {
   if (!selectedNode.value) return;
-  
-  // Automatically set layer based on type
+
+  // Automatically set layer based on type (PAVE model)
   const typeLayerMap: Record<string, 1 | 2 | 3 | 4> = {
     'performance': 1,
-    'property': 2,
+    'attribute': 2,
+    'property': 2,  // deprecated, for backward compatibility
     'variable': 3,
     'object': 4,
-    'condition': 4
+    'environment': 4
   };
-  
+
   const newLayer = typeLayerMap[selectedNode.value.type];
   if (newLayer) {
     selectedNode.value.layer = newLayer;
   }
-  
+
   emitUpdate();
 }
 
@@ -863,7 +1200,7 @@ function updateTempNodeData() {
 // Initialize temporary data when edge is selected
 function updateTempEdgeData() {
   if (selectedEdge.value) {
-    tempEdgeWeight.value = (selectedEdge.value.weight ?? 0) as 3 | 1 | 0.33 | 0 | -0.33 | -1 | -3;
+    tempEdgeWeight.value = selectedEdge.value.weight ?? 0;
   }
 }
 
@@ -877,20 +1214,21 @@ function saveNodeChanges() {
   selectedNode.value.type = tempNodeData.value.type;
   selectedNode.value.performance_id = tempNodeData.value.performance_id;
   
-  // Automatically set layer based on type
+  // Automatically set layer based on type (PAVE model)
   const typeLayerMap: Record<string, 1 | 2 | 3 | 4> = {
     'performance': 1,
-    'property': 2,
+    'attribute': 2,
+    'property': 2,  // deprecated, for backward compatibility
     'variable': 3,
     'object': 4,
     'environment': 4
   };
-  
+
   const newLayer = typeLayerMap[tempNodeData.value.type];
   if (newLayer) {
     selectedNode.value.layer = newLayer;
   }
-  
+
   emitUpdate();
   selectedNode.value = null; // Clear selection
 }
@@ -977,7 +1315,7 @@ function addNode(x: number, y: number, layer: number, nodeType?: string) {
   if (nodeType) {
     type = nodeType as NetworkNode['type'];
   } else {
-    type = layerInfo?.type as NetworkNode['type'] || 'property';
+    type = layerInfo?.type as NetworkNode['type'] || 'attribute';
   }
   
   // Determine label
@@ -1031,18 +1369,25 @@ function handleNodeClick(node: NetworkNode) {
   }
 }
 
-// Create edge
+// Create edge with PAVE validation
 function createEdge(from: NetworkNode, to: NetworkNode) {
   if (from.id === to.id) return;
-  
+
   // Check if exists
   const exists = network.value.edges.some(
     e => (e.source_id === from.id && e.target_id === to.id) ||
          (e.source_id === to.id && e.target_id === from.id)
   );
-  
+
   if (exists) {
     alert('This edge already exists');
+    return;
+  }
+
+  // PAVE edge direction validation
+  const validation = validateEdgeDirection(from, to);
+  if (!validation.valid) {
+    alert(`Invalid edge direction:\n\n${validation.reason}`);
     return;
   }
 
@@ -1056,7 +1401,7 @@ function createEdge(from: NetworkNode, to: NetworkNode) {
 
   network.value.edges.push(newEdge);
   emitUpdate();
-  
+
   // Automatically select edge and show properties
   selectedTool.value = 'select';
   selectedEdge.value = newEdge;
@@ -1585,6 +1930,101 @@ onUnmounted(() => {
   background: color.adjust($gray, $lightness: 10%);
 }
 
+// Weight mode selector styles
+.weight-mode-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5vw;
+}
+
+.weight-mode-label {
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+  color: color.adjust($white, $alpha: -0.3);
+  white-space: nowrap;
+}
+
+.weight-mode-select {
+  padding: clamp(0.3rem, 0.6vh, 0.4rem) clamp(0.5rem, 1vw, 0.6rem);
+  background: color.adjust($gray, $lightness: 20%);
+  border: 1px solid color.adjust($white, $alpha: -0.8);
+  border-radius: 0.4vw;
+  color: $white;
+  font-size: clamp(0.7rem, 0.85vw, 0.75rem);
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: color.adjust($white, $alpha: -0.6);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $main_1;
+    box-shadow: 0 0 0 2px color.adjust($main_1, $alpha: -0.7);
+  }
+
+  option {
+    background: $gray;
+    color: $white;
+  }
+}
+
+// Continuous weight input styles
+.continuous-weight-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .property-input {
+    text-align: center;
+    font-family: monospace;
+  }
+
+  .weight-slider {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: linear-gradient(to right, $sub_1 0%, silver 50%, $main_1 100%);
+    border-radius: 3px;
+    cursor: pointer;
+
+    &::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: $white;
+      border-radius: 50%;
+      border: 2px solid $main_1;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        transform: scale(1.1);
+        box-shadow: 0 2px 8px color.adjust($main_1, $alpha: -0.5);
+      }
+    }
+
+    &::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: $white;
+      border-radius: 50%;
+      border: 2px solid $main_1;
+      cursor: pointer;
+    }
+  }
+
+  .weight-value-display {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    color: $main_1;
+    font-family: monospace;
+  }
+}
+
 .tool-icon {
   font-size: clamp(0.9rem, 1.2vw, 1rem);
 }
@@ -1647,10 +2087,9 @@ onUnmounted(() => {
   font-size: clamp(0.7rem, 0.9vw, 0.75rem);
 }
 
-.legend-color {
-  width: clamp(0.7rem, 1.2vw, 0.8rem);
-  height: clamp(0.7rem, 1.2vw, 0.8rem);
-  border-radius: 50%;
+.legend-icon {
+  width: clamp(0.8rem, 1.4vw, 1rem);
+  height: clamp(0.8rem, 1.4vw, 1rem);
   flex-shrink: 0;
 }
 

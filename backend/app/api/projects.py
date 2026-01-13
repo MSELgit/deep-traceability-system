@@ -17,6 +17,7 @@ from app.schemas.project import (
     DesignCase, DesignCaseCreate, DesignCaseUpdate, StakeholderNeedRelation, NeedPerformanceRelation,
     UtilityFunctionData, MountainPosition, NetworkStructure, NetworkNode, NetworkEdge
 )
+from app.services.weight_normalization import migrate_network_edges, needs_7_level_migration
 from pydantic import BaseModel
 from typing import Optional, Literal
 
@@ -40,7 +41,7 @@ class NodePositionUpdate(BaseModel):
 class NetworkNodeCreate(BaseModel):
     label: str
     layer: Literal[1, 2, 3, 4]
-    type: Literal['performance', 'property', 'variable', 'object', 'environment']
+    type: Literal['performance', 'property', 'attribute', 'variable', 'object', 'environment']  # 'property' deprecated, use 'attribute'
     x: Optional[float] = None
     y: Optional[float] = None
     performance_id: Optional[str] = None
@@ -757,6 +758,22 @@ def create_design_case(
     else:
         color = design_case.color
     
+    # ネットワーク構造を作成
+    network = {
+        'nodes': [n.dict() for n in design_case.network.nodes],
+        'edges': [e.dict() for e in design_case.network.edges]
+    }
+
+    # SCC分析を実行
+    scc_analysis_json = None
+    try:
+        from app.services.scc_analyzer import analyze_scc, scc_result_to_dict
+        if network['nodes']:
+            scc_result = analyze_scc(network)
+            scc_analysis_json = json.dumps(scc_result_to_dict(scc_result), ensure_ascii=False)
+    except Exception as e:
+        print(f"SCC analysis error: {e}")
+
     db_design_case = DesignCaseModel(
         id=str(uuid.uuid4()),
         project_id=project_id,
@@ -764,16 +781,15 @@ def create_design_case(
         description=design_case.description,
         color=color,
         performance_values_json=json.dumps(design_case.performance_values),
-        network_json=json.dumps({
-            'nodes': [n.dict() for n in design_case.network.nodes],
-            'edges': [e.dict() for e in design_case.network.edges]
-        }),
-        performance_snapshot_json=json.dumps(design_case.performance_snapshot)
+        network_json=json.dumps(network),
+        performance_snapshot_json=json.dumps(design_case.performance_snapshot),
+        scc_analysis_json=scc_analysis_json,
+        weight_mode=design_case.weight_mode or 'discrete_7'
     )
     db.add(db_design_case)
     db.commit()
     db.refresh(db_design_case)
-    
+
     # 山の座標を計算（非同期ではなく同期的に実行）
     try:
         # 全ての設計案のネットワーク情報を取得
@@ -800,7 +816,9 @@ def create_design_case(
                     'x': pos['x'],
                     'y': pos['y'],
                     'z': pos['z'],
-                    'H': pos['H']
+                    'H': pos['H'],
+                    'total_energy': pos.get('total_energy', 0),
+                    'partial_energies': pos.get('partial_energies', {})
                 })
                 db_design_case.utility_vector_json = json.dumps(pos['utility_vector'])
                 db_design_case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
@@ -870,9 +888,29 @@ def update_design_case(
     
     if hasattr(design_case, 'color') and design_case.color:
         db_design_case.color = design_case.color
-    
+
+    # weight_mode を更新
+    if hasattr(design_case, 'weight_mode') and design_case.weight_mode:
+        db_design_case.weight_mode = design_case.weight_mode
+
+    # SCC分析を実行して保存
+    try:
+        from app.services.scc_analyzer import analyze_scc, scc_result_to_dict
+        network = {
+            'nodes': [n.dict() for n in design_case.network.nodes],
+            'edges': [e.dict() for e in design_case.network.edges]
+        }
+        if network['nodes']:
+            scc_result = analyze_scc(network)
+            db_design_case.scc_analysis_json = json.dumps(scc_result_to_dict(scc_result), ensure_ascii=False)
+        else:
+            db_design_case.scc_analysis_json = None
+    except Exception as e:
+        print(f"SCC analysis error: {e}")
+        db_design_case.scc_analysis_json = None
+
     db.commit()
-    
+
     # 山の座標を再計算
     try:
         project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
@@ -901,7 +939,9 @@ def update_design_case(
                     'x': pos['x'],
                     'y': pos['y'],
                     'z': pos['z'],
-                    'H': pos['H']
+                    'H': pos['H'],
+                    'total_energy': pos.get('total_energy', 0),
+                    'partial_energies': pos.get('partial_energies', {})
                 })
                 db_design_case.utility_vector_json = json.dumps(pos['utility_vector'])
                 db_design_case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
@@ -910,7 +950,7 @@ def update_design_case(
                 break
     except Exception as e:
         print(f"Mountain calculation error: {e}")
-    
+
     db.refresh(db_design_case)
     return format_design_case_response(db_design_case)
 
@@ -966,7 +1006,9 @@ def delete_design_case(
                         'x': pos['x'],
                         'y': pos['y'],
                         'z': pos['z'],
-                        'H': pos['H']
+                        'H': pos['H'],
+                        'total_energy': pos.get('total_energy', 0),
+                        'partial_energies': pos.get('partial_energies', {})
                     })
                     # utility_vectorのタプルキーを文字列に変換
                     utility_vec_str_keys = {
@@ -975,7 +1017,7 @@ def delete_design_case(
                     remaining_case.utility_vector_json = json.dumps(utility_vec_str_keys)
                     remaining_case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                     remaining_case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
-            
+
             db.commit()
             print(f"✓ Updated coordinates for {len(positions)} remaining design cases\n")
     except Exception as e:
@@ -1184,14 +1226,18 @@ def copy_design_case(
                     'x': pos['x'],
                     'y': pos['y'],
                     'z': pos['z'],
-                    'H': pos['H']
+                    'H': pos['H'],
+                    'total_energy': pos.get('total_energy', 0),
+                    'partial_energies': pos.get('partial_energies', {})
                 })
                 db_copy.utility_vector_json = json.dumps(pos['utility_vector'])
+                db_copy.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
+                db_copy.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
                 db.commit()
                 break
     except Exception as e:
         print(f"Mountain calculation error: {e}")
-    
+
     db.refresh(db_copy)
     return format_design_case_response(db_copy)
 
@@ -1261,8 +1307,13 @@ def export_project(
         DesignCaseModel.project_id == project_id
     ).all()
     
+    # データマイグレーションモジュールをインポート
+    from app.services.data_migration import get_export_metadata, add_export_fields_to_design_case
+
     # エクスポートデータ構築
     export_data = {
+        # メタデータ（バージョン情報）
+        **get_export_metadata(),
         "project": {
             "id": project.id,
             "name": project.name,
@@ -1316,7 +1367,7 @@ def export_project(
             } for r in need_performance_relations
         ],
         "design_cases": [
-            {
+            add_export_fields_to_design_case({
                 "id": d.id,
                 "name": d.name,
                 "description": d.description,
@@ -1330,7 +1381,7 @@ def export_project(
                 "performance_weights_json": d.performance_weights_json,
                 "created_at": d.created_at.isoformat(),
                 "updated_at": d.updated_at.isoformat()
-            } for d in design_cases
+            }, d) for d in design_cases
         ]
     }
     
@@ -1343,13 +1394,60 @@ def export_project(
     return export_data
 
 
+@router.post("/import/preview")
+def preview_import(import_data: dict):
+    """
+    インポートデータのマイグレーションプレビュー
+
+    実際のインポートは行わず、どのようなマイグレーションが適用されるかを分析して返す
+    """
+    from app.services.data_migration import analyze_migrations, validate_import_data
+
+    # データ検証
+    validation = validate_import_data(import_data)
+
+    # マイグレーション分析
+    migration_analysis = analyze_migrations(import_data)
+
+    return {
+        "validation": validation,
+        "migration_analysis": migration_analysis,
+        "project_name": import_data.get("project", {}).get("name", "Unknown"),
+        "counts": {
+            "stakeholders": len(import_data.get("stakeholders", [])),
+            "needs": len(import_data.get("needs", [])),
+            "performances": len(import_data.get("performances", [])),
+            "design_cases": len(import_data.get("design_cases", []))
+        }
+    }
+
+
+class ImportRequest(BaseModel):
+    """インポートリクエストのスキーマ"""
+    data: dict  # プロジェクトデータ
+    user_choices: Optional[dict] = None  # ユーザー選択値（マイグレーション用）
+
+
 @router.post("/import")
 def import_project(
-    import_data: dict,
+    request: ImportRequest,
     db: Session = Depends(get_db)
 ):
     """プロジェクトデータをインポート"""
+    from app.services.data_migration import migrate_import_data, validate_import_data
+
+    import_data = request.data
+    user_choices = request.user_choices or {}
+
     try:
+        # データ検証
+        validation = validate_import_data(import_data)
+        if not validation["valid"]:
+            raise HTTPException(status_code=400, detail={"errors": validation["errors"]})
+
+        # バージョンマイグレーション（古いバージョンのデータを最新に変換）
+        import_data = migrate_import_data(import_data, user_choices)
+
         # 新しいプロジェクトIDを生成
         new_project_id = str(uuid.uuid4())
         
@@ -1530,7 +1628,13 @@ def import_project(
                 mountain_position_json=design_case.get("mountain_position_json"),
                 utility_vector_json=design_case.get("utility_vector_json"),
                 partial_heights_json=design_case.get("partial_heights_json"),
-                performance_weights_json=design_case.get("performance_weights_json")
+                performance_weights_json=design_case.get("performance_weights_json"),
+                # Phase 4: 新規フィールド（マイグレーション後はデフォルト値で設定済み）
+                structural_analysis_json=design_case.get("structural_analysis_json"),
+                paper_metrics_json=design_case.get("paper_metrics_json"),
+                scc_analysis_json=design_case.get("scc_analysis_json"),
+                kernel_type=design_case.get("kernel_type", "classic_wl"),
+                weight_mode=design_case.get("weight_mode", "discrete")
             )
             db.add(db_design_case)
         
@@ -1595,26 +1699,45 @@ def format_design_case_response(db_design_case: DesignCaseModel) -> DesignCase:
     """DesignCaseModelをレスポンス形式に変換"""
     performance_values = json.loads(db_design_case.performance_values_json)
     network_data = json.loads(db_design_case.network_json)
-    
+
+    # weight_modeが設定されているか確認
+    weight_mode = getattr(db_design_case, 'weight_mode', None)
+
+    # 有効なweight_mode値のリスト
+    VALID_WEIGHT_MODES = {'discrete_3', 'discrete_5', 'discrete_7', 'continuous'}
+
+    # 古い 'discrete' や無効な値を検出
+    has_valid_weight_mode = weight_mode in VALID_WEIGHT_MODES
+
+    # 旧7段階モードからのマイグレーション
+    # weight_modeが設定されていない古いデータの場合、エッジ重みをマイグレーション
+    edges_data = network_data.get('edges', [])
+    if not has_valid_weight_mode and needs_7_level_migration(edges_data):
+        migrated_edges, _ = migrate_network_edges(edges_data, has_weight_mode=False)
+        network_data['edges'] = migrated_edges
+        weight_mode = 'discrete_7'  # マイグレーション後は新7段階モード
+    elif not has_valid_weight_mode:
+        weight_mode = 'discrete_7'  # デフォルト（'discrete'など無効値も含む）
+
     mountain_position = None
     if db_design_case.mountain_position_json:
         mountain_position = MountainPosition(**json.loads(db_design_case.mountain_position_json))
-    
+
     utility_vector = None
     if db_design_case.utility_vector_json:
         utility_vector = json.loads(db_design_case.utility_vector_json)
-    
+
     partial_heights = None
     if hasattr(db_design_case, 'partial_heights_json') and db_design_case.partial_heights_json:
         partial_heights = json.loads(db_design_case.partial_heights_json)
-    
+
     performance_weights = None
     if hasattr(db_design_case, 'performance_weights_json') and db_design_case.performance_weights_json:
         performance_weights = json.loads(db_design_case.performance_weights_json)
-    
+
     # performance_snapshotを@propertyから取得
     performance_snapshot = db_design_case.performance_snapshot if hasattr(db_design_case, 'performance_snapshot') else None
-    
+
     return DesignCase(
         id=db_design_case.id,
         name=db_design_case.name,
@@ -1631,7 +1754,8 @@ def format_design_case_response(db_design_case: DesignCaseModel) -> DesignCase:
         utility_vector=utility_vector,
         partial_heights=partial_heights,
         performance_weights=performance_weights,
-        performance_snapshot=performance_snapshot  # 追加！
+        performance_snapshot=performance_snapshot,  # 追加！
+        weight_mode=weight_mode
     )
 
 
@@ -1688,58 +1812,78 @@ def recalculate_mountains(
     """
     全設計案の山の座標を再計算
     性能、ニーズ、効用関数、投票などが変更された場合に使用
-    
+
     Request body:
         networks: 各設計案のネットワーク情報（オプション）
     """
+    import time
+    api_start = time.time()
+
     project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     if len(project.design_cases) == 0:
         return {"message": "No design cases to recalculate", "updated": 0}
-    
+
     try:
         from app.services.mountain_calculator import calculate_mountain_positions
-        
+
         # リクエストボディからネットワーク情報を取得
         networks = request_body.get('networks') if request_body else None
-        
+
+        calc_start = time.time()
         result = calculate_mountain_positions(project, db, networks=networks)
+        calc_time = (time.time() - calc_start) * 1000
+
         positions = result['positions']
         H_max = result['H_max']
-        
-        # 各設計案の座標を更新
-        updated_count = 0
+        calc_timings = result.get('timings', {})
+
+        # 各設計案の座標を更新（calculate_mountain_positionsで既にcommit済みなのでスキップ）
+        updated_count = len(positions)
+
+        api_total = (time.time() - api_start) * 1000
+
+        # API timing report
+        print(f"\n{'='*60}")
+        print(f"⏱️  API Timing Report (recalculate-mountains)")
+        print(f"{'='*60}")
+        print(f"  Mountain calculation: {calc_time:.2f} ms")
+        print(f"  API total: {api_total:.2f} ms")
+        print(f"{'='*60}\n")
+
+        # positionsをシリアライズ可能な形式に変換
+        serializable_positions = []
         for pos in positions:
-            design_case = db.query(DesignCaseModel).filter(
-                DesignCaseModel.id == pos['case_id']
-            ).first()
-            
-            if design_case:
-                design_case.mountain_position_json = json.dumps({
-                    'x': pos['x'],
-                    'y': pos['y'],
-                    'z': pos['z'],
-                    'H': pos['H'],
-                    'total_energy': pos.get('energy', {}).get('total_energy', 0)
-                })
-                # utility_vectorのタプルキーを文字列に変換
-                utility_vec_str_keys = {
+            serializable_positions.append({
+                'case_id': pos['case_id'],
+                'x': pos['x'],
+                'y': pos['y'],
+                'z': pos['z'],
+                'H': pos['H'],
+                'total_energy': pos.get('energy', {}).get('total_energy', 0),
+                'partial_heights': pos.get('partial_heights', {}),
+                'partial_energies': pos.get('energy', {}).get('partial_energies', {}),
+                'performance_weights': pos.get('performance_weights', {}),
+                # utility_vectorはタプルキーなので文字列キーに変換
+                'utility_vector': {
                     f"{k[0]}_{k[1]}": v for k, v in pos['utility_vector'].items()
                 }
-                design_case.utility_vector_json = json.dumps(utility_vec_str_keys)
-                design_case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
-                design_case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
-                updated_count += 1
-        
-        db.commit()
+            })
+
         return {
-            "message": f"Successfully recalculated {updated_count} design cases", 
+            "message": f"Successfully recalculated {updated_count} design cases",
             "updated": updated_count,
-            "H_max": H_max
+            "H_max": H_max,
+            "positions": serializable_positions,  # 追加: 更新されたposition情報
+            "timings": {
+                "api_total_ms": round(api_total, 2),
+                "calculation_ms": round(calc_time, 2),
+                "breakdown": calc_timings
+            }
         }
-    
+
     except Exception as e:
         import traceback
         print(f"❌ Recalculation error: {str(e)}")
@@ -1985,7 +2129,9 @@ def create_network_node(
                     'x': pos['x'],
                     'y': pos['y'],
                     'z': pos['z'],
-                    'H': pos['H']
+                    'H': pos['H'],
+                    'total_energy': pos.get('total_energy', 0),
+                    'partial_energies': pos.get('partial_energies', {})
                 })
                 utility_vec_str_keys = {
                     f"{k[0]}_{k[1]}": v for k, v in pos['utility_vector'].items()
@@ -1993,11 +2139,11 @@ def create_network_node(
                 case.utility_vector_json = json.dumps(utility_vec_str_keys)
                 case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
-        
+
         db.commit()
     except Exception as e:
         print(f"Mountain calculation error: {e}")
-    
+
     return NetworkNode(**new_node)
 
 @router.put("/{project_id}/design-cases/{case_id}/nodes/{node_id}")
@@ -2076,7 +2222,9 @@ def update_network_node(
                     'x': pos['x'],
                     'y': pos['y'],
                     'z': pos['z'],
-                    'H': pos['H']
+                    'H': pos['H'],
+                    'total_energy': pos.get('total_energy', 0),
+                    'partial_energies': pos.get('partial_energies', {})
                 })
                 utility_vec_str_keys = {
                     f"{k[0]}_{k[1]}": v for k, v in pos['utility_vector'].items()
@@ -2084,11 +2232,11 @@ def update_network_node(
                 case.utility_vector_json = json.dumps(utility_vec_str_keys)
                 case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
-        
+
         db.commit()
     except Exception as e:
         print(f"Mountain calculation error: {e}")
-    
+
     return {"message": "Node updated successfully"}
 
 @router.delete("/{project_id}/design-cases/{case_id}/nodes/{node_id}")
@@ -2167,7 +2315,9 @@ def delete_network_node(
                     'x': pos['x'],
                     'y': pos['y'],
                     'z': pos['z'],
-                    'H': pos['H']
+                    'H': pos['H'],
+                    'total_energy': pos.get('total_energy', 0),
+                    'partial_energies': pos.get('partial_energies', {})
                 })
                 utility_vec_str_keys = {
                     f"{k[0]}_{k[1]}": v for k, v in pos['utility_vector'].items()
@@ -2175,11 +2325,11 @@ def delete_network_node(
                 case.utility_vector_json = json.dumps(utility_vec_str_keys)
                 case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
-        
+
         db.commit()
     except Exception as e:
         print(f"Mountain calculation error: {e}")
-    
+
     return {"message": "Node deleted successfully"}
 
 
@@ -2245,7 +2395,9 @@ def delete_network_edge(
                     'x': pos['x'],
                     'y': pos['y'],
                     'z': pos['z'],
-                    'H': pos['H']
+                    'H': pos['H'],
+                    'total_energy': pos.get('total_energy', 0),
+                    'partial_energies': pos.get('partial_energies', {})
                 })
                 utility_vec_str_keys = {
                     f"{k[0]}_{k[1]}": v for k, v in pos['utility_vector'].items()
@@ -2253,11 +2405,11 @@ def delete_network_edge(
                 case.utility_vector_json = json.dumps(utility_vec_str_keys)
                 case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
-        
+
         db.commit()
     except Exception as e:
         print(f"Mountain calculation error: {e}")
-    
+
     return {"message": "Edge deleted successfully"}
 
 @router.put("/{project_id}/design-cases/{case_id}/nodes/{node_id}/position3d")
@@ -2402,7 +2554,9 @@ def create_network_edge(
                     'x': pos['x'],
                     'y': pos['y'],
                     'z': pos['z'],
-                    'H': pos['H']
+                    'H': pos['H'],
+                    'total_energy': pos.get('total_energy', 0),
+                    'partial_energies': pos.get('partial_energies', {})
                 })
                 utility_vec_str_keys = {
                     f"{k[0]}_{k[1]}": v for k, v in pos['utility_vector'].items()
@@ -2410,11 +2564,11 @@ def create_network_edge(
                 case.utility_vector_json = json.dumps(utility_vec_str_keys)
                 case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
-        
+
         db.commit()
     except Exception as e:
         print(f"Mountain calculation error: {e}")
-    
+
     return NetworkEdge(**new_edge)
 
 
@@ -2487,7 +2641,9 @@ def update_network_edge(
                     'x': pos['x'],
                     'y': pos['y'],
                     'z': pos['z'],
-                    'H': pos['H']
+                    'H': pos['H'],
+                    'total_energy': pos.get('total_energy', 0),
+                    'partial_energies': pos.get('partial_energies', {})
                 })
                 utility_vec_str_keys = {
                     f"{k[0]}_{k[1]}": v for k, v in pos['utility_vector'].items()
@@ -2495,7 +2651,7 @@ def update_network_edge(
                 case.utility_vector_json = json.dumps(utility_vec_str_keys)
                 case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
-        
+
         db.commit()
     except Exception as e:
         print(f"Mountain calculation error: {e}")

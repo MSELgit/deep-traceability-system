@@ -207,7 +207,7 @@ const tabs = [
   { key: 'mountain', label: 'Mountain View' },
   { key: 'twoaxis', label: '2-axis' },
   { key: 'opm3d', label: '3D OPM' },
-  { key: 'demo', label: 'Network' },
+  { key: 'demo', label: 'WL Kernel' },
 ];
 
 function handleTabChange(tabKey: string) {

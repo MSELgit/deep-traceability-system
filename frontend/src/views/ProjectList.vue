@@ -65,33 +65,44 @@
         </button>
       </div>
 
+      <!-- File Select Dialog -->
       <div v-if="showImportDialog" class="modal-overlay" @click="showImportDialog = false">
         <div class="modal-content" @click.stop>
           <h2>Import Project</h2>
           <div class="import-area">
-            <input 
-              type="file" 
-              @change="handleFileSelect" 
+            <input
+              type="file"
+              @change="handleFileSelect"
               accept=".json"
               ref="fileInput"
               style="display: none"
             />
             <FontAwesomeIcon :icon="['fas', 'cloud-upload-alt']" class="import-icon" />
-            <button 
-              class="import-button" 
+            <button
+              class="import-button"
               @click="fileInput?.click()"
+              :disabled="isLoadingPreview"
             >
-              Select File
+              {{ isLoadingPreview ? 'Analyzing...' : 'Select File' }}
             </button>
             <p class="import-help">Choose a project file (.json) to import</p>
           </div>
           <div class="form-actions">
-            <button type="button" @click="showImportDialog = false">
+            <button type="button" @click="showImportDialog = false" :disabled="isLoadingPreview">
               Cancel
             </button>
           </div>
         </div>
       </div>
+
+      <!-- Import Preview Dialog -->
+      <ImportPreviewDialog
+        v-if="showPreviewDialog && importPreview"
+        :visible="showPreviewDialog"
+        :preview="importPreview"
+        @confirm="confirmImport"
+        @cancel="cancelImport"
+      />
 
       <div v-if="showCreateDialog" class="modal-overlay" @click="showCreateDialog = false">
         <div class="modal-content" @click.stop>
@@ -134,8 +145,9 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProjectStore } from '../stores/projectStore'
 import { storeToRefs } from 'pinia'
-import { projectApi } from '../utils/api'
+import { projectApi, type ImportPreviewResponse } from '../utils/api'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import ImportPreviewDialog from '../components/common/ImportPreviewDialog.vue'
 
 const router = useRouter()
 const projectStore = useProjectStore()
@@ -143,9 +155,15 @@ const { projects, loading } = storeToRefs(projectStore)
 
 const showCreateDialog = ref(false)
 const showImportDialog = ref(false)
+const showPreviewDialog = ref(false)
+const isLoadingPreview = ref(false)
 const newProjectName = ref('')
 const newProjectDescription = ref('')
 const fileInput = ref<HTMLInputElement>()
+
+// Import preview state
+const importPreview = ref<ImportPreviewResponse | null>(null)
+const pendingImportData = ref<any>(null)
 
 onMounted(async () => {
   try {
@@ -216,26 +234,63 @@ async function handleFileSelect(event: Event) {
   const file = target.files?.[0]
   if (!file) return
 
+  isLoadingPreview.value = true
+
   try {
     const reader = new FileReader()
     reader.onload = async (e) => {
       try {
         const projectData = JSON.parse(e.target?.result as string)
-        await projectApi.import(projectData)
-        
-        await projectStore.loadProjects()
+
+        // Get preview first
+        const previewResponse = await projectApi.importPreview(projectData)
+        importPreview.value = previewResponse.data
+        pendingImportData.value = projectData
+
+        // Close file dialog and show preview dialog
         showImportDialog.value = false
-        alert('Project imported successfully')
+        showPreviewDialog.value = true
       } catch (error) {
-        console.error('Failed to import project:', error)
-        alert('Failed to import project')
+        console.error('Failed to analyze import:', error)
+        alert('Failed to analyze import file. Please check the file format.')
+      } finally {
+        isLoadingPreview.value = false
+        // Reset file input
+        if (fileInput.value) {
+          fileInput.value.value = ''
+        }
       }
     }
     reader.readAsText(file)
   } catch (error) {
     console.error('Failed to read file:', error)
     alert('Failed to read file')
+    isLoadingPreview.value = false
   }
+}
+
+async function confirmImport(userChoices: Record<string, any>) {
+  if (!pendingImportData.value) return
+
+  try {
+    await projectApi.import(pendingImportData.value, userChoices)
+    await projectStore.loadProjects()
+
+    showPreviewDialog.value = false
+    importPreview.value = null
+    pendingImportData.value = null
+
+    alert('Project imported successfully')
+  } catch (error) {
+    console.error('Failed to import project:', error)
+    alert('Failed to import project')
+  }
+}
+
+function cancelImport() {
+  showPreviewDialog.value = false
+  importPreview.value = null
+  pendingImportData.value = null
 }
 </script>
 

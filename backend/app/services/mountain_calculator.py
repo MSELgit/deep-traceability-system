@@ -12,10 +12,43 @@ from scipy.spatial.distance import pdist, squareform
 from typing import List, Dict
 from sqlalchemy.orm import Session
 import json
+import time
 
 from app.models.database import ProjectModel, DesignCaseModel, NeedPerformanceRelationModel
 from app.api.mds import compute_wl_kernel, kernel_to_distance, circular_mds_parallel
-from app.services.energy_calculator import calculate_energy_for_case
+from app.services.structural_energy import compute_structural_energy
+
+
+# Timing utility
+class Timer:
+    """計算時間計測用ユーティリティ"""
+    def __init__(self):
+        self.timings = {}
+        self._start_times = {}
+
+    def start(self, name: str):
+        self._start_times[name] = time.time()
+
+    def stop(self, name: str):
+        if name in self._start_times:
+            elapsed = (time.time() - self._start_times[name]) * 1000  # ms
+            self.timings[name] = elapsed
+            del self._start_times[name]
+
+    def get_report(self) -> Dict[str, float]:
+        return self.timings.copy()
+
+    def print_report(self, prefix: str = ""):
+        print(f"\n{'='*60}")
+        print(f"⏱️  {prefix}Timing Report")
+        print(f"{'='*60}")
+        total = 0
+        for name, ms in self.timings.items():
+            print(f"  {name}: {ms:.2f} ms")
+            total += ms
+        print(f"{'─'*60}")
+        print(f"  TOTAL: {total:.2f} ms")
+        print(f"{'='*60}\n")
 
 def calculate_network_kernel(networks: List[Dict]) -> np.ndarray:
     """
@@ -127,23 +160,32 @@ def calculate_effective_votes(up_votes: float, down_votes: float) -> float:
 
 
 def distribute_votes_to_needs(project: ProjectModel) -> Dict[str, float]:
-    """ステークホルダーの票をニーズに按分（重み付き）"""
+    """ステークホルダーの票をニーズに按分（重み付き）
+
+    各ニーズのpriorityも適用される
+    """
     need_votes = {}
-    
+
+    # ニーズIDからpriorityを取得するマップを作成
+    need_priorities = {need.id: (need.priority if need.priority is not None else 1.0)
+                       for need in project.needs}
+
     for stakeholder in project.stakeholders:
         # 重みを含む関係を取得
-        related_needs = [(r.need_id, r.relationship_weight or 1.0) for r in project.stakeholder_need_relations 
+        related_needs = [(r.need_id, r.relationship_weight or 1.0) for r in project.stakeholder_need_relations
                         if r.stakeholder_id == stakeholder.id and (r.relationship_weight or 1.0) > 0]
-        
+
         if len(related_needs) > 0:
             # 総重みを計算
             total_weight = sum(weight for _, weight in related_needs)
-            
+
             # 重みに比例して票を配分
             for need_id, weight in related_needs:
                 vote_portion = (weight / total_weight) * stakeholder.votes
-                need_votes[need_id] = need_votes.get(need_id, 0) + vote_portion
-    
+                # priorityを適用
+                priority = need_priorities.get(need_id, 1.0)
+                need_votes[need_id] = need_votes.get(need_id, 0) + (vote_portion * priority)
+
     return need_votes
 
 
@@ -345,26 +387,34 @@ def calculate_mountain_positions(
 ) -> List[Dict]:
     """
     全設計案の半球座標を計算
-    
+
     標高H_max（全効用関数が1.0の場合）が半球の頂点になるようにスケーリングする。
     各設計案は半球の表面上に配置される：x² + y² + z² = R²（y ≥ 0）
-    
+
     Args:
         project: プロジェクトモデル
         db: データベースセッション
         hemisphere_radius: 半球の半径（デフォルト5.0）
-    
+
     Returns:
         [{'case_id': str, 'x': float, 'y': float, 'z': float, 'H': float, 'utility_vector': dict}, ...]
     """
+    timer = Timer()
+    timer.start("total")
+
     design_cases = project.design_cases
+    n_cases = len(design_cases)
+    n_networks = len(networks) if networks else 0
+    print(f"\n📊 Mountain calculation: {n_cases} design cases, {n_networks} networks")
 
     if len(design_cases) == 0:
-        return []
-    
+        return {'positions': [], 'H_max': 1.0, 'timings': {}}
+
     # 1. 性能×ニーズペアごとの重みを計算
+    timer.start("1_vote_distribution")
     need_votes = distribute_votes_to_needs(project)
     performance_need_votes = distribute_votes_to_performances(project, need_votes)
+    timer.stop("1_vote_distribution")
     
     # 効用関数が設定されているペアを確認（標高計算用）
     relations_with_utility = set()
@@ -400,18 +450,19 @@ def calculate_mountain_positions(
     # 正規化された重みを使用するため、H_maxは常に1.0
     # （全ての重みの合計が1.0に正規化され、全効用が1.0の場合）
     H_max = 1.0
-    
+
     # 2. 各設計案の効用ベクトルと標高を計算
+    timer.start("2_utility_vectors")
     utility_vectors = []
     elevations = []
-    
+
     for case in design_cases:
         # 設計案のスナップショットから末端性能を取得
         if case.performance_snapshot:
             # スナップショットが存在する場合（すでにリスト形式）
             case_performances = case.performance_snapshot
             case_leaf_performance_ids = set()
-            
+
             # スナップショット内で末端性能を判定
             for perf in case_performances:
                 # この性能を親として持つ子が存在するか確認
@@ -421,31 +472,38 @@ def calculate_mountain_positions(
         else:
             # スナップショットがない場合は現在の性能ツリーを使用（後方互換性）
             case_leaf_performance_ids = current_leaf_performance_ids
-        
+
         utility_vec = calculate_utility_vector(case, project, need_perf_relations)
         H = calculate_elevation(utility_vec, performance_need_weights, case_leaf_performance_ids)
-        
+
         utility_vectors.append(utility_vec)
         elevations.append(H)
-    
+    timer.stop("2_utility_vectors")
+
     # 3. 効用ベクトルからMDSで2D座標を計算
     # ↓ ネットワーク情報がある場合は円環MDSを使用（テスト段階）
     if networks is not None and len(networks) > 0:
-        
+
         # WLカーネル計算（反復1回）
+        timer.start("3a_wl_kernel")
         K = compute_wl_kernel(networks, iterations=int(1))
-        
+        timer.stop("3a_wl_kernel")
+
         # カーネル→距離行列変換
+        timer.start("3b_kernel_to_distance")
         distance_matrix = kernel_to_distance(K)
-        
+        timer.stop("3b_kernel_to_distance")
+
         # 円環MDS（並列版、n_init=500）
+        timer.start("3c_circular_mds")
         circular_mds_angles, circular_stress = circular_mds_parallel(
             distance_matrix,
             n_init=500,
             n_workers=None  # 自動でCPU数に応じて設定
         )
-        
-        
+        timer.stop("3c_circular_mds")
+        print(f"   Circular MDS stress: {circular_stress:.6f}")
+
         mds_angles = circular_mds_angles
     else:
         # 既存のMDS処理（効用ベクトルベース）
@@ -478,11 +536,12 @@ def calculate_mountain_positions(
     max_H_index = np.argmax(elevations)
     rotation_offset = -mds_angles[max_H_index]
     mds_angles = mds_angles + rotation_offset
-    
+
     # 6. 円錐座標に変換（半球の制約に従う）
+    timer.start("4_position_calculation")
     # 半球の半径を設定（H_maxが頂点になるように）
     hemisphere_radius = 10.0  # 半球の半径
-    
+
     positions = []
     
     for i, case in enumerate(design_cases):
@@ -552,32 +611,51 @@ def calculate_mountain_positions(
             'partial_heights': partial_heights,  # 性能ごとの部分標高
             'performance_weights': performance_total_weights  # 性能ごとの合計票数
         })
-        
-    
+    timer.stop("4_position_calculation")
+
     # 7. データベースに座標を保存（オプション）
+    timer.start("5_energy_and_db")
     for i, case in enumerate(design_cases):
-        # エネルギーを計算（スナップショットがある場合はそれを使用）
-        if case.performance_snapshot:
-            # スナップショットの性能リストをPerformanceオブジェクトに変換（すでにリスト形式）
-            from app.schemas.project import Performance
-            case_performances = [Performance(**perf_data) for perf_data in case.performance_snapshot]
-            energy_result = calculate_energy_for_case(case, case_performances, db)
+        # 論文準拠エネルギーを計算
+        # E = Σ(i<j) W_i × W_j × L(C_ij) / (Σ W_i)²
+        network = case.network
+        perf_weights = case.performance_weights or {}
+        weight_mode = getattr(case, 'weight_mode', 'discrete_7') or 'discrete_7'
+
+        if network and 'nodes' in network and 'edges' in network:
+            energy_result = compute_structural_energy(
+                network=network,
+                performance_weights=perf_weights,
+                weight_mode=weight_mode
+            )
+            total_energy = energy_result['E']
+
+            # 性能ごとの部分エネルギーを集計（論文準拠: E_ij から E_i を導出）
+            partial_energies = {}
+            for contrib in energy_result.get('energy_contributions', []):
+                perf_i_id = contrib['perf_i_id']
+                perf_j_id = contrib['perf_j_id']
+                contribution = contrib['contribution']
+                # 各性能に半分ずつ配分
+                partial_energies[perf_i_id] = partial_energies.get(perf_i_id, 0) + contribution / 2
+                partial_energies[perf_j_id] = partial_energies.get(perf_j_id, 0) + contribution / 2
         else:
-            # スナップショットがない場合は現在の性能ツリーを使用
-            energy_result = calculate_energy_for_case(case, project.performances, db)
+            total_energy = 0.0
+            partial_energies = {}
 
         positions[i]['energy'] = {
-            'total_energy': energy_result['total_energy'],
-            'partial_energies': energy_result['partial_energies']
+            'total_energy': total_energy,
+            'partial_energies': partial_energies
         }
 
-        # 座標とエネルギーを保存
+        # 座標とエネルギーを保存（partial_energiesも含む）
         case.mountain_position_json = json.dumps({
             'x': positions[i]['x'],
             'y': positions[i]['y'],
             'z': positions[i]['z'],
             'H': positions[i]['H'],
-            'total_energy': energy_result['total_energy']
+            'total_energy': total_energy,
+            'partial_energies': partial_energies
         })
         # utility_vectorはタプルキーをJSON化できないので文字列キーに変換
         utility_vec_str_keys = {
@@ -590,10 +668,15 @@ def calculate_mountain_positions(
 
         # 性能ごとの合計票数も保存
         case.performance_weights_json = json.dumps(positions[i]['performance_weights'])
-    
+
     db.commit()
-    
+    timer.stop("5_energy_and_db")
+
+    timer.stop("total")
+    timer.print_report("Mountain Calculator ")
+
     return {
         'positions': positions,
-        'H_max': float(H_max)
+        'H_max': float(H_max),
+        'timings': timer.get_report()
     }

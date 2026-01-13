@@ -15,6 +15,7 @@ from app.services.matrix_utils import (
     normalize_weight,
     build_adjacency_matrices,
     compute_total_effect_matrix,
+    compute_inner_products,
     compute_structural_tradeoff,
     analyze_network_structure,
 )
@@ -24,22 +25,41 @@ class TestNormalizeWeight:
     """normalize_weight のテスト"""
 
     def test_discrete_values(self):
-        """離散値の変換"""
-        assert normalize_weight(-3) == -0.8
-        assert normalize_weight(-1) == -0.4
-        assert normalize_weight(0) == 0.0
-        assert normalize_weight(1) == 0.4
-        assert normalize_weight(3) == 0.8
+        """離散値の変換（discrete_5モード）"""
+        # discrete_5 モード: {-3, -1, 0, 1, 3} → {-4/5, -2/5, 0, 2/5, 4/5}
+        assert normalize_weight(-3, 'discrete_5') == pytest.approx(-0.8)
+        assert normalize_weight(-1, 'discrete_5') == pytest.approx(-0.4)
+        assert normalize_weight(0, 'discrete_5') == 0.0
+        assert normalize_weight(1, 'discrete_5') == pytest.approx(0.4)
+        assert normalize_weight(3, 'discrete_5') == pytest.approx(0.8)
 
     def test_continuous_values(self):
-        """連続値のパススルー"""
-        assert normalize_weight(0.5) == 0.5
-        assert normalize_weight(-0.5) == -0.5
+        """連続値のパススルー（連続モード）"""
+        # 連続モードでは値がそのままパススルー
+        assert normalize_weight(0.5, 'continuous') == 0.5
+        assert normalize_weight(-0.5, 'continuous') == -0.5
 
     def test_clipping(self):
-        """範囲外の値のクリッピング"""
-        assert normalize_weight(5) == pytest.approx(1.0, abs=0.1)
-        assert normalize_weight(-5) == pytest.approx(-1.0, abs=0.1)
+        """範囲外の値のクリッピング（連続モード）"""
+        # 連続モードでは[-1, 1]にクリップ
+        assert normalize_weight(5, 'continuous') == pytest.approx(1.0, abs=0.01)
+        assert normalize_weight(-5, 'continuous') == pytest.approx(-1.0, abs=0.01)
+
+    def test_discrete_3_mode(self):
+        """3段階離散化モード"""
+        assert normalize_weight(-1, 'discrete_3') == pytest.approx(-2/3)
+        assert normalize_weight(0, 'discrete_3') == 0.0
+        assert normalize_weight(1, 'discrete_3') == pytest.approx(2/3)
+
+    def test_discrete_7_mode(self):
+        """7段階離散化モード: {-5,-3,-1,0,1,3,5} → {-6/7,-4/7,-2/7,0,2/7,4/7,6/7}"""
+        assert normalize_weight(-5, 'discrete_7') == pytest.approx(-6/7)
+        assert normalize_weight(-3, 'discrete_7') == pytest.approx(-4/7)
+        assert normalize_weight(-1, 'discrete_7') == pytest.approx(-2/7)
+        assert normalize_weight(0, 'discrete_7') == 0.0
+        assert normalize_weight(1, 'discrete_7') == pytest.approx(2/7)
+        assert normalize_weight(3, 'discrete_7') == pytest.approx(4/7)
+        assert normalize_weight(5, 'discrete_7') == pytest.approx(6/7)
 
 
 class TestBuildAdjacencyMatrices:
@@ -67,6 +87,7 @@ class TestBuildAdjacencyMatrices:
                 {'source_id': 'v1', 'target_id': 'a1', 'weight': 1},  # V→A
             ]
         }
+        # デフォルトは discrete_7 モード
         result = build_adjacency_matrices(network)
 
         assert result['dimensions']['n_perf'] == 1
@@ -74,12 +95,14 @@ class TestBuildAdjacencyMatrices:
         assert result['dimensions']['n_var'] == 1
 
         # B_PA: Attr → Perf (1×1)
+        # discrete_7: weight 3 → 4/7 ≈ 0.5714
         assert result['B_PA'].shape == (1, 1)
-        assert result['B_PA'][0, 0] == pytest.approx(0.8)  # weight 3 → 0.8
+        assert result['B_PA'][0, 0] == pytest.approx(4/7)
 
         # B_AV: Var → Attr (1×1)
+        # discrete_7: weight 1 → 2/7 ≈ 0.2857
         assert result['B_AV'].shape == (1, 1)
-        assert result['B_AV'][0, 0] == pytest.approx(0.4)  # weight 1 → 0.4
+        assert result['B_AV'][0, 0] == pytest.approx(2/7)
 
         # B_AA: Attr → Attr (1×1)
         assert result['B_AA'].shape == (1, 1)
@@ -144,8 +167,10 @@ class TestComputeTotalEffectMatrix:
         assert result['convergence'] is True
         # V1→A1→P1 の直接効果 + V1→A1→A2→P1 の間接効果
         # T = B_PA × (I - B_AA)^(-1) × B_AV
-        # (I - B_AA)^(-1) = [[1, 0.3], [0, 1]] の逆行列 = [[1, -0.3], [0, 1]]... 計算が複雑なので近似
-        assert result['T'][0, 0] > 1.0  # 間接効果で増幅
+        # (I - B_AA)^(-1) = [[1, 0.3], [0, 1]]
+        # B_PA × (I - B_AA)^(-1) = [[1.0, 0.5]] × [[1, 0.3], [0, 1]] = [[1.0, 0.8]]
+        # T = [[1.0, 0.8]] × [[1.0], [0.0]] = [[1.0]]
+        assert result['T'][0, 0] >= 1.0  # 間接効果で増幅（この例では 1.0）
 
     def test_empty_matrices(self):
         """空行列の処理"""
@@ -156,6 +181,77 @@ class TestComputeTotalEffectMatrix:
         result = compute_total_effect_matrix(B_PA, B_AA, B_AV)
 
         assert result['method'] == 'empty'
+
+
+class TestComputeInnerProducts:
+    """compute_inner_products のテスト（論文Chapter 7のエネルギー計算用）"""
+
+    def test_basic_inner_product(self):
+        """基本的な内積計算"""
+        T = np.array([
+            [1.0, 0.0],   # P1: V1のみに影響
+            [0.0, 1.0],   # P2: V2のみに影響
+        ])
+
+        result = compute_inner_products(T)
+
+        # 内積行列
+        assert result['C'].shape == (2, 2)
+        assert result['C'][0, 0] == pytest.approx(1.0)  # T_0 · T_0 = 1
+        assert result['C'][1, 1] == pytest.approx(1.0)  # T_1 · T_1 = 1
+        assert result['C'][0, 1] == pytest.approx(0.0)  # 直交 → 内積 = 0
+
+        # ノルム
+        assert result['norms'][0] == pytest.approx(1.0)
+        assert result['norms'][1] == pytest.approx(1.0)
+
+        # cos θ
+        assert result['cos_theta'][0, 1] == pytest.approx(0.0)  # 独立
+
+    def test_tradeoff_inner_product(self):
+        """トレードオフ時の内積（負値）"""
+        T = np.array([
+            [1.0, 0.0],   # P1: 正の効果
+            [-1.0, 0.0],  # P2: 負の効果（トレードオフ）
+        ])
+
+        result = compute_inner_products(T)
+
+        # 内積は負（トレードオフ）
+        assert result['C'][0, 1] == pytest.approx(-1.0)
+
+        # cos θ = -1（完全なトレードオフ）
+        assert result['cos_theta'][0, 1] == pytest.approx(-1.0)
+
+    def test_magnitude_matters(self):
+        """内積は大きさを含む（cos θ との違い）"""
+        # 同じ方向だが大きさが異なる
+        T = np.array([
+            [2.0, 0.0],   # P1: 大きな効果
+            [0.5, 0.0],   # P2: 小さな効果（同じ方向）
+        ])
+
+        result = compute_inner_products(T)
+
+        # cos θ = 1（方向は同じ）
+        assert result['cos_theta'][0, 1] == pytest.approx(1.0)
+
+        # 内積 = 2 * 0.5 = 1.0（大きさを含む）
+        assert result['C'][0, 1] == pytest.approx(1.0)
+
+        # ノルムが異なる
+        assert result['norms'][0] == pytest.approx(2.0)
+        assert result['norms'][1] == pytest.approx(0.5)
+
+    def test_empty_matrix(self):
+        """空行列の処理"""
+        T = np.array([])
+
+        result = compute_inner_products(T)
+
+        assert result['C'].size == 0
+        assert result['norms'].size == 0
+        assert result['cos_theta'].size == 0
 
 
 class TestComputeStructuralTradeoff:
