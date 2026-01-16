@@ -1,0 +1,51 @@
+\begin{itemize}
+    \item 変数：$V_1, V_2, V_3, V_4$（4個）
+    \item 属性：$A_1, A_2, A_3, A_4, A_5, A_6$（6個）
+    \item 性能：$P_1, P_2, P_3, P_4, P_5, P_6$（6個）
+\end{itemize}
+
+意図する構造として、
+\begin{itemize}
+    \item $P_1, P_2, P_3$は主に$A_1, A_2, A_3$を経由（$V_1, V_2$から駆動）
+    \item $P_4, P_5, P_6$は主に$A_4, A_5, A_6$を経由（$V_3, V_4$から駆動）
+    \item $A_3$から$A_4$への弱い結合がクラスタ間の橋渡しとなる
+\end{itemize}
+という設計を行った．
+
+パス係数行列は以下の通りである：
+
+\begin{equation}
+    \mathbf{B}_{AV} = \begin{pmatrix}
+        1.0 & 0.3 & 0 & 0 \\
+        0.4 & 1.0 & 0 & 0 \\
+        0 & 0.6 & 0.2 & 0 \\
+        0 & 0 & 0.8 & 0.3 \\
+        0 & 0 & 0.4 & 1.0 \\
+        0 & 0 & 0 & 0.7
+    \end{pmatrix}
+    \label{eq:example_B_AV}
+\end{equation}
+
+\begin{equation}
+    \mathbf{B}_{AA} = \begin{pmatrix}
+        0 & 0 & 0 & 0 & 0 & 0 \\
+        0.15 & 0 & 0 & 0 & 0 & 0 \\
+        0 & 0.1 & 0 & 0 & 0 & 0 \\
+        0 & 0 & 0.05 & 0 & 0 & 0 \\
+        0 & 0 & 0 & 0.12 & 0 & 0 \\
+        0 & 0 & 0 & 0 & 0.1 & 0
+    \end{pmatrix}
+    \label{eq:example_B_AA}
+\end{equation}
+
+\begin{equation}
+    \mathbf{B}_{PA} = \begin{pmatrix}
+        1.0 & -0.7 & 0.3 & 0 & 0 & 0 \\
+        -0.5 & 1.0 & -0.4 & 0 & 0 & 0 \\
+        0.3 & 0.4 & 1.0 & 0.15 & 0 & 0 \\
+        0 & 0 & 0.1 & 1.0 & -0.6 & 0.2 \\
+        0 & 0 & 0 & -0.5 & 1.0 & -0.4 \\
+        0 & 0 & 0 & 0.3 & -0.4 & 1.0
+    \end{pmatrix}
+    \label{eq:example_B_PA}
+\end{equation}
