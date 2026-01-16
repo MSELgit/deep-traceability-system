@@ -16,6 +16,9 @@
         <button class="tool-btn" @click="resetView" title="Fit">
           <FontAwesomeIcon :icon="['fas', 'expand']" />
         </button>
+        <button class="tool-btn" @click="downloadAsImage" title="Download">
+          <FontAwesomeIcon :icon="['fas', 'camera']" />
+        </button>
       </div>
     </div>
 
@@ -254,7 +257,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import type { NetworkStructure, NetworkNode, Performance } from '../../types/project';
 import type { NodeShapleyValue, EdgeShapleyValue } from '@/utils/api';
@@ -971,6 +974,73 @@ watch([() => props.perfIId, () => props.perfJId, () => props.nodeShapleyValues],
   });
 }, { deep: true });
 
+// Download network as PNG image
+async function downloadAsImage() {
+  if (!svgCanvas.value) return;
+
+  try {
+    // Clone SVG
+    const svgClone = svgCanvas.value.cloneNode(true) as SVGSVGElement;
+
+    // Reset transform to show full view
+    const mainGroup = svgClone.querySelector('g[transform]');
+    if (mainGroup) {
+      mainGroup.setAttribute('transform', 'scale(1)');
+    }
+
+    // Set viewBox and dimensions
+    svgClone.setAttribute('viewBox', `0 0 ${canvasWidth.value} ${canvasHeight.value}`);
+    svgClone.setAttribute('width', String(canvasWidth.value));
+    svgClone.setAttribute('height', String(canvasHeight.value));
+
+    // Serialize SVG to string
+    const svgData = new XMLSerializer().serializeToString(svgClone);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const svgUrl = URL.createObjectURL(svgBlob);
+
+    // Load into image
+    const img = new Image();
+    img.onload = () => {
+      // Create canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = canvasWidth.value;
+      canvas.height = canvasHeight.value;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Fill background
+      ctx.fillStyle = '#fafafa';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw SVG
+      ctx.drawImage(img, 0, 0);
+
+      // Download
+      const link = document.createElement('a');
+      const perfIName = props.perfIId ? props.performances.find(p => p.id === props.perfIId || `perf-${p.id}` === props.perfIId)?.name || 'P1' : 'all';
+      const perfJName = props.perfJId ? props.performances.find(p => p.id === props.perfJId || `perf-${p.id}` === props.perfJId)?.name || 'P2' : 'all';
+      link.download = `tradeoff-network-${perfIName}-${perfJName}-${new Date().toISOString().slice(0, 10)}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      // Cleanup
+      URL.revokeObjectURL(svgUrl);
+    };
+
+    img.onerror = () => {
+      console.error('Failed to load SVG as image');
+      alert('Failed to download network image');
+      URL.revokeObjectURL(svgUrl);
+    };
+
+    img.src = svgUrl;
+  } catch (error) {
+    console.error('Failed to download network image:', error);
+    alert('Failed to download network image');
+  }
+}
+
 onMounted(() => {
   nextTick(() => {
     if (props.network.nodes.length > 0) {
@@ -987,7 +1057,8 @@ onMounted(() => {
 .tradeoff-network-viewer {
   display: flex;
   flex-direction: column;
-  width: 100%;
+  flex: 1;
+  min-height: 0;
   background: $gray;
   border-radius: 8px;
   overflow: hidden;
@@ -1072,8 +1143,8 @@ onMounted(() => {
 .network-viewer {
   position: relative;
   overflow: hidden;
-  width: 100%;
-  aspect-ratio: 3/2;  // 1200:800 = 3:2 (横:縦) - キャンバスの縦横比に合わせる
+  flex: 1;
+  min-height: 0;
 }
 
 .canvas-container {
@@ -1081,6 +1152,9 @@ onMounted(() => {
   height: 100%;
   overflow: auto;
   background: #fafafa;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
 
   &::-webkit-scrollbar {
     width: 6px;

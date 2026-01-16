@@ -9,10 +9,10 @@ import './style.css'
 // Font Awesome
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { 
+import {
 	faPenToSquare, faTrash, faEye, faCopy, faRotateRight,
 	faHexagonNodes, faExpand, faAlignJustify, faFloppyDisk, faArrowPointer,
-	faFolder, faFolderOpen, faShareFromSquare, faFileImport, faChevronDown, faChevronRight, faChevronUp, faChevronLeft,
+	faFolder, faFolderOpen, faShareFromSquare, faFileImport, faFileExport, faChevronDown, faChevronRight, faChevronUp, faChevronLeft,
 	faTriangleExclamation, faXmark, faPlus, faGear, faCircleInfo, faCamera, faPaste
 } from '@fortawesome/free-solid-svg-icons'
 
@@ -20,7 +20,7 @@ import {
 library.add(
 	faPenToSquare, faTrash, faEye, faCopy, faRotateRight,
 	faHexagonNodes, faExpand, faAlignJustify, faFloppyDisk, faArrowPointer,
-	faFolder, faFolderOpen, faShareFromSquare, faFileImport, faChevronDown, faChevronRight, faChevronUp, faChevronLeft,
+	faFolder, faFolderOpen, faShareFromSquare, faFileImport, faFileExport, faChevronDown, faChevronRight, faChevronUp, faChevronLeft,
 	faTriangleExclamation, faXmark, faPlus, faGear, faCircleInfo, faCamera, faPaste
 )
 

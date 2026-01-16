@@ -421,6 +421,7 @@ function initThreeJS() {
   controls.dampingFactor = 0.05;
   controls.minDistance = 5;
   controls.maxDistance = 50;
+  controls.target.set(0, 3, 0);
 
   // Lights
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -436,11 +437,12 @@ function initThreeJS() {
     color: 0xadff2f,
     transparent: true,
     opacity: 0.2,
-
+    depthWrite: false,  // Don't write to depth buffer so circles can render on top
     side: THREE.DoubleSide
   });
   mountainMesh = new THREE.Mesh(geometry, material);
   mountainMesh.rotation.x = 0; // Orient hemisphere upward
+  mountainMesh.renderOrder = 1;  // Render first
   scene.add(mountainMesh);
   const peakGeometry = new THREE.SphereGeometry(0.3, 16, 16);
   const peakMaterial = new THREE.MeshPhongMaterial({
@@ -571,25 +573,26 @@ function updateMountainView() {
     scene.add(mesh);
     casePoints.set(designCase.id, mesh);
   });
-  designCases.value.forEach((designCase: DesignCase) => {
+  designCases.value.forEach((designCase: DesignCase, index: number) => {
     if (!designCase.mountain_position) return;
-    
+
     const y = designCase.mountain_position.y;
     const hemisphereRadius = 10;
     const rSquared = hemisphereRadius ** 2 - y ** 2;
     const r = Math.sqrt(Math.max(0, rSquared));
-    
+
     const circleGeometry = new THREE.CircleGeometry(r, 32);
     const circleMaterial = new THREE.MeshBasicMaterial({
       color: designCase.color || '#3357FF',
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.1,
+      opacity: 0.2,
       depthWrite: false
     });
     const circleMesh = new THREE.Mesh(circleGeometry, circleMaterial);
     circleMesh.rotation.x = -Math.PI / 2; // Place horizontally
     circleMesh.position.set(0, y, 0);
+    circleMesh.renderOrder = 10 + index; // Render after hemisphere (renderOrder=1)
     scene.add(circleMesh);
   });
 

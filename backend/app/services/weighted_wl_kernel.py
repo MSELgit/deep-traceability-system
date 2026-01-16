@@ -73,12 +73,18 @@ class WeightedWLKernel:
             'variable': 2, 'object': 3, 'environment': 3, 'entity': 3
         }
 
-    def fit_transform(self, graphs: List[Dict]) -> np.ndarray:
+    def fit_transform(
+        self,
+        graphs: List[Dict],
+        weight_modes: Optional[List[str]] = None
+    ) -> np.ndarray:
         """
         グラフリストからカーネル行列を計算
 
         Args:
             graphs: ネットワークのリスト [{'nodes': [...], 'edges': [...]}, ...]
+            weight_modes: 各グラフのweight_modeリスト（オプション）
+                          指定しない場合はインスタンスのweight_modeを使用
 
         Returns:
             K: (n_graphs × n_graphs) カーネル行列（正規化済み）
@@ -87,10 +93,16 @@ class WeightedWLKernel:
         if n == 0:
             return np.array([])
 
-        # 各グラフの特徴を抽出
+        # weight_modesが指定されていない場合はインスタンスのweight_modeを使用
+        if weight_modes is None:
+            weight_modes = [self.weight_mode] * n
+        elif len(weight_modes) != n:
+            raise ValueError(f"weight_modes length ({len(weight_modes)}) must match graphs length ({n})")
+
+        # 各グラフの特徴を抽出（個別のweight_modeを適用）
         all_features = []
-        for graph in graphs:
-            features = self._extract_features(graph)
+        for graph, wm in zip(graphs, weight_modes):
+            features = self._extract_features(graph, weight_mode=wm)
             all_features.append(features)
 
         # カーネル行列を計算
@@ -106,9 +118,13 @@ class WeightedWLKernel:
 
         return K_normalized
 
-    def _extract_features(self, graph: Dict) -> Dict:
+    def _extract_features(self, graph: Dict, weight_mode: Optional[str] = None) -> Dict:
         """
         グラフから階層的特徴を抽出
+
+        Args:
+            graph: ネットワークデータ
+            weight_mode: このグラフに適用するweight_mode（Noneの場合はインスタンスのweight_modeを使用）
 
         Returns:
             {
@@ -117,6 +133,9 @@ class WeightedWLKernel:
                 'histogram': np.ndarray,  # 全体のヒストグラム特徴
             }
         """
+        # 使用するweight_modeを決定
+        effective_weight_mode = weight_mode if weight_mode is not None else self.weight_mode
+
         nodes = graph.get('nodes', [])
         edges = graph.get('edges', [])
 
@@ -142,8 +161,8 @@ class WeightedWLKernel:
             if weight is None:
                 weight = 0
 
-            # 連続値に正規化
-            weight = self._normalize_weight(weight)
+            # 指定されたweight_modeで連続値に正規化
+            weight = self._normalize_weight(weight, weight_mode=effective_weight_mode)
 
             if src_idx is not None and tgt_idx is not None:
                 adjacency[src_idx].append((tgt_idx, weight))
@@ -218,7 +237,7 @@ class WeightedWLKernel:
             'histogram': histogram,
         }
 
-    def _normalize_weight(self, weight: float) -> float:
+    def _normalize_weight(self, weight: float, weight_mode: Optional[str] = None) -> float:
         """
         重みを [-1, 1] の範囲に正規化
 
@@ -228,8 +247,13 @@ class WeightedWLKernel:
         - 5段階: {-3, -1, 0, +1, +3} → {-4/5, -2/5, 0, +2/5, +4/5}
         - 7段階: {-5, -3, -1, 0, +1, +3, +5} → {-6/7, -4/7, -2/7, 0, +2/7, +4/7, +6/7}
         - 連続: そのまま（-1~+1にクリップ）
+
+        Args:
+            weight: 正規化する重み値
+            weight_mode: 使用するweight_mode（Noneの場合はインスタンスのweight_modeを使用）
         """
-        return _normalize_weight_impl(weight, self.weight_mode)
+        effective_mode = weight_mode if weight_mode is not None else self.weight_mode
+        return _normalize_weight_impl(weight, effective_mode)
 
     def _aggregate_neighbors(
         self,
@@ -603,7 +627,8 @@ def compute_discretization_confidence(
 def compute_weighted_wl_kernel(
     networks: List[Dict],
     iterations: int = 3,
-    weight_mode: str = 'continuous'
+    weight_mode: str = 'continuous',
+    weight_modes: Optional[List[str]] = None
 ) -> np.ndarray:
     """
     Weighted WLカーネルを計算する便利関数
@@ -613,7 +638,9 @@ def compute_weighted_wl_kernel(
     Args:
         networks: ネットワークのリスト
         iterations: WL反復回数
-        weight_mode: 'discrete' or 'continuous'
+        weight_mode: デフォルトのweight_mode（weight_modesが指定されていない場合に使用）
+        weight_modes: 各ネットワークのweight_modeリスト（オプション）
+                      指定された場合はweight_modeパラメータより優先
 
     Returns:
         正規化されたカーネル行列
@@ -622,4 +649,4 @@ def compute_weighted_wl_kernel(
         n_iterations=iterations,
         weight_mode=weight_mode
     )
-    return kernel.fit_transform(networks)
+    return kernel.fit_transform(networks, weight_modes=weight_modes)

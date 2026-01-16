@@ -143,18 +143,22 @@ def classical_mds(distance_matrix: List[List[float]], n_components: int = 2) -> 
 
 def circular_mds_parallel(distance_matrix: np.ndarray, n_init: int = 50, n_workers: int = None) -> tuple:
     """距離行列から直接円環座標を計算（並列版Circular MDS）
-    
+
     Args:
         distance_matrix: 距離行列
         n_init: 初期値試行回数
         n_workers: 並列ワーカー数（Noneで自動：CPU数）
-    
+
     Returns:
         (thetas, normalized_stress) のタプル
     """
     D = np.array(distance_matrix)
     n = len(D)
-    
+
+    # 1件以下の場合は早期リターン
+    if n <= 1:
+        return np.array([0.0] * n), 0.0
+
     # 距離を[0, π]の範囲に正規化
     max_dist = np.max(D)
     if max_dist > 0:
@@ -183,14 +187,18 @@ def circular_mds_parallel(distance_matrix: np.ndarray, n_init: int = 50, n_worke
 
 def circular_mds_sequential(distance_matrix: np.ndarray, n_init: int = 50) -> tuple:
     """距離行列から直接円環座標を計算（逐次版Circular MDS）"""
-    
+
     def circular_distance(theta_i: float, theta_j: float) -> float:
         diff = abs(theta_i - theta_j)
         return min(diff, 2*np.pi - diff)
-    
+
     D = np.array(distance_matrix)
     n = len(D)
-    
+
+    # 1件以下の場合は早期リターン
+    if n <= 1:
+        return np.array([0.0] * n), 0.0
+
     # 距離を[0, π]の範囲に正規化
     max_dist = np.max(D)
     if max_dist > 0:

@@ -662,6 +662,8 @@ def calculate_mountain_positions(
             f"{k[0]}_{k[1]}": v for k, v in positions[i]['utility_vector'].items()
         }
         case.utility_vector_json = json.dumps(utility_vec_str_keys)
+        # 返却値も文字列キーに変換（APIレスポンス用）
+        positions[i]['utility_vector'] = utility_vec_str_keys
 
         # 部分標高も保存
         case.partial_heights_json = json.dumps(positions[i]['partial_heights'])

@@ -21,24 +21,35 @@
           <div class="left-column">
             <div class="column-header">
               <h3>Tradeoff Matrix</h3>
-              <div class="mode-toggle">
-                <button
-                  :class="['toggle-btn', { active: currentMode === 'cosTheta' }]"
-                  @click="currentMode = 'cosTheta'"
-                >
-                  cos θ
-                </button>
-                <button
-                  :class="['toggle-btn', { active: currentMode === 'energy' }]"
-                  @click="currentMode = 'energy'"
-                >
-                  Energy
-                </button>
+              <div class="header-controls">
+                <div class="mode-toggle">
+                  <button
+                    :class="['toggle-btn', { active: currentMode === 'cosTheta' }]"
+                    @click="currentMode = 'cosTheta'"
+                  >
+                    cos θ
+                  </button>
+                  <button
+                    :class="['toggle-btn', { active: currentMode === 'energy' }]"
+                    @click="currentMode = 'energy'"
+                  >
+                    Energy
+                  </button>
+                </div>
+                <div class="download-buttons">
+                  <button class="download-btn" @click="downloadMatrixImage" title="Download as Image (PNG)">
+                    <FontAwesomeIcon :icon="['fas', 'camera']" />
+                  </button>
+                  <button class="download-btn" @click="downloadMatrixCSV" title="Download as CSV">
+                    <FontAwesomeIcon :icon="['fas', 'file-export']" />
+                  </button>
+                </div>
               </div>
             </div>
-            <div class="matrix-container">
+            <div class="matrix-container" ref="matrixContainer">
               <MatrixHeatmap
                 v-if="cosThetaMatrix && cosThetaMatrix.length > 0"
+                ref="matrixHeatmapRef"
                 :cos-theta-matrix="cosThetaMatrix"
                 :inner-product-matrix="innerProductMatrix"
                 :energy-matrix="energyMatrix"
@@ -59,30 +70,40 @@
           <div class="right-column">
             <!-- Tab Navigation -->
             <div class="right-tabs">
+              <div class="tabs-left">
+                <button
+                  :class="['tab-btn', { active: rightTab === 'breakdown' }]"
+                  @click="rightTab = 'breakdown'"
+                >
+                  Contribution
+                </button>
+                <button
+                  :class="['tab-btn', { active: rightTab === 'network' }]"
+                  @click="rightTab = 'network'"
+                >
+                  Network
+                </button>
+                <button
+                  :class="['tab-btn', { active: rightTab === 'confidence' }]"
+                  @click="rightTab = 'confidence'"
+                >
+                  Confidence
+                </button>
+              </div>
               <button
-                :class="['tab-btn', { active: rightTab === 'breakdown' }]"
-                @click="rightTab = 'breakdown'"
+                v-if="rightTab === 'breakdown' && selectedPair"
+                class="tab-download-btn"
+                @click="downloadContributionImage"
+                title="Download Contribution as Image"
               >
-                Contribution
-              </button>
-              <button
-                :class="['tab-btn', { active: rightTab === 'network' }]"
-                @click="rightTab = 'network'"
-              >
-                Network
-              </button>
-              <button
-                :class="['tab-btn', { active: rightTab === 'confidence' }]"
-                @click="rightTab = 'confidence'"
-              >
-                Confidence
+                <FontAwesomeIcon :icon="['fas', 'camera']" />
               </button>
             </div>
 
             <!-- Tab Content -->
             <div class="tab-content">
               <!-- Shapley Breakdown -->
-              <div v-if="rightTab === 'breakdown'" class="tab-panel">
+              <div v-if="rightTab === 'breakdown'" class="tab-panel" ref="contributionPanel">
                 <ShapleyBreakdown
                   v-if="selectedPair"
                   :perf-i-name="selectedPair.perfIName"
@@ -243,6 +264,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import MatrixHeatmap from './MatrixHeatmap.vue';
 import ShapleyBreakdown from './ShapleyBreakdown.vue';
 import DiscretizationConfidence from './DiscretizationConfidence.vue';
@@ -299,6 +321,11 @@ const nodeShapleyLoading = ref(false);
 const nodeShapleyError = ref<string | null>(null);
 const edgeShapleyResult = ref<EdgeShapleyResult | null>(null);
 const edgeShapleyLoading = ref(false);
+
+// Refs for download functionality
+const matrixContainer = ref<HTMLDivElement | null>(null);
+const matrixHeatmapRef = ref<InstanceType<typeof MatrixHeatmap> | null>(null);
+const contributionPanel = ref<HTMLDivElement | null>(null);
 
 // Computed
 const nodeShapleyValues = computed<NodeShapleyValue[]>(() => {
@@ -436,6 +463,129 @@ async function fetchShapleyValues(perfIId: string, perfJId: string) {
   }
 }
 
+// Download Matrix as Image (using html2canvas)
+async function downloadMatrixImage() {
+  if (!matrixContainer.value) return;
+
+  try {
+    const html2canvas = (await import('html2canvas')).default as any;
+
+    const matrixHeatmap = matrixContainer.value.querySelector('.matrix-heatmap') as HTMLElement;
+    if (!matrixHeatmap) {
+      alert('Matrix element not found');
+      return;
+    }
+
+    const matrixContent = matrixHeatmap.querySelector('.matrix-container') as HTMLElement;
+    if (!matrixContent) {
+      alert('Matrix content not found');
+      return;
+    }
+
+    // Get actual matrix content width (scroll width includes full content)
+    const actualWidth = matrixContent.scrollWidth;
+    const scale = 2;
+
+    // Capture the original element (preserves all styles)
+    const fullCanvas = await html2canvas(matrixHeatmap, {
+      backgroundColor: '#2d2d2d',
+      scale: scale,
+      logging: false,
+    });
+
+    // Calculate crop width (matrix content width + some padding for the container)
+    const containerPadding = 24; // approximate padding of .matrix-container
+    const cropWidth = (actualWidth + containerPadding) * scale;
+
+    // If the canvas is wider than needed, crop it
+    if (fullCanvas.width > cropWidth) {
+      const croppedCanvas = document.createElement('canvas');
+      croppedCanvas.width = cropWidth;
+      croppedCanvas.height = fullCanvas.height;
+
+      const ctx = croppedCanvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(fullCanvas, 0, 0);
+
+        const link = document.createElement('a');
+        const modeName = currentMode.value === 'cosTheta' ? 'cosTheta' : 'Energy';
+        link.download = `tradeoff-matrix-${modeName}-${props.caseName}-${new Date().toISOString().slice(0, 10)}.png`;
+        link.href = croppedCanvas.toDataURL('image/png');
+        link.click();
+        return;
+      }
+    }
+
+    // Fallback: use full canvas if cropping fails or not needed
+    const link = document.createElement('a');
+    const modeName = currentMode.value === 'cosTheta' ? 'cosTheta' : 'Energy';
+    link.download = `tradeoff-matrix-${modeName}-${props.caseName}-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = fullCanvas.toDataURL('image/png');
+    link.click();
+  } catch (error) {
+    console.error('Failed to download matrix image:', error);
+    alert('Failed to download matrix image');
+  }
+}
+
+// Download Matrix as CSV
+function downloadMatrixCSV() {
+  const matrix = currentMode.value === 'cosTheta' ? props.cosThetaMatrix : props.energyMatrix;
+  if (!matrix) {
+    alert('No matrix data available');
+    return;
+  }
+
+  // Build CSV content
+  const headers = [''].concat(props.performanceNames);
+  const rows = [headers.join(',')];
+
+  for (let i = 0; i < matrix.length; i++) {
+    const row = [props.performanceNames[i]].concat(
+      matrix[i].map(v => v.toFixed(6))
+    );
+    rows.push(row.join(','));
+  }
+
+  const csvContent = rows.join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+  // Download
+  const link = document.createElement('a');
+  const modeName = currentMode.value === 'cosTheta' ? 'cosTheta' : 'Energy';
+  link.download = `tradeoff-matrix-${modeName}-${props.caseName}-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+// Download Contribution panel as Image
+async function downloadContributionImage() {
+  if (!contributionPanel.value || !selectedPair.value) return;
+
+  try {
+    const html2canvas = (await import('html2canvas')).default as any;
+
+    const canvas = await html2canvas(contributionPanel.value, {
+      backgroundColor: '#2d2d2d',
+      scale: 2,
+      logging: false,
+      useCORS: true,
+      allowTaint: true,
+    });
+
+    const link = document.createElement('a');
+    const perfIName = selectedPair.value.perfIName || 'P1';
+    const perfJName = selectedPair.value.perfJName || 'P2';
+    link.download = `contribution-${perfIName}-${perfJName}-${props.caseName}-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch (error) {
+    console.error('Failed to download contribution image:', error);
+    alert('Failed to download contribution image');
+  }
+}
+
 // ESC key handler
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape' && props.show) {
@@ -564,6 +714,12 @@ onUnmounted(() => {
       color: $white;
     }
 
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
     .mode-toggle {
       display: flex;
       gap: 2px;
@@ -594,6 +750,11 @@ onUnmounted(() => {
         color: $white;
         box-shadow: 0 2px 6px color.adjust($main_1, $alpha: -0.5);
       }
+    }
+
+    .download-buttons {
+      display: flex;
+      gap: 0.35rem;
     }
   }
 
@@ -636,11 +797,18 @@ onUnmounted(() => {
 
 .right-tabs {
   display: flex;
-  gap: 2px;
+  align-items: center;
+  justify-content: space-between;
   padding: 0.75rem 0.75rem 0;
   border-bottom: 1px solid color.adjust($white, $alpha: -0.9);
   background: color.adjust($gray, $lightness: 8%);
   border-radius: 10px 10px 0 0;
+
+  .tabs-left {
+    display: flex;
+    gap: 2px;
+    flex: 1;
+  }
 
   .tab-btn {
     flex: 1;
@@ -676,6 +844,27 @@ onUnmounted(() => {
       }
     }
   }
+
+  .tab-download-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 0.5rem;
+    background: color.adjust($gray, $lightness: 18%);
+    border: 1px solid color.adjust($white, $alpha: -0.85);
+    border-radius: 4px;
+    cursor: pointer;
+    color: $white;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+    margin-left: 0.5rem;
+    margin-bottom: 0.25rem;
+
+    &:hover {
+      background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+      border-color: $main_1;
+    }
+  }
 }
 
 .tab-content {
@@ -709,6 +898,25 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+  }
+}
+
+.download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.5rem;
+  background: color.adjust($gray, $lightness: 18%);
+  border: 1px solid color.adjust($white, $alpha: -0.85);
+  border-radius: 4px;
+  cursor: pointer;
+  color: $white;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+
+  &:hover {
+    background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
+    border-color: $main_1;
   }
 }
 

@@ -86,6 +86,36 @@
         </select>
       </div>
 
+      <!-- Excel Import/Export for continuous mode -->
+      <template v-if="currentWeightMode === 'continuous'">
+        <div class="tool-divider"></div>
+        <div class="tool-group">
+          <button
+            class="tool-btn"
+            @click="downloadWeightMatrix"
+            title="Download weight matrix as Excel"
+          >
+            <span class="tool-icon"><FontAwesomeIcon :icon="['fas', 'file-export']" /></span>
+            Export Excel
+          </button>
+          <button
+            class="tool-btn"
+            @click="triggerImportExcel"
+            title="Import weight matrix from Excel"
+          >
+            <span class="tool-icon"><FontAwesomeIcon :icon="['fas', 'file-import']" /></span>
+            Import Excel
+          </button>
+          <input
+            ref="excelFileInput"
+            type="file"
+            accept=".xlsx,.xls"
+            style="display: none"
+            @change="importWeightMatrix"
+          />
+        </div>
+      </template>
+
     </div>
     
     <div class="network-editor-wrapper">
@@ -165,7 +195,8 @@
 
       <!-- Edge Properties -->
       <template v-else-if="selectedEdge">
-        <div class="property-group">
+        <!-- Weight setting: only for directed edges (not V↔E, E↔E) -->
+        <div class="property-group" v-if="!isUndirectedEdge(selectedEdge)">
           <label>Weight (Causal Strength)</label>
           <!-- Discrete mode: dropdown -->
           <select
@@ -200,6 +231,11 @@
             />
             <div class="weight-value-display">{{ tempEdgeWeight.toFixed(2) }}</div>
           </div>
+        </div>
+        <!-- Undirected edge notice -->
+        <div class="property-group" v-else>
+          <label>Edge Type</label>
+          <p class="undirected-notice">Undirected (no weight)</p>
         </div>
         
         <div class="property-group">
@@ -572,6 +608,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import type { NetworkStructure, NetworkNode, NetworkEdge, Performance, WeightMode } from '../../types/project';
 import { WEIGHT_MODE_OPTIONS, migrateNodeType } from '../../types/project';
+import * as XLSX from 'xlsx';
 
 /**
  * Migrate network data: 'property' → 'attribute' for PAVE compliance
@@ -862,6 +899,7 @@ const currentWeightOptions = computed(() => {
 const svgCanvas = ref<SVGSVGElement>();
 const canvasContainer = ref<HTMLDivElement>();
 const weightModeSelectRef = ref<HTMLSelectElement>();
+const excelFileInput = ref<HTMLInputElement>();
 
 // Layer definition (PAVE model)
 const layers = [
@@ -921,13 +959,6 @@ function getEdgeColor(edge: NetworkEdge): string {
 
   const weight = edge.weight ?? 0;
 
-  // For discrete values, use the predefined colors
-  if (weight in edgeWeightColors) {
-    return edgeWeightColors[weight as keyof typeof edgeWeightColors];
-  }
-
-  // For continuous values, interpolate between colors
-  // Use gradient colors for all values including weight=0
   // maxWeight depends on current weight mode:
   // - discrete_7: ±5, discrete_5: ±3, discrete_3: ±1, continuous: ±1
   const maxWeightMap: Record<string, number> = {
@@ -937,6 +968,13 @@ function getEdgeColor(edge: NetworkEdge): string {
     continuous: 1
   };
   const maxWeight = maxWeightMap[currentWeightMode.value] || 5;
+
+  // For discrete modes, use the predefined colors if weight matches exactly
+  if (currentWeightMode.value !== 'continuous' && weight in edgeWeightColors) {
+    return edgeWeightColors[weight as keyof typeof edgeWeightColors];
+  }
+
+  // For continuous mode (or non-matching discrete values), interpolate
   const clampedWeight = Math.max(-maxWeight, Math.min(maxWeight, weight));
 
   if (clampedWeight > 0) {
@@ -1754,6 +1792,322 @@ async function downloadAsImage() {
   }
 }
 
+/**
+ * Trigger file input for Excel import
+ */
+function triggerImportExcel() {
+  excelFileInput.value?.click();
+}
+
+/**
+ * Download weight matrix as Excel file
+ * - Rows: Source nodes (PAVE order)
+ * - Columns: Target nodes (PAVE order)
+ * - Editable cells: V→A, A→A, A→P only
+ * - Other cells: Grey background (disabled)
+ */
+function downloadWeightMatrix() {
+  // Sort nodes by PAVE order (P=1, A=2, V=3, E=4)
+  const sortedNodes = [...network.value.nodes].sort((a, b) => a.layer - b.layer);
+
+  // Get layer boundaries for labeling
+  const layerBoundaries: { layer: number; label: string; start: number; end: number }[] = [];
+  let currentLayer = 0;
+  let startIdx = 0;
+
+  sortedNodes.forEach((node, idx) => {
+    if (node.layer !== currentLayer) {
+      if (currentLayer !== 0) {
+        layerBoundaries.push({
+          layer: currentLayer,
+          label: ['P', 'A', 'V', 'E'][currentLayer - 1],
+          start: startIdx,
+          end: idx - 1
+        });
+      }
+      currentLayer = node.layer;
+      startIdx = idx;
+    }
+  });
+  // Add last layer
+  if (currentLayer !== 0) {
+    layerBoundaries.push({
+      layer: currentLayer,
+      label: ['P', 'A', 'V', 'E'][currentLayer - 1],
+      start: startIdx,
+      end: sortedNodes.length - 1
+    });
+  }
+
+  // Create edge lookup map (source_id -> target_id -> weight)
+  const edgeMap = new Map<string, Map<string, number>>();
+  network.value.edges.forEach(edge => {
+    if (!edgeMap.has(edge.source_id)) {
+      edgeMap.set(edge.source_id, new Map());
+    }
+    edgeMap.get(edge.source_id)!.set(edge.target_id, edge.weight ?? 0);
+  });
+
+  // Build worksheet data
+  // Row 0: "Target →" header with layer labels
+  // Row 1: Empty corner + node labels
+  // Row 2+: Source nodes (rows) × Target nodes (columns)
+  const wsData: (string | number | null)[][] = [];
+
+  // Header row 1: "Target →" + Layer labels for columns
+  const targetLabelRow: (string | null)[] = ['Target →'];
+  sortedNodes.forEach(node => {
+    const layerLabel = ['P', 'A', 'V', 'E'][node.layer - 1];
+    targetLabelRow.push(`[${layerLabel}]`);
+  });
+  wsData.push(targetLabelRow);
+
+  // Header row 2: "↓ Source" + node labels for columns
+  const headerRow: (string | null)[] = ['↓ Source'];
+  sortedNodes.forEach(node => {
+    headerRow.push(node.label);
+  });
+  wsData.push(headerRow);
+
+  // Data rows: Each source node (rows)
+  sortedNodes.forEach((sourceNode, rowIdx) => {
+    const row: (string | number | null)[] = [];
+    // First column: source node label with layer prefix
+    const sourceLayerLabel = ['P', 'A', 'V', 'E'][sourceNode.layer - 1];
+    row.push(`[${sourceLayerLabel}] ${sourceNode.label}`);
+
+    // Other columns: weights, empty (editable), or "-" (non-editable)
+    sortedNodes.forEach((targetNode, colIdx) => {
+      // Check if this cell is editable (V→A, A→A, A→P)
+      // Also exclude self-loops (same node)
+      const isSelfLoop = sourceNode.id === targetNode.id;
+      const isEditable = !isSelfLoop && isEditableCell(sourceNode.layer, targetNode.layer);
+
+      if (isEditable) {
+        // Get weight if edge exists
+        const weight = edgeMap.get(sourceNode.id)?.get(targetNode.id);
+        row.push(weight !== undefined ? weight : null);
+      } else {
+        // Non-editable cell - mark with "-" to indicate disabled
+        row.push('-');
+      }
+    });
+    wsData.push(row);
+  });
+
+  // Create worksheet
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Set column widths
+  const colWidths = [{ wch: 25 }]; // First column wider
+  sortedNodes.forEach(() => colWidths.push({ wch: 12 }));
+  ws['!cols'] = colWidths;
+
+  // Create workbook and download
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Weight Matrix');
+
+  // Add a legend sheet
+  const legendData = [
+    ['Weight Matrix Legend'],
+    [''],
+    ['Matrix Structure:'],
+    ['- Rows = Source nodes (↓ Source)'],
+    ['- Columns = Target nodes (Target →)'],
+    ['- Cell value = Weight of edge from row node to column node'],
+    [''],
+    ['Layers:'],
+    ['[P] = Performance (Layer 1) - Cannot be source'],
+    ['[A] = Attribute (Layer 2)'],
+    ['[V] = Variable (Layer 3)'],
+    ['[E] = Entity (Layer 4)'],
+    [''],
+    ['Cell Markers:'],
+    ['(number) = Edge weight (-1.0 to +1.0)'],
+    ['(empty) = No edge (editable area)'],
+    ['"-" = Non-editable cell (invalid connection in PAVE model)'],
+    [''],
+    ['Editable Cells (Valid Connections):'],
+    ['V → A: Variable affects Attribute'],
+    ['A → A: Attribute affects Attribute (between different nodes)'],
+    ['A → P: Attribute affects Performance'],
+    ['Note: Self-loops (A → same A) are NOT allowed'],
+    [''],
+    ['Weight Range: -1.0 to +1.0'],
+    ['Positive: Positive causal effect'],
+    ['Negative: Negative causal effect'],
+    ['Zero: No effect'],
+    [''],
+    ['Instructions:'],
+    ['1. Edit values only in cells without "-"'],
+    ['2. Leave cell empty to delete existing edge'],
+    ['3. Add value to empty cell to create new edge'],
+    ['4. Do NOT modify cells marked with "-"'],
+    ['5. Import the modified file back to the system']
+  ];
+  const legendWs = XLSX.utils.aoa_to_sheet(legendData);
+  legendWs['!cols'] = [{ wch: 50 }];
+  XLSX.utils.book_append_sheet(wb, legendWs, 'Legend');
+
+  // Download
+  const filename = `weight_matrix_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  XLSX.writeFile(wb, filename);
+}
+
+/**
+ * Check if a cell is editable based on source and target layers
+ * Valid: V→A (3→2), A→A (2→2), A→P (2→1)
+ */
+function isEditableCell(sourceLayer: number, targetLayer: number): boolean {
+  // V → A (3 → 2)
+  if (sourceLayer === 3 && targetLayer === 2) return true;
+  // A → A (2 → 2)
+  if (sourceLayer === 2 && targetLayer === 2) return true;
+  // A → P (2 → 1)
+  if (sourceLayer === 2 && targetLayer === 1) return true;
+  return false;
+}
+
+/**
+ * Import weight matrix from Excel file
+ */
+async function importWeightMatrix(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  try {
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data);
+
+    // Get the first sheet (Weight Matrix)
+    const ws = workbook.Sheets[workbook.SheetNames[0]];
+    const jsonData = XLSX.utils.sheet_to_json<(string | number | null)[]>(ws, { header: 1 });
+
+    if (jsonData.length < 3) {
+      alert('Invalid Excel format: Not enough rows');
+      return;
+    }
+
+    // Parse header rows
+    // Row 0: Layer labels ("Target →", "[P]", "[A]", "[V]", "[E]", ...)
+    // Row 1: Node labels ("↓ Source", "node1", "node2", ...)
+    const headerRow = jsonData[1] as string[];
+
+    // Create map from node label to node
+    const nodeLabelMap = new Map<string, NetworkNode>();
+    network.value.nodes.forEach(node => {
+      nodeLabelMap.set(node.label, node);
+    });
+
+    // Build column index to target node mapping (using header row labels)
+    const colToTargetNode: (NetworkNode | null)[] = [null]; // Column 0 is source label
+    for (let colIdx = 1; colIdx < headerRow.length; colIdx++) {
+      const targetLabel = headerRow[colIdx];
+      const targetNode = nodeLabelMap.get(targetLabel) || null;
+      colToTargetNode.push(targetNode);
+    }
+
+    // Track changes
+    const changes = {
+      updated: 0,
+      created: 0,
+      deleted: 0,
+      skipped: 0
+    };
+
+    // Process data rows (starting from row 2)
+    for (let rowIdx = 2; rowIdx < jsonData.length; rowIdx++) {
+      const row = jsonData[rowIdx] as (string | number | null)[];
+      if (!row || row.length === 0) continue;
+
+      // Parse source node label from first cell (format: "[P] NodeLabel")
+      const sourceCellValue = String(row[0] || '');
+      const sourceLabel = sourceCellValue.replace(/^\[[PAVE]\]\s*/, '');
+      const sourceNode = nodeLabelMap.get(sourceLabel);
+
+      if (!sourceNode) {
+        console.warn(`Source node not found: "${sourceLabel}"`);
+        changes.skipped++;
+        continue;
+      }
+
+      // Process each target column
+      for (let colIdx = 1; colIdx < row.length; colIdx++) {
+        const targetNode = colToTargetNode[colIdx];
+        if (!targetNode) {
+          continue;
+        }
+
+        // Check if this cell is editable (skip self-loops and invalid connections)
+        if (sourceNode.id === targetNode.id) continue; // Self-loop
+        if (!isEditableCell(sourceNode.layer, targetNode.layer)) continue;
+
+        const cellValue = row[colIdx];
+        const existingEdgeIdx = network.value.edges.findIndex(
+          e => e.source_id === sourceNode.id && e.target_id === targetNode.id
+        );
+
+        if (cellValue === null || cellValue === undefined || cellValue === '') {
+          // Empty cell - delete edge if exists
+          if (existingEdgeIdx !== -1) {
+            network.value.edges.splice(existingEdgeIdx, 1);
+            changes.deleted++;
+          }
+        } else if (cellValue === '-') {
+          // Non-editable cell marker - skip
+          continue;
+        } else {
+          // Has value - update or create edge
+          const weight = typeof cellValue === 'number' ? cellValue : parseFloat(String(cellValue));
+
+          if (isNaN(weight)) continue;
+
+          // Clamp to valid range
+          const clampedWeight = Math.max(-1, Math.min(1, weight));
+
+          if (existingEdgeIdx !== -1) {
+            // Update existing edge
+            const existingWeight = network.value.edges[existingEdgeIdx].weight ?? 0;
+            if (Math.abs(existingWeight - clampedWeight) > 0.0001) {
+              network.value.edges[existingEdgeIdx].weight = clampedWeight;
+              changes.updated++;
+            }
+          } else {
+            // Create new edge
+            const newEdge: NetworkEdge = {
+              id: `edge-${Date.now()}-${Math.random()}`,
+              source_id: sourceNode.id,
+              target_id: targetNode.id,
+              type: 'type1',
+              weight: clampedWeight
+            };
+            network.value.edges.push(newEdge);
+            changes.created++;
+          }
+        }
+      }
+    }
+
+    // Emit update
+    emitUpdate();
+
+    // Show result
+    let message = `Import completed!\n\nUpdated: ${changes.updated} edges\nCreated: ${changes.created} edges\nDeleted: ${changes.deleted} edges`;
+    if (changes.skipped > 0) {
+      message += `\nSkipped: ${changes.skipped} rows (node not found)`;
+    }
+    alert(message);
+
+  } catch (error) {
+    console.error('Excel import error:', error);
+    alert('Failed to import Excel file. Please check the file format.');
+  } finally {
+    // Reset file input
+    input.value = '';
+  }
+}
+
 onUnmounted(() => {
   document.removeEventListener('mousemove', handleDragMove);
   document.removeEventListener('mouseup', handleDragEnd);
@@ -2369,6 +2723,13 @@ onUnmounted(() => {
   border-radius: 0.4vw;
   font-size: clamp(0.75rem, 0.95vw, 0.85rem);
   border: 1px solid color.adjust($white, $alpha: -0.95);
+}
+
+.undirected-notice {
+  color: color.adjust($white, $alpha: -0.3);
+  font-size: clamp(0.75rem, 0.95vw, 0.85rem);
+  font-style: italic;
+  margin: 0;
 }
 
 .connection-info p {
