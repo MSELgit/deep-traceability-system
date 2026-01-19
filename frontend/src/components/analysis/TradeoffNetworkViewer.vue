@@ -257,7 +257,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import type { NetworkStructure, NetworkNode, Performance } from '../../types/project';
 import type { NodeShapleyValue, EdgeShapleyValue } from '@/utils/api';
@@ -852,127 +852,6 @@ function resetView() {
     container.scrollLeft = 0;
   }
 }
-
-// Debug logging function
-function logHighlightState() {
-  console.group('🎯 TradeoffNetworkViewer - Highlight State');
-
-  // Selected performances
-  const perfIName = perfINode.value?.label || 'none';
-  const perfJName = perfJNode.value?.label || 'none';
-  console.log(`📍 Selected Cell: ${perfIName} × ${perfJName}`);
-  console.log(`   perfIId: ${props.perfIId || 'undefined'}`);
-  console.log(`   perfJId: ${props.perfJId || 'undefined'}`);
-
-  // Debug: List all performance nodes and their performance_ids
-  const perfNodes = props.network.nodes.filter(n => n.layer === 1);
-  console.log(`🔍 Performance Nodes in Network (${perfNodes.length}):`);
-  perfNodes.forEach(n => {
-    const matchesI = n.performance_id === props.perfIId;
-    const matchesJ = n.performance_id === props.perfJId;
-    console.log(`   ${n.label}: id=${n.id}, performance_id=${n.performance_id} ${matchesI ? '← matches perfIId' : ''} ${matchesJ ? '← matches perfJId' : ''}`);
-  });
-
-  // Node Shapley values (V ∪ A)
-  console.log(`📊 Node Shapley Values (V ∪ A): ${props.nodeShapleyValues?.length || 0} entries`);
-  if (props.nodeShapleyValues && props.nodeShapleyValues.length > 0) {
-    console.log('   Top 5 contributors:');
-    props.nodeShapleyValues.slice(0, 5).forEach((nv: NodeShapleyValue, i: number) => {
-      const node = getNodeById(nv.node_id);
-      const typeIcon = nv.node_type === 'V' ? '◆' : '●';
-      console.log(`   ${i + 1}. ${typeIcon} ${nv.node_label} (type=${nv.node_type}, id=${nv.node_id}, label=${node?.label || 'N/A'}): phi=${nv.phi?.toFixed(4) || 'N/A'}, abs_phi=${nv.abs_phi?.toFixed(4) || 'N/A'}`);
-    });
-  }
-
-  // Node states
-  console.group('🔵 Node Highlight States');
-  const nodeStates: { highlighted: string[], highContrib: string[], dimmed: string[] } = {
-    highlighted: [],
-    highContrib: [],
-    dimmed: []
-  };
-
-  for (const node of props.network.nodes) {
-    const opacity = getNodeOpacity(node);
-    const isSelected = isSelectedPerformance(node);
-    const isHighContrib = isHighContributionNode(node);
-    const fill = getNodeFill(node);
-    const stroke = getNodeStroke(node);
-
-    if (isSelected) {
-      nodeStates.highlighted.push(`${node.label} (layer=${node.layer}, fill=${fill}, stroke=${stroke})`);
-    } else if (isHighContrib) {
-      nodeStates.highContrib.push(`${node.label} (layer=${node.layer}, fill=${fill}, stroke=${stroke})`);
-    } else if (opacity < 0.5) {
-      nodeStates.dimmed.push(`${node.label} (opacity=${opacity.toFixed(2)})`);
-    }
-  }
-
-  console.log(`✅ Selected Performance Nodes (${nodeStates.highlighted.length}):`, nodeStates.highlighted);
-  console.log(`🔶 High Contribution Nodes (${nodeStates.highContrib.length}):`, nodeStates.highContrib);
-  console.log(`⬜ Dimmed Nodes (${nodeStates.dimmed.length}):`, nodeStates.dimmed.length > 10 ? `${nodeStates.dimmed.length} nodes (too many to list)` : nodeStates.dimmed);
-  console.groupEnd();
-
-  // Edge Shapley values
-  console.log(`📈 Edge Shapley Values: ${props.edgeShapleyValues?.length || 0} entries`);
-  if (props.edgeShapleyValues && props.edgeShapleyValues.length > 0) {
-    console.log('   Top 5 edge contributors:');
-    props.edgeShapleyValues.slice(0, 5).forEach((ev, i) => {
-      console.log(`   ${i + 1}. ${ev.source_label} → ${ev.target_label} (${ev.edge_type}): phi=${ev.phi?.toFixed(4)}, abs_phi=${ev.abs_phi?.toFixed(4)}, sign=${ev.sign}`);
-    });
-  }
-
-  // Edge states
-  console.group('📐 Edge Highlight States');
-  const edgeStates: { strong: string[], medium: string[], weak: string[], dimmed: string[] } = {
-    strong: [],
-    medium: [],
-    weak: [],
-    dimmed: []
-  };
-
-  for (const edge of props.network.edges) {
-    const source = getNodeById(edge.source_id);
-    const target = getNodeById(edge.target_id);
-    const level = getEdgeHighlightLevel(edge);
-    const opacity = getEdgeOpacity(edge);
-    const color = getEdgeColor(edge);
-    const width = getEdgeStrokeWidth(edge);
-    const contribution = getEdgeContribution(edge);
-
-    const edgeLabel = `${source?.label || edge.source_id} → ${target?.label || edge.target_id}`;
-    const contribInfo = contribution > 0 ? `, contrib=${(contribution * 100).toFixed(1)}%` : '';
-
-    if (level === 'strong') {
-      edgeStates.strong.push(`${edgeLabel} (color=${color}, width=${width}${contribInfo})`);
-    } else if (level === 'medium') {
-      edgeStates.medium.push(`${edgeLabel} (color=${color}, width=${width}${contribInfo})`);
-    } else if (level === 'weak') {
-      edgeStates.weak.push(`${edgeLabel} (color=${color}, width=${width}${contribInfo})`);
-    } else if (opacity < 0.5) {
-      edgeStates.dimmed.push(edgeLabel);
-    }
-  }
-
-  console.log(`🔴 Strong Edges (${edgeStates.strong.length}):`, edgeStates.strong);
-  console.log(`🟠 Medium Edges (${edgeStates.medium.length}):`, edgeStates.medium);
-  console.log(`🟡 Weak Edges (${edgeStates.weak.length}):`, edgeStates.weak);
-  console.log(`⬜ Dimmed Edges (${edgeStates.dimmed.length}):`, edgeStates.dimmed.length > 10 ? `${edgeStates.dimmed.length} edges` : edgeStates.dimmed);
-  console.groupEnd();
-
-  // Connected nodes
-  console.log(`🔗 Nodes connected to P1/P2 (within 2 hops): ${nodesConnectedToSelectedPerfs.value.size} nodes`);
-  console.log(`   IDs:`, Array.from(nodesConnectedToSelectedPerfs.value));
-
-  console.groupEnd();
-}
-
-// Watch for selection changes and log debug info
-watch([() => props.perfIId, () => props.perfJId, () => props.nodeShapleyValues], () => {
-  nextTick(() => {
-    logHighlightState();
-  });
-}, { deep: true });
 
 // Download network as PNG image
 async function downloadAsImage() {

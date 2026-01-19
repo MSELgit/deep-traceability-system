@@ -898,8 +898,6 @@ function downloadOPM3DImage() {
     link.download = `3D-OPM-${caseName}-${timestamp}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
-    
-    console.log('3D OPM image downloaded successfully');
   } catch (error) {
     console.error('Failed to download 3D OPM image:', error);
     alert('Failed to download image');

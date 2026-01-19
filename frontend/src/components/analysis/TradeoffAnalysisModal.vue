@@ -84,6 +84,12 @@
                   Network
                 </button>
                 <button
+                  :class="['tab-btn', { active: rightTab === 'coupling' }]"
+                  @click="rightTab = 'coupling'"
+                >
+                  Coupling
+                </button>
+                <button
                   :class="['tab-btn', { active: rightTab === 'confidence' }]"
                   @click="rightTab = 'confidence'"
                 >
@@ -218,6 +224,15 @@
                 </div>
               </div>
 
+              <!-- Coupling & Clustering -->
+              <div v-else-if="rightTab === 'coupling'" class="tab-panel">
+                <CouplingClusteringPanel
+                  :project-id="projectId"
+                  :case-id="caseId"
+                  :auto-load="true"
+                />
+              </div>
+
               <!-- Discretization Confidence -->
               <div v-else-if="rightTab === 'confidence'" class="tab-panel">
                 <DiscretizationConfidence
@@ -269,6 +284,7 @@ import MatrixHeatmap from './MatrixHeatmap.vue';
 import ShapleyBreakdown from './ShapleyBreakdown.vue';
 import DiscretizationConfidence from './DiscretizationConfidence.vue';
 import TradeoffNetworkViewer from './TradeoffNetworkViewer.vue';
+import CouplingClusteringPanel from './CouplingClusteringPanel.vue';
 import { nodeShapleyApi, edgeShapleyApi } from '@/utils/api';
 import type { NodeShapleyResult, NodeShapleyValue, EdgeShapleyResult, EdgeShapleyValue } from '@/utils/api';
 import { formatEnergy } from '@/utils/energyFormat';
@@ -314,7 +330,7 @@ const emit = defineEmits<{
 
 // State
 const currentMode = ref<'cosTheta' | 'energy'>('cosTheta');
-const rightTab = ref<'breakdown' | 'network' | 'confidence'>('breakdown');
+const rightTab = ref<'breakdown' | 'network' | 'coupling' | 'confidence'>('breakdown');
 const selectedPair = ref<SelectedPair | null>(null);
 const nodeShapleyResult = ref<NodeShapleyResult | null>(null);
 const nodeShapleyLoading = ref(false);
@@ -454,7 +470,6 @@ async function fetchShapleyValues(perfIId: string, perfJId: string) {
   try {
     const response = await edgePromise;
     edgeShapleyResult.value = response.data;
-    console.log('Edge Shapley loaded:', edgeShapleyResult.value?.edge_shapley_values?.length, 'edges');
   } catch (err: any) {
     console.warn('Failed to fetch Edge Shapley values:', err);
     edgeShapleyResult.value = null;

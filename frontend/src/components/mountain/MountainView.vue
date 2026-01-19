@@ -382,7 +382,6 @@ function initThreeJS() {
   const width = threeContainer.value.clientWidth;
   const height = threeContainer.value.clientHeight;
   if (width <= 0 || height <= 0) {
-    console.log('initThreeJS: Container has no size, skipping initialization');
     return;
   }
 
@@ -765,26 +764,6 @@ async function handleRecalculate() {
 
     timings['total'] = performance.now() - totalStart;
 
-    // Log timing report
-    console.log('\n========================================');
-    console.log('⏱️  Frontend Timing Report (handleRecalculate)');
-    console.log('========================================');
-    console.log('  Frontend:');
-    Object.entries(timings).forEach(([key, value]) => {
-      console.log(`    ${key}: ${value.toFixed(2)} ms`);
-    });
-    if (result.timings) {
-      console.log('  Backend:');
-      console.log(`    API total: ${result.timings.api_total_ms} ms`);
-      console.log(`    Calculation: ${result.timings.calculation_ms} ms`);
-      if (result.timings.breakdown) {
-        Object.entries(result.timings.breakdown).forEach(([key, value]) => {
-          console.log(`      ${key}: ${(value as number).toFixed(2)} ms`);
-        });
-      }
-    }
-    console.log('========================================\n');
-
     setTimeout(() => {
       recalculateMessage.value = '';
     }, 3000);
@@ -819,9 +798,8 @@ function closeRightPanel() {
   selectedCase.value = null;
 }
 
-function handleTradeoffCellClick(payload: { i: number; j: number; perfIId?: string; perfJId?: string }) {
-  // Log cell click for debugging - modal is handled by DesignCaseDetail
-  console.log('Tradeoff cell clicked:', payload);
+function handleTradeoffCellClick(_payload: { i: number; j: number; perfIId?: string; perfJId?: string }) {
+  // Modal is handled by DesignCaseDetail
 }
 
 function closeAllPanels() {

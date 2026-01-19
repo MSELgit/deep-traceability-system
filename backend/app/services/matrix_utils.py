@@ -266,7 +266,7 @@ def compute_total_effect_matrix(
         spectral_radius = float('inf')
 
     # 収束条件: ρ(B_AA) < 1
-    convergence = spectral_radius < 1.0
+    convergence = bool(spectral_radius < 1.0)
 
     if convergence:
         # 直接逆行列を計算

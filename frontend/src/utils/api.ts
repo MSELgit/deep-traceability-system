@@ -213,22 +213,13 @@ export const calculationApi = {
         convergence: boolean;
       };
     }>(`/calculations/energy/${projectId}/${caseId}`),
-  calculateTradeoff: (projectId: string) => {
-    console.log(`[API] Calling POST /calculations/tradeoff/${projectId}`);
-    console.log(`[API] Full URL: ${API_BASE_URL}/calculations/tradeoff/${projectId}`);
-    return apiClient.post<{ [key: string]: {
+  calculateTradeoff: (projectId: string) =>
+    apiClient.post<{ [key: string]: {
       ratio: number;
       total_paths: number;
       tradeoff_paths: number;
       is_valid: boolean;
-    } }>(`/calculations/tradeoff/${projectId}`).then(response => {
-      console.log('[API] Response received:', response.status);
-      return response;
-    }).catch(error => {
-      console.error('[API] Error:', error);
-      throw error;
-    });
-  },
+    } }>(`/calculations/tradeoff/${projectId}`),
   getDiscretizationConfidence: (projectId: string, caseId: string) =>
     apiClient.get<{
       case_id: string;
@@ -652,6 +643,68 @@ export const structuralTradeoffApi = {
         min_cos_theta: number;
       }>;
     }>(`/calculations/structural-tradeoff-summary/${projectId}`),
+};
+
+// カップリング＆クラスタリングAPI
+export interface CouplingTradeoff {
+  index: number;
+  label: string;
+  perf_i_idx: number;
+  perf_j_idx: number;
+  perf_i_label: string;
+  perf_j_label: string;
+  cos_theta: number;
+  c_ij: number;
+}
+
+export interface ClusterGroup {
+  [clusterId: number]: Array<{
+    perf_idx: number;
+    perf_label: string;
+  }>;
+}
+
+export interface DendrogramNode {
+  id: number;
+  label: string;
+  is_leaf: boolean;
+  height: number;
+  children: number[];
+}
+
+export interface CouplingResult {
+  n_tradeoffs: number;
+  tradeoffs: CouplingTradeoff[];
+  coupling_matrix: number[][];
+  tradeoff_labels: string[];
+  performance_connection_matrix: number[][];
+  performance_labels: string[];
+  clustering: {
+    clusters: number[] | null;
+    optimal_n_clusters: number | null;
+    silhouette_score: number | null;
+    cluster_groups: ClusterGroup;
+  };
+  dendrogram: {
+    nodes: DendrogramNode[];
+    n_leaves: number;
+    labels: string[];
+    max_height: number;
+    silhouette_curve: {
+      height: number;
+      n_clusters: number;
+      silhouette: number | null;
+    }[];
+    optimal_height: number | null;
+  } | null;
+}
+
+export const couplingApi = {
+  getForCase: (projectId: string, caseId: string, tradeoffThreshold: number = 0.0) =>
+    apiClient.get<CouplingResult>(
+      `/calculations/coupling/${projectId}/${caseId}`,
+      { params: { tradeoff_threshold: tradeoffThreshold } }
+    ),
 };
 
 export default apiClient;

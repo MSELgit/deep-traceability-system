@@ -72,10 +72,33 @@ class UtilityFunction(BaseModel):
 
 class Performance(PerformanceBase):
     id: str
-    utility_function: Optional[UtilityFunction] = None
-    
+    utility_function: Optional[Dict] = None  # 柔軟なDict型で受け取る
+
     class Config:
         from_attributes = True
+
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        """ORM モデルから Pydantic モデルへの変換"""
+        # _utility_function_temp があればそれを使用、なければ @property を使用
+        if hasattr(obj, '_utility_function_temp'):
+            utility_func = obj._utility_function_temp
+        elif hasattr(obj, 'utility_function'):
+            utility_func = obj.utility_function
+        else:
+            utility_func = None
+
+        data = {
+            'id': obj.id,
+            'name': obj.name,
+            'parent_id': obj.parent_id,
+            'level': obj.level,
+            'is_leaf': obj.is_leaf,
+            'unit': obj.unit,
+            'description': obj.description,
+            'utility_function': utility_func,
+        }
+        return cls(**data)
 
 
 class DiscreteRow(BaseModel):

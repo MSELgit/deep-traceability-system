@@ -605,9 +605,10 @@
               
               
               <template v-if="currentUtilityEdit?.type === 'continuous'">
-                <text x="50" y="295" font-size="11" fill="#f3f3f3" text-anchor="middle">{{ axisRange.min }}</text>
-                <text x="215" y="295" font-size="11" fill="#f3f3f3" text-anchor="middle">{{ ((axisRange.min + axisRange.max) / 2).toFixed(2) }}</text>
-                <text x="380" y="295" font-size="11" fill="#f3f3f3" text-anchor="middle">{{ axisRange.max }}</text>
+                <!-- X軸ラベル: axisRange (定義域) -->
+                <text :x="valueToSvgX(axisRange.min)" y="295" font-size="11" fill="#f3f3f3" text-anchor="middle">{{ axisRange.min }}</text>
+                <text :x="valueToSvgX((axisRange.min + axisRange.max) / 2)" y="295" font-size="11" fill="#f3f3f3" text-anchor="middle">{{ ((axisRange.min + axisRange.max) / 2).toFixed(1) }}</text>
+                <text :x="valueToSvgX(axisRange.max)" y="295" font-size="11" fill="#f3f3f3" text-anchor="middle">{{ axisRange.max }}</text>
               </template>
               
               
@@ -824,6 +825,17 @@ const currentUtilityEdit = ref<{
 const axisRange = ref({
   min: 0,
   max: 100
+})
+
+// 表示範囲: 定義域(axisRange) ± 10%のパディング
+const VIEW_PADDING_RATIO = 0.1
+const viewRange = computed(() => {
+  const range = axisRange.value.max - axisRange.value.min
+  const padding = range * VIEW_PADDING_RATIO
+  return {
+    min: axisRange.value.min - padding,
+    max: axisRange.value.max + padding
+  }
 })
 
 const rangeSliderElement = ref<HTMLElement | null>(null)
@@ -1579,25 +1591,30 @@ function canPasteUtilityFunction(): boolean {
 function handleGraphClick(event: MouseEvent) {
   const svg = event.currentTarget as SVGElement
   const rect = svg.getBoundingClientRect()
-  
+
   const svgX = ((event.clientX - rect.left) / rect.width) * 420
   const svgY = ((event.clientY - rect.top) / rect.height) * 330
-  
+
   if (svgX < 50 || svgX > 380 || svgY < 20 || svgY > 280) {
     return
   }
-  
+
   if (currentUtilityEdit.value?.type === 'continuous') {
-    const valueX = ((svgX - 50) / 330) * (axisRange.value.max - axisRange.value.min) + axisRange.value.min
+    const valueX = svgXToValue(svgX)
     const valueY = 1 - ((svgY - 20) / 260)
-    
+
+    // 定義域外のクリックは無視
+    if (valueX < axisRange.value.min || valueX > axisRange.value.max) {
+      return
+    }
+
     utilityPoints.value.push({
       x: svgX,
       y: svgY,
       valueX: valueX,
       valueY: Math.max(0, Math.min(1, valueY))
     })
-    
+
     utilityPoints.value.sort((a, b) => a.valueX - b.valueX)
   } else {
     if (discreteRows.value.length === 0) return
@@ -1792,12 +1809,22 @@ function initRangeSlider() {
   }
 }
 
+// 値をSVG X座標に変換 (viewRangeベース)
+function valueToSvgX(value: number): number {
+  return 50 + ((value - viewRange.value.min) / (viewRange.value.max - viewRange.value.min)) * 330
+}
+
+// SVG X座標を値に変換 (viewRangeベース)
+function svgXToValue(svgX: number): number {
+  return ((svgX - 50) / 330) * (viewRange.value.max - viewRange.value.min) + viewRange.value.min
+}
+
 function updatePointCoordinates() {
   utilityPoints.value = utilityPoints.value.map(p => {
-    const x = 50 + ((p.valueX - axisRange.value.min) / (axisRange.value.max - axisRange.value.min)) * 330
+    const x = valueToSvgX(p.valueX)
     const y = 20 + (1 - p.valueY) * 260
     return {
-      x: Math.max(50, Math.min(380, x)), 
+      x: Math.max(50, Math.min(380, x)),
       y,
       valueX: p.valueX,
       valueY: p.valueY
@@ -2305,18 +2332,18 @@ function getUtilityButtonType(needId: string, performanceId: string): 'none' | '
 
 async function openUtilityModal(needId: string, performanceId: string, event: Event) {
   event.stopPropagation()
-  
+
   const buttonType = getUtilityButtonType(needId, performanceId)
   if (buttonType === 'none') return
-  
+
   const sameColumnFunctions = utilityFunctions.value.filter(
     u => u.performance_id === performanceId && u.saved
   )
-  
+
   const columnStandard = sameColumnFunctions.length > 0 ? sameColumnFunctions[0] : null
-  
+
   let utility = getUtilityFunction(needId, performanceId)
-  
+
   if (!utility) {
     try {
       const loadedUtility = await projectStore.getUtilityFunction(needId, performanceId)
@@ -2328,15 +2355,15 @@ async function openUtilityModal(needId: string, performanceId: string, event: Ev
       console.error('Failed to load utility function:', error)
     }
   }
-  
+
   const effectiveType = columnStandard?.type || utility?.type || 'continuous'
-  
+
   currentUtilityEdit.value = {
     needId,
     performanceId,
     type: effectiveType
   }
-  
+
   if (effectiveType === 'continuous') {
     if (columnStandard?.axisMin !== undefined && columnStandard?.axisMax !== undefined) {
       axisRange.value = {
@@ -2358,7 +2385,7 @@ async function openUtilityModal(needId: string, performanceId: string, event: Ev
   
   if (utility?.points && utility.points.length > 0) {
     utilityPoints.value = utility.points.map(p => {
-      const x = 50 + ((p.valueX - axisRange.value.min) / (axisRange.value.max - axisRange.value.min)) * 330
+      const x = valueToSvgX(p.valueX)
       const y = 20 + (1 - p.valueY) * 260
       return {
         x,
@@ -2542,11 +2569,11 @@ function getCurrentPerformanceUnit(): string | undefined {
 
 async function loadAllUtilityFunctions() {
   if (!currentProject.value?.id) return
-  
+
   try {
     const loadedFunctions = await projectStore.loadUtilityFunctions()
     utilityFunctions.value = loadedFunctions
-    
+
     await normalizeUtilityFunctionsByColumn()
   } catch (error) {
     console.error('Failed to load utility functions:', error)

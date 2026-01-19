@@ -286,15 +286,29 @@ const sortPerformancesByTree = (performances: any[]): any[] => {
   return result;
 };
 
+// Sort performances by P-number (P1, P2, ... P10)
+const sortByPNumber = (perfs: any[]): any[] => {
+  return [...perfs].sort((a, b) => {
+    const getNum = (name: string) => {
+      const match = name.match(/^P(\d+)/);
+      return match ? parseInt(match[1]) : 999;
+    };
+    return getNum(a.name) - getNum(b.name);
+  });
+};
+
 // Performance list to display (snapshot when editing, current leaf performances when creating)
 const displayPerformances = computed(() => {
+  let perfs;
   if (isEdit.value && props.designCase?.performance_snapshot) {
-    // Edit mode: Extract only leaf performances from snapshot (snapshot is already sorted)
-    return props.designCase.performance_snapshot.filter(p => p.is_leaf);
+    // Edit mode: Extract only leaf performances from snapshot
+    perfs = props.designCase.performance_snapshot.filter(p => p.is_leaf);
   } else {
-    // Create mode: Use current leaf performances (already sorted)
-    return props.performances;
+    // Create mode: Use current leaf performances
+    perfs = props.performances;
   }
+  // Sort by P-number order (P1, P2, ... P10)
+  return sortByPNumber(perfs);
 });
 
 // Performance tree consistency check

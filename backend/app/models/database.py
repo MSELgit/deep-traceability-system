@@ -119,7 +119,7 @@ class StakeholderNeedRelationModel(Base):
 
 class PerformanceModel(Base):
     __tablename__ = 'performances'
-    
+
     id = Column(String, primary_key=True)
     project_id = Column(String, ForeignKey('projects.id'), nullable=False)
     name = Column(String, nullable=False)
@@ -129,8 +129,15 @@ class PerformanceModel(Base):
     unit = Column(String, nullable=True)
     description = Column(Text, nullable=True)
     utility_function_json = Column(Text, nullable=True)  # JSON文字列として保存
-    
+
     project = relationship('ProjectModel', back_populates='performances')
+
+    @property
+    def utility_function(self):
+        """utility_function_jsonをパースして返す"""
+        if self.utility_function_json:
+            return json.loads(self.utility_function_json)
+        return None
 
 
 class NeedPerformanceRelationModel(Base):

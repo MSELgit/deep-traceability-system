@@ -1,7 +1,7 @@
 # Deep Traceability System - 詳細技術ドキュメント
 
 **作成日**: 2025年12月23日
-**バージョン**: 1.0
+**バージョン**: 1.1 (Coupling/Clustering機能追加)
 
 ---
 
@@ -38,6 +38,8 @@ Deep Traceability System は、複雑なシステム設計における**多目�
 | **4層ネットワーク構造** | 因果関係のモデル化 |
 | **3D山の可視化** | 設計案の総合評価を3D表示 |
 | **トレードオフ分析** | 性能間の競合関係の定量化 |
+| **Shapley値分解** | トレードオフへの属性寄与度分析 |
+| **カップリング/クラスタリング** | トレードオフ間の結合度と性能グループ化 |
 | **エネルギー計算** | 設計案の内部整合性評価 |
 
 ### 1.3 想定ユースケース
@@ -168,6 +170,53 @@ Tradeoff Ratio = 競合パス数 / 総パス数
 3. 反復してグラフの特徴を抽出
 4. カーネル行列から距離行列を計算
 5. MDSで座標に変換
+
+### 2.9 Shapley値分解
+
+トレードオフの原因となる属性の**寄与度**をゲーム理論的に分解します。
+
+```
+φ_k = Σ_{S⊆N\{k}} [|S|!(n-|S|-1)!/n!] × [v(S∪{k}) - v(S)]
+
+ここで：
+- k: 対象の属性ノード
+- N: 全属性ノードの集合
+- S: kを含まない連合（部分集合）
+- v(S): 連合Sのみを使用した場合の内積 C_ij
+```
+
+**特徴：**
+- φ_k > 0: 属性kがトレードオフを強化
+- φ_k < 0: 属性kがトレードオフを緩和
+- Σ φ_k = C_ij（総内積と一致）
+
+### 2.10 カップリングとクラスタリング
+
+トレードオフ間の**結合度**を計算し、性能を**階層的にグループ化**します。
+
+#### 正規化カップリング
+```
+NormCoupling(TO_ij, TO_kl) = Σ|φ_a(C_ij)|·|φ_a(C_kl)| / (||φ_ij|| · ||φ_kl||)
+
+ここで：
+- TO_ij: 性能iとjのトレードオフ
+- φ_a: 属性aのShapley寄与ベクトル
+```
+
+2つのトレードオフが同じ属性によって引き起こされているほど、カップリングが高くなります。
+
+#### 間接結合度
+```
+Connection(P_i, P_k) = max_{j,l} K_{(ij),(kl)}
+
+性能P_iとP_kが関与するトレードオフ間の最大カップリング
+```
+
+#### 階層的クラスタリング
+- **距離行列**: D = 1 - Connection
+- **連結法**: 平均連結法（Average Linkage）
+- **最適クラスタ数**: Silhouette係数で決定
+- **可視化**: インタラクティブデンドログラム
 
 ---
 
@@ -466,6 +515,9 @@ deep-traceability-system/
 | POST | `/energy/{id}` | 全設計案のエネルギー計算 |
 | GET | `/energy/{id}/{case_id}` | 単一設計案のエネルギー |
 | POST | `/tradeoff/{id}` | トレードオフ比率計算 |
+| GET | `/structural-tradeoff/{id}/{case_id}` | 構造的トレードオフ分析 |
+| GET | `/shapley/{id}/{case_id}/{pi}/{pj}` | Shapley値分解 |
+| GET | `/coupling/{id}/{case_id}` | カップリング/クラスタリング |
 
 #### MDS/カーネル (`/api/mds`)
 
@@ -589,6 +641,60 @@ class TradeoffCalculator:
         """
 ```
 
+#### shapley_calculator.py
+
+**Shapley値分解：**
+
+```python
+def calculate_shapley_decomposition(network, perf_i_idx, perf_j_idx, perf_labels):
+    """
+    トレードオフC_ijへの各属性の寄与度をShapley値で計算
+
+    アルゴリズム:
+    1. 性能i,jに接続する属性ノードを抽出
+    2. 全連合（部分集合）を列挙（2^n パターン）
+    3. 各連合でのC_ij値を計算（部分ネットワーク）
+    4. Shapley公式で各属性の寄与度を算出
+
+    戻り値:
+    {
+        'shapley_values': [{node_id, label, value, percentage}, ...],
+        'total_C_ij': float,
+        'coalition_details': {...}
+    }
+    """
+```
+
+#### coupling_calculator.py
+
+**カップリングとクラスタリング：**
+
+```python
+def compute_coupling_for_case(network, matrices, cos_theta_matrix, ...):
+    """
+    設計案のカップリングとクラスタリングを計算
+
+    処理フロー:
+    1. トレードオフペア（cos θ < 0）を抽出
+    2. 各トレードオフのShapley寄与ベクトルを計算
+    3. 正規化カップリング行列を構築
+    4. 性能間の間接結合度行列を計算
+    5. 階層的クラスタリング（平均連結法）
+    6. Silhouette係数で最適クラスタ数を決定
+    7. デンドログラムデータを生成
+
+    戻り値:
+    CouplingResult {
+        coupling_matrix: np.ndarray,       # トレードオフ間カップリング
+        performance_connection_matrix: np.ndarray,  # 性能間結合度
+        clusters: List[int],               # クラスタ割当
+        optimal_n_clusters: int,
+        silhouette_score: float,
+        dendrogram_data: Dict              # 可視化用データ
+    }
+    """
+```
+
 ---
 
 ## 6. フロントエンド詳細
@@ -694,6 +800,39 @@ const sphereRadius = 0.35 + normalizedEnergy * 0.4;
 0 (なし),
 -0.33 (弱い負), -1 (負), -3 (強い負)
 ```
+
+#### TradeoffAnalysisPanel.vue
+**機能：**
+- 構造的トレードオフ分析の結果表示
+- cos θ 行列のヒートマップ
+- トレードオフペアの一覧
+
+**サブコンポーネント：**
+- `ShapleyBreakdown.vue` - Shapley値の棒グラフ
+- `CouplingClusteringPanel.vue` - カップリング/クラスタリング
+- `InteractiveDendrogram.vue` - デンドログラム可視化
+- `MatrixHeatmap.vue` - 行列ヒートマップ
+- `SCCWarningBanner.vue` - SCC警告表示
+
+#### CouplingClusteringPanel.vue
+**機能：**
+- トレードオフ間のカップリング行列表示
+- 性能間の間接結合度行列表示
+- クラスタ一覧（色分け表示）
+- インタラクティブデンドログラム
+
+**タブ構成：**
+1. **Dendrogram** - 階層的クラスタリングの木構造
+2. **Clusters** - 最適クラスタ数での分類結果
+3. **Coupling Matrix** - トレードオフ間カップリング
+4. **Connection Matrix** - 性能間結合度
+
+#### InteractiveDendrogram.vue
+**機能：**
+- SVGベースのデンドログラム描画
+- カット高さの動的調整（スライダー）
+- Silhouette係数の曲線表示
+- 最適高さの自動提案
 
 ### 6.3 状態管理 (projectStore.ts)
 
@@ -1073,4 +1212,4 @@ find . -name "__pycache__" -exec rm -rf {} +
 ---
 
 *このドキュメントは Deep Traceability System の技術仕様を記載したものです。*
-*最終更新: 2025年12月23日*
+*最終更新: 2026年1月20日*

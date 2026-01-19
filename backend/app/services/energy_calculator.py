@@ -1,9 +1,12 @@
 # backend/app/services/energy_calculator.py
 
+import logging
 import numpy as np
 from typing import Dict, List, Tuple, Optional
 from sqlalchemy.orm import Session
 from app.models.database import ProjectModel, DesignCaseModel
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_energy_for_case(
@@ -23,7 +26,7 @@ def calculate_energy_for_case(
     """
     network = design_case.network
     if not network or 'nodes' not in network or 'edges' not in network:
-        print("ネットワーク情報が不足しています")
+        logger.warning("ネットワーク情報が不足しています")
         return {
             "total_energy": 0.0,
             "partial_energies": {},
@@ -80,7 +83,7 @@ def calculate_energy_for_case(
                 importance[perf_node['id']] = 0.0
     else:
         # デフォルトの重要度
-        print("  performance_weightsが設定されていません。デフォルト値(0.0)を使用します。")
+        logger.debug("performance_weightsが設定されていません。デフォルト値(0.0)を使用します。")
         for perf_node in performance_nodes:
             importance[perf_node['id']] = 0.0
     

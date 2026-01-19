@@ -96,8 +96,17 @@ No additional environment variables are required for basic setup. The system use
 - **Mountain View**: 3D visualization of design alternatives
 - **Network Editor**: Create and visualize system networks
 - **Two-Axis Evaluation**: Compare design alternatives on multiple dimensions
+- **Structural Tradeoff Analysis**: cos θ based tradeoff detection with heatmap visualization
+- **Shapley Value Decomposition**: Game-theoretic attribution of tradeoff causes
+- **Coupling/Clustering Analysis**: Hierarchical clustering of performances with interactive dendrogram
 
-## Recent Updates
+## Recent Updates (2026-01)
+
+- **Coupling/Clustering**: Added performance clustering based on tradeoff coupling
+- **Interactive Dendrogram**: Adjustable cut height with Silhouette score optimization
+- **Connection Matrix**: Performance-to-performance indirect coupling visualization
+
+## Previous Updates
 
 - **Priority System**: Needs can now have priorities (0-1) that affect vote distribution
 - **Normalized Valid Votes**: Valid votes are normalized to sum to 1.0 for relative comparison

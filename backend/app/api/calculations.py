@@ -1405,3 +1405,139 @@ def compute_edge_shapley_for_pair(
     except Exception as e:
         logger.error(f"Edge Shapley calculation error: {e}")
         raise HTTPException(status_code=500, detail=f"Edge Shapley calculation error: {str(e)}")
+
+
+# ========== カップリング＆クラスタリング API ==========
+
+@router.get("/coupling/{project_id}/{case_id}")
+def compute_coupling_and_clustering(
+    project_id: str,
+    case_id: str,
+    tradeoff_threshold: float = 0.0,
+    db: Session = Depends(get_db)
+):
+    """
+    設計案のトレードオフ間カップリングと性能クラスタリングを計算
+
+    論文 design.tex 3573-3786行に基づく実装:
+    - 正規化カップリング: NormCoupling(TO_ij, TO_kl) = Σ|φ_a|·|φ_b| / (||φ||·||φ||)
+    - 間接結合度: Connection(P_i, P_k) = max K_{(ij),(kl)}
+    - 階層的クラスタリング: Silhouette係数で最適クラスタ数を決定
+
+    Args:
+        project_id: プロジェクトID
+        case_id: 設計案ID
+        tradeoff_threshold: トレードオフと見なす cos θ の閾値 (default: 0.0)
+
+    Returns:
+        {
+            'n_tradeoffs': int,
+            'tradeoffs': [...],
+            'coupling_matrix': [[...]],
+            'tradeoff_labels': [...],
+            'performance_connection_matrix': [[...]],
+            'performance_labels': [...],
+            'clustering': {
+                'clusters': [...],
+                'optimal_n_clusters': int,
+                'silhouette_score': float,
+                'cluster_groups': {...}
+            },
+            'dendrogram': {...}
+        }
+    """
+    from app.models.database import DesignCaseModel
+    from app.services.matrix_utils import build_adjacency_matrices, compute_total_effect_matrix
+    from app.services.coupling_calculator import (
+        compute_coupling_for_case,
+        coupling_result_to_dict,
+        TradeoffInfo
+    )
+    from app.services.shapley_calculator import compute_node_shapley_for_performance_pair
+    import numpy as np
+
+    # 設計案を取得
+    design_case = db.query(DesignCaseModel).filter(
+        DesignCaseModel.id == case_id,
+        DesignCaseModel.project_id == project_id
+    ).first()
+
+    if not design_case:
+        raise HTTPException(status_code=404, detail="Design case not found")
+
+    try:
+        network = design_case.network
+        if not network or not network.get('nodes'):
+            raise HTTPException(status_code=400, detail="No network data available")
+
+        # weight_mode取得
+        weight_mode = getattr(design_case, 'weight_mode', 'discrete_7') or 'discrete_7'
+
+        # 隣接行列を構築
+        matrices = build_adjacency_matrices(network, weight_mode)
+        if matrices is None or 'B_PA' not in matrices:
+            raise HTTPException(status_code=400, detail="Failed to build adjacency matrices")
+
+        perf_labels = matrices['node_labels']['P']
+        n_perfs = len(perf_labels)
+
+        # 総効果行列と cos θ 行列を計算
+        T_result = compute_total_effect_matrix(
+            matrices['B_PA'], matrices['B_AA'], matrices['B_AV']
+        )
+        T = T_result['T']
+
+        # cos θ と内積行列を計算
+        cos_theta_matrix = np.zeros((n_perfs, n_perfs))
+        inner_product_matrix = np.zeros((n_perfs, n_perfs))
+
+        norms = np.linalg.norm(T, axis=1)
+        for i in range(n_perfs):
+            for j in range(n_perfs):
+                if i == j:
+                    cos_theta_matrix[i][j] = 1.0
+                    inner_product_matrix[i][j] = norms[i] ** 2
+                else:
+                    inner_product_matrix[i][j] = np.dot(T[i], T[j])
+                    if norms[i] > 1e-10 and norms[j] > 1e-10:
+                        cos_theta_matrix[i][j] = inner_product_matrix[i][j] / (norms[i] * norms[j])
+
+        # ノードShapley計算関数を定義
+        def node_shapley_func(perf_i: int, perf_j: int) -> Dict:
+            try:
+                result = compute_node_shapley_for_performance_pair(
+                    network=network,
+                    matrices=matrices,
+                    perf_i=perf_i,
+                    perf_j=perf_j,
+                    method='monte_carlo'  # 高速化のためモンテカルロ
+                )
+                # NodeShapleyResult から寄与ベクトルを抽出
+                # node_shapley_values は Dict[str, float] (node_id -> phi)
+                if result and hasattr(result, 'node_shapley_values') and result.node_shapley_values:
+                    # 順序を維持してベクトル化（値のみを抽出）
+                    shapley_vector = np.array(list(result.node_shapley_values.values()))
+                    return {'shapley_vector': shapley_vector}
+                return None
+            except Exception as e:
+                logger.warning(f"Node Shapley calculation failed for ({perf_i}, {perf_j}): {e}")
+                return None
+
+        # カップリングとクラスタリングを計算
+        coupling_result = compute_coupling_for_case(
+            network=network,
+            matrices=matrices,
+            cos_theta_matrix=cos_theta_matrix,
+            inner_product_matrix=inner_product_matrix,
+            perf_labels=perf_labels,
+            node_shapley_func=node_shapley_func,
+            tradeoff_threshold=tradeoff_threshold
+        )
+
+        return coupling_result_to_dict(coupling_result)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Coupling calculation error: {e}")
+        raise HTTPException(status_code=500, detail=f"Coupling calculation error: {str(e)}")

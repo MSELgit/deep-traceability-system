@@ -54,7 +54,27 @@
    - 複数の評価視点の保存と切り替え
    - エクスポート機能（画像・データ）
 
-### 7. **データ管理**
+### 7. **構造的トレードオフ分析**
+   - 総効果行列 T = B_AP × (I - B_AA)^{-1} × B_VA の計算
+   - 内積行列による性能ペア間の関係定量化
+   - cos θ 判定（正: シナジー、負: トレードオフ）
+   - ヒートマップによる可視化
+   - SCC（強連結成分）検出とループ警告
+
+### 8. **Shapley値分解**
+   - トレードオフへの各属性の寄与度計算
+   - ゲーム理論に基づく公平な分配
+   - 棒グラフによる寄与度可視化
+   - 正/負の寄与の識別
+
+### 9. **カップリング/クラスタリング分析**
+   - トレードオフ間の正規化カップリング計算
+   - 性能間の間接結合度行列
+   - 階層的クラスタリング（平均連結法）
+   - Silhouette係数による最適クラスタ数決定
+   - インタラクティブデンドログラム表示
+
+### 10. **データ管理**
    - プロジェクト単位でのデータ管理
    - インポート/エクスポート機能
    - ローカル/Webモードの切り替え
@@ -71,7 +91,7 @@
 
 ### バックエンド
 - FastAPI（Python）
-- NumPy, scikit-learn（計算エンジン）
+- NumPy, SciPy, scikit-learn（計算エンジン）
 - SQLite（ローカル版）/ PostgreSQL（Web版）
 
 ## 必要な環境
@@ -146,12 +166,18 @@ deep-traceability-system/
 ├── frontend/          # Vue3フロントエンド
 │   ├── src/
 │   │   ├── components/   # UIコンポーネント
-│   │   │   ├── stakeholders/  # ステークホルダー管理
+│   │   │   ├── stakeholder/   # ステークホルダー管理
 │   │   │   ├── performance/   # 性能・効用関数管理
-│   │   │   ├── designcase/    # 設計案管理
-│   │   │   ├── opm3d/         # 3Dネットワーク可視化
+│   │   │   ├── matrix/        # マトリクス表示
 │   │   │   ├── mountain/      # 山の可視化
-│   │   │   └── twoaxis/       # 2軸評価
+│   │   │   ├── network/       # ネットワーク編集
+│   │   │   ├── opm3d/         # 3Dネットワーク可視化
+│   │   │   ├── twoaxis/       # 2軸評価
+│   │   │   └── analysis/      # トレードオフ分析
+│   │   │       ├── TradeoffAnalysisPanel.vue
+│   │   │       ├── ShapleyBreakdown.vue
+│   │   │       ├── CouplingClusteringPanel.vue
+│   │   │       └── InteractiveDendrogram.vue
 │   │   ├── stores/       # 状態管理（Pinia）
 │   │   ├── types/        # TypeScript型定義
 │   │   └── utils/        # ユーティリティ関数
@@ -160,7 +186,11 @@ deep-traceability-system/
 │   │   ├── api/          # APIエンドポイント
 │   │   ├── models/       # データベースモデル
 │   │   ├── schemas/      # Pydanticスキーマ
-│   │   └── algorithms/   # 計算アルゴリズム
+│   │   └── services/     # 計算サービス
+│   │       ├── mountain_calculator.py
+│   │       ├── structural_tradeoff.py
+│   │       ├── shapley_calculator.py
+│   │       └── coupling_calculator.py
 ├── data/              # ローカルデータ保存先
 └── docs/              # ドキュメント
 ```
@@ -185,7 +215,11 @@ deep-traceability-system/
 
 5. **評価と分析**
    - 「山の可視化」タブで総合評価を確認
-   - 「2軸評価」タブでトレードオフ分析
+   - 「2軸評価」タブで性能間の散布図分析
+   - 「Tradeoff Analysis」タブで構造的トレードオフ分析
+     - cos θ 行列で性能間の関係を確認
+     - Shapley値で原因属性を特定
+     - カップリング/クラスタリングで性能グループを把握
    - 「3D Network」タブで構造を可視化
 
 ## トラブルシューティング

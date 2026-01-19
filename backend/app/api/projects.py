@@ -85,19 +85,22 @@ def get_project(project_id: str, db: Session = Depends(get_db)):
     project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     # 性能のis_leafを実際の子の存在に基づいて再計算
+    # また、utility_function_jsonをパースしてutility_functionとして設定
     performance_ids = {p.id for p in project.performances}
     for performance in project.performances:
         # この性能を親として持つ子が存在するか確認
         has_children = any(p.parent_id == performance.id for p in project.performances)
         performance.is_leaf = not has_children
-    
+        # utility_function_jsonをパース（@propertyの値をPydanticが読めるように）
+        performance._utility_function_temp = performance.utility_function
+
     # 設計案のperformance_snapshotを明示的に設定（@propertyの値をインスタンス変数にコピー）
     for dc in project.design_cases:
         # @propertyの値を一時的なインスタンス変数として保存（Pydanticが読み取れるように）
         dc._performance_snapshot_temp = dc.performance_snapshot
-    
+
     return project
 
 
@@ -729,13 +732,16 @@ def list_utility_functions(project_id: str, db: Session = Depends(get_db)):
         NeedPerformanceRelationModel.project_id == project_id,
         NeedPerformanceRelationModel.utility_function_json.isnot(None)
     ).all()
-    
+
     result = []
     for r in relations:
         if r.utility_function_json:
             utility_data = json.loads(r.utility_function_json)
+            # need_idとperformance_idを追加（フロントエンドで必要）
+            utility_data['need_id'] = r.need_id
+            utility_data['performance_id'] = r.performance_id
             result.append(utility_data)
-    
+
     return result
 
 # ========== 設計案 ==========
