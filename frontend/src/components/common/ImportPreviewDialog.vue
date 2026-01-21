@@ -337,7 +337,7 @@ function handleConfirm() {
 </script>
 
 <style scoped lang="scss">
-@import '@/style/_color.scss';
+@use '@/style/_color.scss' as *;
 
 .modal-overlay {
   position: fixed;

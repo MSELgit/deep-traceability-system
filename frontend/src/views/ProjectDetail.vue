@@ -287,7 +287,7 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 @use 'sass:color';
-@import '../style/color';
+@use '../style/color' as *;
 .project-detail {
   min-height: 100vh;
   background: $black;

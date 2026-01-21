@@ -2719,7 +2719,7 @@ const insufficientDecompositionAnalysis = computed(() => {
 
 <style scoped lang="scss">
 @use 'sass:color';
-@import '../../style/color';
+@use '../../style/color' as *;
 .need-performance-matrix {
   padding: 2vh;
 }

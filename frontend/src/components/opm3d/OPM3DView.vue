@@ -932,7 +932,7 @@ function initializeExisting3DPositions() {
 
 <style scoped lang="scss">
 @use 'sass:color';
-@import '../../style/color';
+@use '../../style/color' as *;
 
 .network-viewer {
   display: flex;

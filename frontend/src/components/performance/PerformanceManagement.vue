@@ -216,7 +216,7 @@ function downloadPerformanceTree() {
 
 <style scoped lang="scss">
 @use 'sass:color';
-@import '../../style/color';
+@use '../../style/color' as *;
 .performance-management {
   padding: 2vh;
 }

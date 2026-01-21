@@ -1178,7 +1178,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use 'sass:color';
-@import '../../style/color';
+@use '../../style/color' as *;
 
 .network-demo {
   padding: 2vh;

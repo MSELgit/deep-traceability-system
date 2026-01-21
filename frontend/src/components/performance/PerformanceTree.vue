@@ -69,7 +69,7 @@ defineEmits<{
 
 <style scoped lang="scss">
 @use 'sass:color';
-@import '../../style/color';
+@use '../../style/color' as *;
 .tree-node {
   margin-bottom: 1vh;
 }

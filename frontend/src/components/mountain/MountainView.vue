@@ -832,7 +832,7 @@ async function handleColorChange(designCase: DesignCase, color: string) {
 
 <style scoped lang="scss">
 @use 'sass:color';
-@import '../../style/color';
+@use '../../style/color' as *;
 
 // カスタムスクロールバースタイル
 @mixin custom-scrollbar {

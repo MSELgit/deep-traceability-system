@@ -42,7 +42,7 @@ const showAnalysis = computed(() => {
 
 <style scoped lang="scss">
 @use 'sass:color';
-@import '../../style/color';
+@use '../../style/color' as *;
 
 .decomposition-analysis {
   margin-top: 3vh;

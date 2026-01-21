@@ -65,7 +65,7 @@ function selectMode(mode: 'local' | 'web') {
 
 <style scoped lang="scss">
 @use 'sass:color';
-@import '../../style/color';
+@use '../../style/color' as *;
 
 .mode-selector-overlay {
   position: fixed;

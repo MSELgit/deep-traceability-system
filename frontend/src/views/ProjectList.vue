@@ -301,7 +301,7 @@ function cancelImport() {
 
 <style scoped lang="scss">
 @use 'sass:color';
-@import '../style/color';
+@use '../style/color' as *;
 
 .project-list {
   min-height: calc(100vh - 120px);

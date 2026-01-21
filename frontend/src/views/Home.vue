@@ -115,7 +115,7 @@ const scrollToFeatures = () => {
 
 <style scoped lang="scss">
 @use 'sass:color';
-@import '../style/color';
+@use '../style/color' as *;
 
 .home {
   width: 100vw;

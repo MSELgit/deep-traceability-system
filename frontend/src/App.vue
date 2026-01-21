@@ -35,7 +35,7 @@ function onModeSelected(mode: 'local' | 'web') {
 </script>
 
 <style scoped lang="scss">
-@import './style/color';
+@use './style/color' as *;
 
 #app {
   min-height: 100vh;

@@ -757,7 +757,7 @@ function getNodeY(nodeId: string): number {
 
 <style scoped lang="scss">
 @use 'sass:color';
-@import '../../style/color';
+@use '../../style/color' as *;
 
 .comparison-view {
   padding: 20px;
