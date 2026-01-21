@@ -106,12 +106,6 @@
     <div v-if="mode === 'network'" class="network-comparison">
       <!-- Controls -->
       <div class="network-controls">
-        <div class="control-group">
-          <label>WL反復回数:</label>
-          <select v-model="wlIterations" class="select-input small">
-            <option v-for="i in 4" :key="i" :value="i">{{ i }}</option>
-          </select>
-        </div>
         <button
           class="compute-btn"
           :disabled="designCases.length < 2 || isComputingKernel"
@@ -292,7 +286,6 @@ const performanceLabels = ref<string[]>([])
 const displayModeIndex = ref(0)
 
 // Network comparison state
-const wlIterations = ref(2)
 const isComputingKernel = ref(false)
 const distanceMatrix = ref<number[][] | null>(null)
 const selectedPairI = ref<number | null>(null)
@@ -535,7 +528,7 @@ async function computeWLKernel() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         networks: networkStructures,
-        iterations: wlIterations.value,
+        iterations: 1,  // Fixed to 1 iteration
         method: 'circular_mds',
         n_init: 50,
         compare_methods: false

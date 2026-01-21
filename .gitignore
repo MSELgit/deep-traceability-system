@@ -90,3 +90,5 @@ simulation
 *.log*.fdb_latexmk
 *.fls
 log.txt
+
+.要望.Mmd
