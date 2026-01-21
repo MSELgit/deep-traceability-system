@@ -300,6 +300,7 @@ function cancelImport() {
 </script>
 
 <style scoped lang="scss">
+@use 'sass:color';
 @import '../style/color';
 
 .project-list {
@@ -319,7 +320,7 @@ function cancelImport() {
   align-items: center;
   margin-bottom: 4vh;
   padding-bottom: 2vh;
-  border-bottom: 1px solid transparentize($white, 0.95);
+  border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
 }
 
 .page-header-section h1 {
@@ -327,7 +328,7 @@ function cancelImport() {
   color: $white;
   font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, $white, transparentize($white, 0.15));
+  background: linear-gradient(135deg, $white, color.adjust($white, $alpha: -0.15));
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -339,9 +340,9 @@ function cancelImport() {
 }
 
 .secondary {
-  background: transparentize($gray, 0.5);
+  background: color.adjust($gray, $alpha: -0.5);
   color: $white;
-  border: 1px solid transparentize($white, 0.8);
+  border: 1px solid color.adjust($white, $alpha: -0.8);
   padding: 1.5vh 1.5vw;
   border-radius: 0.5vw;
   font-size: clamp(0.85rem, 1vw, 0.95rem);
@@ -354,8 +355,8 @@ function cancelImport() {
 }
 
 .secondary:hover {
-  background: transparentize($gray, 0.3);
-  border-color: transparentize($white, 0.7);
+  background: color.adjust($gray, $alpha: -0.3);
+  border-color: color.adjust($white, $alpha: -0.7);
 }
 
 .primary {
@@ -375,7 +376,7 @@ function cancelImport() {
 
 .primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0.5vh 2vh transparentize($main_2, 0.6);
+  box-shadow: 0 0.5vh 2vh color.adjust($main_2, $alpha: -0.6);
 }
 
 .primary:disabled {
@@ -395,13 +396,13 @@ function cancelImport() {
 .spinner {
   width: 60px;
   height: 60px;
-  border: 3px solid transparentize($white, 0.95);
+  border: 3px solid color.adjust($white, $alpha: -0.95);
   border-top-color: $main_1;
   border-right-color: $main_2;
   border-radius: 50%;
   margin: 0 auto 3vh;
   animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
-  box-shadow: 0 0 2vh transparentize($main_1, 0.8);
+  box-shadow: 0 0 2vh color.adjust($main_1, $alpha: -0.8);
 }
 
 @keyframes spin {
@@ -409,7 +410,7 @@ function cancelImport() {
 }
 
 .loading p {
-  color: transparentize($white, 0.2);
+  color: color.adjust($white, $alpha: -0.2);
   font-size: clamp(1rem, 1.2vw, 1.1rem);
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -423,13 +424,13 @@ function cancelImport() {
 
 .project-card {
   background: linear-gradient(145deg, lighten($gray, 12%), lighten($gray, 8%));
-  border: 1px solid transparentize($white, 0.85);
+  border: 1px solid color.adjust($white, $alpha: -0.85);
   border-radius: 1.2vw;
   padding: 0;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0.8vh 3vh transparentize($black, 0.2);
+  box-shadow: 0 0.8vh 3vh color.adjust($black, $alpha: -0.2);
 }
 
 .project-card::before {
@@ -447,8 +448,8 @@ function cancelImport() {
 
 .project-card:hover {
   transform: translateY(-0.8vh) scale(1.02);
-  border-color: transparentize($main_1, 0.5);
-  box-shadow: 0 1.5vh 4vh transparentize($main_1, 0.6);
+  border-color: color.adjust($main_1, $alpha: -0.5);
+  box-shadow: 0 1.5vh 4vh color.adjust($main_1, $alpha: -0.6);
   background: linear-gradient(145deg, lighten($gray, 15%), lighten($gray, 10%));
 }
 
@@ -474,7 +475,7 @@ function cancelImport() {
 }
 
 .project-card p {
-  color: transparentize($white, 0.15);
+  color: color.adjust($white, $alpha: -0.15);
   margin-bottom: auto;
   line-height: 1.7;
   font-size: clamp(0.9rem, 1.05vw, 1rem);
@@ -489,7 +490,7 @@ function cancelImport() {
   font-size: clamp(0.85rem, 1vw, 0.95rem);
   margin-top: 2vh;
   padding-top: 2vh;
-  border-top: 1px solid transparentize($white, 0.9);
+  border-top: 1px solid color.adjust($white, $alpha: -0.9);
 }
 
 .meta-label {
@@ -497,7 +498,7 @@ function cancelImport() {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: clamp(0.75rem, 0.9vw, 0.85rem);
-  color: transparentize($white, 0.3);
+  color: color.adjust($white, $alpha: -0.3);
 }
 
 .project-card-actions {
@@ -518,8 +519,8 @@ function cancelImport() {
   width: 40px;
   height: 40px;
   padding: 0;
-  background: transparentize($black, 0.1);
-  border: 1px solid transparentize($white, 0.85);
+  background: color.adjust($black, $alpha: -0.1);
+  border: 1px solid color.adjust($white, $alpha: -0.85);
   border-radius: 0.8vw;
   cursor: pointer;
   display: flex;
@@ -528,7 +529,7 @@ function cancelImport() {
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   color: $white;
   backdrop-filter: blur(10px);
-  box-shadow: 0 0.3vh 1vh transparentize($black, 0.5);
+  box-shadow: 0 0.3vh 1vh color.adjust($black, $alpha: -0.5);
 }
 
 .icon-button.export:hover {
@@ -536,7 +537,7 @@ function cancelImport() {
   border-color: $main_1;
   transform: scale(1.15) rotate(-5deg);
   color: $white;
-  box-shadow: 0 0.5vh 1.5vh transparentize($main_1, 0.5);
+  box-shadow: 0 0.5vh 1.5vh color.adjust($main_1, $alpha: -0.5);
 }
 
 .icon-button.delete:hover {
@@ -544,7 +545,7 @@ function cancelImport() {
   border-color: $sub_1;
   transform: scale(1.15) rotate(5deg);
   color: $white;
-  box-shadow: 0 0.5vh 1.5vh transparentize($sub_1, 0.5);
+  box-shadow: 0 0.5vh 1.5vh color.adjust($sub_1, $alpha: -0.5);
 }
 
 .empty-state {
@@ -552,7 +553,7 @@ function cancelImport() {
   padding: 12vh 2vw;
   background: linear-gradient(145deg, lighten($gray, 8%), lighten($gray, 5%));
   border-radius: 2vw;
-  border: 1px solid transparentize($white, 0.9);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
 }
 
 .empty-icon {
@@ -560,7 +561,7 @@ function cancelImport() {
   color: $main_1;
   margin-bottom: 3vh;
   opacity: 0.3;
-  filter: drop-shadow(0 1vh 2vh transparentize($main_1, 0.8));
+  filter: drop-shadow(0 1vh 2vh color.adjust($main_1, $alpha: -0.8));
 }
 
 .empty-state h3 {
@@ -572,7 +573,7 @@ function cancelImport() {
 }
 
 .empty-state p {
-  color: transparentize($white, 0.3);
+  color: color.adjust($white, $alpha: -0.3);
   margin-bottom: 4vh;
   font-size: clamp(1rem, 1.2vw, 1.1rem);
   font-weight: 400;
@@ -584,7 +585,7 @@ function cancelImport() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: transparentize($black, 0.2);
+  background: color.adjust($black, $alpha: -0.2);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -594,12 +595,12 @@ function cancelImport() {
 
 .modal-content {
   background: $gray;
-  border: 1px solid transparentize($white, 0.9);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 1vw;
   padding: 2vh 3vw;
   max-width: 500px;
   width: 90%;
-  box-shadow: 0 2vh 6vh transparentize($black, 0.5);
+  box-shadow: 0 2vh 6vh color.adjust($black, $alpha: -0.5);
 }
 
 .modal-content h2 {
@@ -625,8 +626,8 @@ function cancelImport() {
 .form-group textarea {
   width: 100%;
   padding: 1vh 1vw;
-  background: transparentize($black, 0.3);
-  border: 1px solid transparentize($white, 0.9);
+  background: color.adjust($black, $alpha: -0.3);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 0.5vw;
   color: $white;
   font-size: clamp(0.85rem, 1vw, 0.95rem);
@@ -637,12 +638,12 @@ function cancelImport() {
 .form-group textarea:focus {
   outline: none;
   border-color: $main_1;
-  background: transparentize($black, 0.1);
+  background: color.adjust($black, $alpha: -0.1);
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: transparentize($main_1, 0.3);
+  color: color.adjust($main_1, $alpha: -0.3);
 }
 
 .form-actions {
@@ -654,11 +655,11 @@ function cancelImport() {
 
 .import-area {
   padding: 4vh 3vw;
-  border: 2px dashed transparentize($main_1, 0.5);
+  border: 2px dashed color.adjust($main_1, $alpha: -0.5);
   border-radius: 0.8vw;
   text-align: center;
   margin-bottom: 2vh;
-  background: transparentize($black, 0.5);
+  background: color.adjust($black, $alpha: -0.5);
 }
 
 .import-icon {
@@ -682,7 +683,7 @@ function cancelImport() {
 
 .import-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0.5vh 2vh transparentize($main_2, 0.6);
+  box-shadow: 0 0.5vh 2vh color.adjust($main_2, $alpha: -0.6);
 }
 
 .import-help {

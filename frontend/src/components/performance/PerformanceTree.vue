@@ -68,6 +68,7 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
+@use 'sass:color';
 @import '../../style/color';
 .tree-node {
   margin-bottom: 1vh;
@@ -79,14 +80,14 @@ defineEmits<{
   align-items: center;
   padding: 1.5vh 1.5vw;
   background: lighten($gray, 8%);
-  border: 1px solid transparentize($white, 0.9);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 0.8vw;
   transition: all 0.3s ease;
 }
 
 .node-content:hover {
-  border-color: transparentize($main_1, 0.5);
-  box-shadow: 0 0.5vh 1.5vh transparentize($main_1, 0.8);
+  border-color: color.adjust($main_1, $alpha: -0.5);
+  box-shadow: 0 0.5vh 1.5vh color.adjust($main_1, $alpha: -0.8);
   background: lighten($gray, 10%);
 }
 
@@ -113,7 +114,7 @@ defineEmits<{
 }
 
 .node-unit {
-  color: transparentize($white, 0.4);
+  color: color.adjust($white, $alpha: -0.4);
   font-size: clamp(0.8rem, 0.95vw, 0.9rem);
 }
 
@@ -125,8 +126,8 @@ defineEmits<{
 .icon-btn {
   padding: 0.6vh 0.8vw;
   font-size: clamp(0.85rem, 1vw, 0.95rem);
-  background: transparentize($black, 0.5);
-  border: 1px solid transparentize($white, 0.9);
+  background: color.adjust($black, $alpha: -0.5);
+  border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 0.4vw;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -139,8 +140,8 @@ defineEmits<{
 }
 
 .icon-btn:hover {
-  background: transparentize($black, 0.3);
-  border-color: transparentize($white, 0.8);
+  background: color.adjust($black, $alpha: -0.3);
+  border-color: color.adjust($white, $alpha: -0.8);
   transform: scale(1.1);
 }
 
@@ -149,7 +150,7 @@ defineEmits<{
 }
 
 .icon-btn.danger:hover {
-  background: transparentize($sub_1, 0.9);
+  background: color.adjust($sub_1, $alpha: -0.9);
   border-color: $sub_1;
 }
 .icon-btn.danger:hover {

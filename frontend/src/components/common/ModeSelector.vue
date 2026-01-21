@@ -64,6 +64,7 @@ function selectMode(mode: 'local' | 'web') {
 </script>
 
 <style scoped lang="scss">
+@use 'sass:color';
 @import '../../style/color';
 
 .mode-selector-overlay {
@@ -81,7 +82,7 @@ function selectMode(mode: 'local' | 'web') {
 
 .mode-selector-card {
   background: $gray;
-  border: 1px solid transparentize($white, 0.95);
+  border: 1px solid color.adjust($white, $alpha: -0.95);
   border-radius: 1.5vw;
   padding: 4vh 4vw;
   max-width: 70vw;
@@ -116,8 +117,8 @@ function selectMode(mode: 'local' | 'web') {
 }
 
 .mode-option {
-  background: transparentize($white, 0.98);
-  border: 1px solid transparentize($white, 0.95);
+  background: color.adjust($white, $alpha: -0.98);
+  border: 1px solid color.adjust($white, $alpha: -0.95);
   border-radius: 1vw;
   padding: 3vh 2.5vw;
   cursor: pointer;
@@ -139,16 +140,16 @@ function selectMode(mode: 'local' | 'web') {
 }
 
 .mode-option.local::before {
-  background: radial-gradient(circle, transparentize($main_1, 0.9), transparent);
+  background: radial-gradient(circle, color.adjust($main_1, $alpha: -0.9), transparent);
 }
 
 .mode-option.web::before {
-  background: radial-gradient(circle, transparentize($main_2, 0.9), transparent);
+  background: radial-gradient(circle, color.adjust($main_2, $alpha: -0.9), transparent);
 }
 
 .mode-option:hover {
   transform: translateY(-0.5vh);
-  border-color: transparentize($white, 0.9);
+  border-color: color.adjust($white, $alpha: -0.9);
 }
 
 .mode-option:hover::before {
@@ -156,13 +157,13 @@ function selectMode(mode: 'local' | 'web') {
 }
 
 .mode-option.local:hover {
-  border-color: transparentize($main_1, 0.7);
-  box-shadow: 0 1vh 3vh transparentize($main_1, 0.8);
+  border-color: color.adjust($main_1, $alpha: -0.7);
+  box-shadow: 0 1vh 3vh color.adjust($main_1, $alpha: -0.8);
 }
 
 .mode-option.web:hover {
-  border-color: transparentize($main_2, 0.7);
-  box-shadow: 0 1vh 3vh transparentize($main_2, 0.8);
+  border-color: color.adjust($main_2, $alpha: -0.7);
+  box-shadow: 0 1vh 3vh color.adjust($main_2, $alpha: -0.8);
 }
 
 .mode-header {
@@ -189,12 +190,12 @@ function selectMode(mode: 'local' | 'web') {
 }
 
 .local .mode-badge {
-  background: transparentize($main_1, 0.8);
+  background: color.adjust($main_1, $alpha: -0.8);
   color: $main_1;
 }
 
 .web .mode-badge {
-  background: transparentize($main_2, 0.8);
+  background: color.adjust($main_2, $alpha: -0.8);
   color: $main_2;
 }
 
@@ -247,7 +248,7 @@ function selectMode(mode: 'local' | 'web') {
 .mode-button.primary:hover {
   background: linear-gradient(135deg, darken($main_1, 10%), darken($main_1, 20%));
   transform: translateY(-1px);
-  box-shadow: 0 0.5vh 2vh transparentize($main_1, 0.7);
+  box-shadow: 0 0.5vh 2vh color.adjust($main_1, $alpha: -0.7);
 }
 
 .mode-button.secondary {
@@ -258,7 +259,7 @@ function selectMode(mode: 'local' | 'web') {
 .mode-button.secondary:hover {
   background: linear-gradient(135deg, darken($main_2, 10%), darken($main_2, 20%));
   transform: translateY(-1px);
-  box-shadow: 0 0.5vh 2vh transparentize($main_2, 0.7);
+  box-shadow: 0 0.5vh 2vh color.adjust($main_2, $alpha: -0.7);
 }
 
 .selector-note {
