@@ -947,7 +947,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   padding: 0.5rem 0.75rem;
-  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 10%), color.adjust($gray, $lightness: 6%));
   border-bottom: 1px solid color.adjust($white, $alpha: -0.9);
   gap: 0.75rem;
   flex-shrink: 0;
@@ -1063,7 +1063,7 @@ onMounted(() => {
   display: flex;
   gap: 1rem;
   padding: 0.4rem 0.75rem;
-  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 10%), color.adjust($gray, $lightness: 6%));
   border-top: 1px solid color.adjust($white, $alpha: -0.9);
   justify-content: center;
   flex-shrink: 0;

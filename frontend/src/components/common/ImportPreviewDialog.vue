@@ -819,7 +819,7 @@ function handleConfirm() {
 }
 
 .btn-secondary:hover {
-  background: lighten($main_1, 10%);
+  background: color.adjust($main_1, $lightness: 10%);
 }
 
 .btn-primary {
@@ -828,7 +828,7 @@ function handleConfirm() {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: lighten($sub_6, 10%);
+  background: color.adjust($sub_6, $lightness: 10%);
 }
 
 .btn-primary:disabled {

@@ -2174,7 +2174,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   padding: clamp(0.6rem, 1.2vh, 0.8rem) clamp(0.8rem, 1.5vw, 1rem);
-  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 10%), color.adjust($gray, $lightness: 6%));
   border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
   gap: 1.2vw;
   overflow-x: auto;
@@ -2273,7 +2273,7 @@ onUnmounted(() => {
   color: $sub_1;
   
   &:hover:not(:disabled) {
-    color: lighten($sub_1, 10%);
+    color: color.adjust($sub_1, $lightness: 10%);
     border-color: $sub_1;
   }
 }
@@ -2407,7 +2407,7 @@ onUnmounted(() => {
   flex: 1;
   position: relative;
   overflow: auto;
-  background: lighten($gray, 5%);
+  background: color.adjust($gray, $lightness: 5%);
   min-width: 0; /* flexboxで必要 */
   @include custom-scrollbar;
   margin-top: 0; // 上部の余白を削除して見切れを防ぐ
@@ -2418,7 +2418,7 @@ onUnmounted(() => {
   flex-direction: column;
   width: clamp(12rem, 20vw, 16rem);
   padding: clamp(1rem, 2vh, 1.25rem);
-  background: lighten($gray, 8%);
+  background: color.adjust($gray, $lightness: 8%);
   border-radius: 0 0 0.8vw 0;
   box-shadow: 0 0.3vh 0.8vh color.adjust($black, $alpha: -0.5);
   overflow-y: auto;
@@ -2517,7 +2517,7 @@ onUnmounted(() => {
     
     &:hover {
       transform: scale(1.1);
-      background: linear-gradient(135deg, lighten($main_1, 15%) 0%, lighten($main_2, 15%) 100%);
+      background: linear-gradient(135deg, color.adjust($main_1, $lightness: 15%) 0%, color.adjust($main_2, $lightness: 15%) 100%);
     }
   }
   
@@ -2664,7 +2664,7 @@ onUnmounted(() => {
 
 .properties-panel {
   width: clamp(12rem, 20vw, 16rem);
-  background: lighten($gray, 8%);
+  background: color.adjust($gray, $lightness: 8%);
   border-radius: 0 0 0 0.8vw;
   padding: clamp(1rem, 2vh, 1.25rem);
   box-shadow: 0 0.3vh 0.8vh color.adjust($black, $alpha: -0.5);

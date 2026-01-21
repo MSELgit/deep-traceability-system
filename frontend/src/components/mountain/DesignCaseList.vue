@@ -154,7 +154,7 @@ function formatDate(dateString: string): string {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: lighten($gray, 8%);
+  background: color.adjust($gray, $lightness: 8%);
 }
 
 .list-header {
@@ -236,7 +236,7 @@ function formatDate(dateString: string): string {
 }
 
 .create-btn:hover {
-  background: linear-gradient(135deg, lighten($main_1, 10%) 0%, lighten($main_2, 10%) 100%);
+  background: linear-gradient(135deg, color.adjust($main_1, $lightness: 10%) 0%, color.adjust($main_2, $lightness: 10%) 100%);
   box-shadow: 0 0.5vh 1.5vh color.adjust($main_1, $alpha: -0.5);
   transform: translateY(-0.1vh);
 }
@@ -284,7 +284,7 @@ function formatDate(dateString: string): string {
   align-items: center;
   gap: 1vw;
   padding: clamp(0.75rem, 1.5vh, 1rem);
-  background: linear-gradient(145deg, lighten($gray, 12%), lighten($gray, 8%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 12%), color.adjust($gray, $lightness: 8%));
   border: 1px solid color.adjust($white, $alpha: -0.95);
   border-radius: 0.5vw;
   margin-bottom: 0.8vh;

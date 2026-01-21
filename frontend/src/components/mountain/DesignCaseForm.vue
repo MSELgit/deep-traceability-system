@@ -679,7 +679,7 @@ function getRandomColor(): string {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: lighten($gray, 8%);
+  background: color.adjust($gray, $lightness: 8%);
 }
 
 .form-header {
@@ -688,7 +688,7 @@ function getRandomColor(): string {
   align-items: center;
   padding: clamp(1rem, 2vh, 1.5rem) clamp(1rem, 2vw, 1.5rem);
   border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
-  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 10%), color.adjust($gray, $lightness: 6%));
 }
 
 .form-header h2 {
@@ -726,7 +726,7 @@ function getRandomColor(): string {
 
 .form-section {
   margin-bottom: clamp(1.5rem, 3vh, 2rem);
-  background: lighten($gray, 8%);
+  background: color.adjust($gray, $lightness: 8%);
   padding: clamp(1rem, 2vh, 1.5rem);
   border-radius: 0.8vw;
   border: 1px solid color.adjust($white, $alpha: -0.95);
@@ -850,7 +850,7 @@ function getRandomColor(): string {
 
 .table-header {
   display: flex;
-  background: linear-gradient(145deg, lighten($gray, 12%), lighten($gray, 8%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 12%), color.adjust($gray, $lightness: 8%));
   padding: clamp(0.6rem, 1.2vh, 0.8rem) clamp(0.8rem, 1.2vw, 1rem);
   font-weight: 600;
   font-size: clamp(0.75rem, 0.95vw, 0.85rem);
@@ -870,7 +870,7 @@ function getRandomColor(): string {
 }
 
 .table-row:hover {
-  background: lighten($gray, 5%);
+  background: color.adjust($gray, $lightness: 5%);
   box-shadow: inset 0 0 1vh color.adjust($main_1, $alpha: -0.95);
 }
 
@@ -918,7 +918,7 @@ function getRandomColor(): string {
   border-radius: 0.4vw;
   font-size: clamp(0.8rem, 1vw, 0.9rem);
   transition: all 0.2s;
-  background: lighten($gray, 3%);
+  background: color.adjust($gray, $lightness: 3%);
   color: $white;
 }
 
@@ -946,7 +946,7 @@ function getRandomColor(): string {
   border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 0.4vw;
   font-size: clamp(0.8rem, 1vw, 0.9rem);
-  background: lighten($gray, 3%);
+  background: color.adjust($gray, $lightness: 3%);
   color: $white;
   cursor: pointer;
   transition: all 0.2s;
@@ -1008,7 +1008,7 @@ function getRandomColor(): string {
   gap: 1vw;
   padding: clamp(0.8rem, 1.5vh, 1rem) clamp(1rem, 2vw, 1.5rem);
   border-top: 1px solid color.adjust($white, $alpha: -0.95);
-  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 10%), color.adjust($gray, $lightness: 6%));
 }
 
 .btn-cancel {
@@ -1041,7 +1041,7 @@ function getRandomColor(): string {
 }
 
 .btn-save:hover:not(:disabled) {
-  background: linear-gradient(135deg, lighten($main_1, 10%) 0%, lighten($main_2, 10%) 100%);
+  background: linear-gradient(135deg, color.adjust($main_1, $lightness: 10%) 0%, color.adjust($main_2, $lightness: 10%) 100%);
   box-shadow: 0 0.3vh 1vh color.adjust($main_1, $alpha: -0.7);
   transform: translateY(-0.1vh);
 }
@@ -1107,7 +1107,7 @@ function getRandomColor(): string {
 }
 
 .edit-network-btn:hover:not(:disabled) {
-  background: lighten($sub_6, 10%);
+  background: color.adjust($sub_6, $lightness: 10%);
   transform: translateY(-0.1vh);
   box-shadow: 0 0.2vh 0.8vh color.adjust($sub_6, $alpha: -0.5);
 }
@@ -1142,7 +1142,7 @@ function getRandomColor(): string {
 }
 
 .network-editor-modal .modal-content {
-  background: lighten($gray, 8%);
+  background: color.adjust($gray, $lightness: 8%);
   width: 90vw;
   height: 85vh;
   max-height: 85vh;
@@ -1160,7 +1160,7 @@ function getRandomColor(): string {
   align-items: center;
   padding: clamp(1rem, 2vh, 1.5rem) clamp(1.2rem, 2vw, 1.8rem);
   border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
-  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 10%), color.adjust($gray, $lightness: 6%));
   border-radius: 1.2vw 1.2vw 0 0;
 }
 
@@ -1192,7 +1192,7 @@ function getRandomColor(): string {
 }
 
 .network-editor-modal .save-network-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, lighten($main_1, 10%) 0%, lighten($main_2, 10%) 100%);
+  background: linear-gradient(135deg, color.adjust($main_1, $lightness: 10%) 0%, color.adjust($main_2, $lightness: 10%) 100%);
   box-shadow: 0 0.3vh 1vh color.adjust($main_1, $alpha: -0.7);
   transform: translateY(-0.1vh);
 }

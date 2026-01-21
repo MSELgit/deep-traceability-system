@@ -47,7 +47,7 @@ const showAnalysis = computed(() => {
 .decomposition-analysis {
   margin-top: 3vh;
   padding: 2.5vh 2.5vw;
-  background: linear-gradient(145deg, lighten($gray, 8%), lighten($gray, 3%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 8%), color.adjust($gray, $lightness: 3%));
   border-radius: 1vw;
   border: 1px solid color.adjust($white, $alpha: -0.9);
   box-shadow: 0 0.5vh 2vh color.adjust($black, $alpha: -0.5);

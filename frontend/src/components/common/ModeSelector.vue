@@ -104,7 +104,7 @@ function selectMode(mode: 'local' | 'web') {
 
 .selector-subtitle {
   text-align: center;
-  color: lighten($main_1, 10%);
+  color: color.adjust($main_1, $lightness: 10%);
   font-size: clamp(0.9rem, 1.2vw, 1.15rem);
   margin-bottom: 4vh;
 }
@@ -200,7 +200,7 @@ function selectMode(mode: 'local' | 'web') {
 }
 
 .mode-description {
-  color: lighten($main_1, 10%);
+  color: color.adjust($main_1, $lightness: 10%);
   line-height: 1.6;
   margin-bottom: 2vh;
   font-size: clamp(0.85rem, 1vw, 0.95rem);
@@ -241,23 +241,23 @@ function selectMode(mode: 'local' | 'web') {
 }
 
 .mode-button.primary {
-  background: linear-gradient(135deg, $main_1, darken($main_1, 10%));
+  background: linear-gradient(135deg, $main_1, color.adjust($main_1, $lightness: -10%));
   color: $white;
 }
 
 .mode-button.primary:hover {
-  background: linear-gradient(135deg, darken($main_1, 10%), darken($main_1, 20%));
+  background: linear-gradient(135deg, color.adjust($main_1, $lightness: -10%), color.adjust($main_1, $lightness: -20%));
   transform: translateY(-1px);
   box-shadow: 0 0.5vh 2vh color.adjust($main_1, $alpha: -0.7);
 }
 
 .mode-button.secondary {
-  background: linear-gradient(135deg, $main_2, darken($main_2, 10%));
+  background: linear-gradient(135deg, $main_2, color.adjust($main_2, $lightness: -10%));
   color: $white;
 }
 
 .mode-button.secondary:hover {
-  background: linear-gradient(135deg, darken($main_2, 10%), darken($main_2, 20%));
+  background: linear-gradient(135deg, color.adjust($main_2, $lightness: -10%), color.adjust($main_2, $lightness: -20%));
   transform: translateY(-1px);
   box-shadow: 0 0.5vh 2vh color.adjust($main_2, $alpha: -0.7);
 }

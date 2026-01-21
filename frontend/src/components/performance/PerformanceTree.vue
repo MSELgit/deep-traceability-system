@@ -79,7 +79,7 @@ defineEmits<{
   justify-content: space-between;
   align-items: center;
   padding: 1.5vh 1.5vw;
-  background: lighten($gray, 8%);
+  background: color.adjust($gray, $lightness: 8%);
   border: 1px solid color.adjust($white, $alpha: -0.9);
   border-radius: 0.8vw;
   transition: all 0.3s ease;
@@ -88,7 +88,7 @@ defineEmits<{
 .node-content:hover {
   border-color: color.adjust($main_1, $alpha: -0.5);
   box-shadow: 0 0.5vh 1.5vh color.adjust($main_1, $alpha: -0.8);
-  background: lighten($gray, 10%);
+  background: color.adjust($gray, $lightness: 10%);
 }
 
 .node-content.is-leaf {

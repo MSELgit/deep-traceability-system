@@ -423,7 +423,7 @@ function cancelImport() {
 }
 
 .project-card {
-  background: linear-gradient(145deg, lighten($gray, 12%), lighten($gray, 8%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 12%), color.adjust($gray, $lightness: 8%));
   border: 1px solid color.adjust($white, $alpha: -0.85);
   border-radius: 1.2vw;
   padding: 0;
@@ -450,7 +450,7 @@ function cancelImport() {
   transform: translateY(-0.8vh) scale(1.02);
   border-color: color.adjust($main_1, $alpha: -0.5);
   box-shadow: 0 1.5vh 4vh color.adjust($main_1, $alpha: -0.6);
-  background: linear-gradient(145deg, lighten($gray, 15%), lighten($gray, 10%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 15%), color.adjust($gray, $lightness: 10%));
 }
 
 .project-card:hover::before {
@@ -486,7 +486,7 @@ function cancelImport() {
   display: flex;
   align-items: center;
   gap: 0.8vw;
-  color: lighten($main_1, 20%);
+  color: color.adjust($main_1, $lightness: 20%);
   font-size: clamp(0.85rem, 1vw, 0.95rem);
   margin-top: 2vh;
   padding-top: 2vh;
@@ -533,7 +533,7 @@ function cancelImport() {
 }
 
 .icon-button.export:hover {
-  background: linear-gradient(135deg, $main_1, darken($main_1, 10%));
+  background: linear-gradient(135deg, $main_1, color.adjust($main_1, $lightness: -10%));
   border-color: $main_1;
   transform: scale(1.15) rotate(-5deg);
   color: $white;
@@ -541,7 +541,7 @@ function cancelImport() {
 }
 
 .icon-button.delete:hover {
-  background: linear-gradient(135deg, $sub_1, darken($sub_1, 10%));
+  background: linear-gradient(135deg, $sub_1, color.adjust($sub_1, $lightness: -10%));
   border-color: $sub_1;
   transform: scale(1.15) rotate(5deg);
   color: $white;
@@ -551,7 +551,7 @@ function cancelImport() {
 .empty-state {
   text-align: center;
   padding: 12vh 2vw;
-  background: linear-gradient(145deg, lighten($gray, 8%), lighten($gray, 5%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 8%), color.adjust($gray, $lightness: 5%));
   border-radius: 2vw;
   border: 1px solid color.adjust($white, $alpha: -0.9);
 }
@@ -688,7 +688,7 @@ function cancelImport() {
 
 .import-help {
   margin-top: 1.5vh;
-  color: lighten($main_1, 10%);
+  color: color.adjust($main_1, $lightness: 10%);
   font-size: clamp(0.75rem, 0.9vw, 0.85rem);
 }
 </style>

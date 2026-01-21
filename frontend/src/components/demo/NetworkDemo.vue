@@ -1283,7 +1283,7 @@ onMounted(() => {
     border-color: $main_1;
 
     &:hover {
-      background: linear-gradient(135deg, lighten($main_1, 10%) 0%, lighten($main_2, 10%) 100%);
+      background: linear-gradient(135deg, color.adjust($main_1, $lightness: 10%) 0%, color.adjust($main_2, $lightness: 10%) 100%);
       box-shadow: 0 0.5vh 1.2vh color.adjust($main_1, $alpha: -0.4);
     }
   }
@@ -1297,7 +1297,7 @@ onMounted(() => {
 }
 
 .network-card {
-  background: lighten($gray, 8%);
+  background: color.adjust($gray, $lightness: 8%);
   border: 1px solid color.adjust($white, $alpha: -0.95);
   border-radius: 0.8vw;
   overflow: hidden;
@@ -1368,7 +1368,7 @@ onMounted(() => {
 }
 
 .result-section {
-  background: lighten($gray, 8%);
+  background: color.adjust($gray, $lightness: 8%);
   padding: clamp(1.5rem, 3vh, 2rem);
   border-radius: 0.8vw;
   border: 1px solid color.adjust($white, $alpha: -0.95);
@@ -1452,11 +1452,11 @@ onMounted(() => {
 }
 
 .kernel-matrix td {
-  color: lighten(#28a745, 20%);
+  color: color.adjust(#28a745, $lightness: 20%);
 }
 
 .distance-matrix td {
-  color: lighten(#dc3545, 15%);
+  color: color.adjust(#dc3545, $lightness: 15%);
 }
 
 .coordinates-table {

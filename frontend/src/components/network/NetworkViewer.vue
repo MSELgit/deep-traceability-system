@@ -682,7 +682,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   padding: clamp(0.5rem, 1vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem);
-  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 10%), color.adjust($gray, $lightness: 6%));
   border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
   gap: clamp(0.75rem, 1.5vw, 1rem);
   flex-shrink: 0;
@@ -743,7 +743,7 @@ onUnmounted(() => {
     
     &:hover {
       transform: scale(1.1);
-      background: linear-gradient(135deg, lighten($main_1, 15%) 0%, lighten($main_2, 15%) 100%);
+      background: linear-gradient(135deg, color.adjust($main_1, $lightness: 15%) 0%, color.adjust($main_2, $lightness: 15%) 100%);
       box-shadow: 0 0.3vh 0.8vh color.adjust($main_1, $alpha: -0.4),
                   0 0 0 0.15vw color.adjust($white, $alpha: -0.6),
                   0 0 1vh color.adjust($main_1, $alpha: -0.3);
@@ -766,7 +766,7 @@ onUnmounted(() => {
     transition: all 0.2s ease;
     
     &:hover {
-      background: linear-gradient(135deg, lighten($main_1, 15%) 0%, lighten($main_2, 15%) 100%);
+      background: linear-gradient(135deg, color.adjust($main_1, $lightness: 15%) 0%, color.adjust($main_2, $lightness: 15%) 100%);
       border-color: color.adjust($white, $alpha: -0.6);
     }
   }
@@ -854,7 +854,7 @@ onUnmounted(() => {
   display: flex;
   gap: 1.6vw;
   padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.8rem, 1.5vw, 1rem);
-  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 10%), color.adjust($gray, $lightness: 6%));
   border-top: 1px solid color.adjust($white, $alpha: -0.95);
   justify-content: center;
   flex-shrink: 0;

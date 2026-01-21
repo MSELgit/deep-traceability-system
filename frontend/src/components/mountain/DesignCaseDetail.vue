@@ -797,7 +797,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: lighten($gray, 8%);
+  background: color.adjust($gray, $lightness: 8%);
 }
 
 .detail-header {
@@ -806,7 +806,7 @@ onMounted(() => {
   align-items: center;
   padding: clamp(1rem, 2vh, 1.5rem) clamp(1rem, 2vw, 1.5rem);
   border-bottom: 1px solid color.adjust($white, $alpha: -0.95);
-  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 10%), color.adjust($gray, $lightness: 6%));
 }
 
 .detail-header h2 {
@@ -846,7 +846,7 @@ onMounted(() => {
 
 .detail-section {
   margin-bottom: clamp(1.2rem, 2vh, 1.5rem);
-  background: lighten($gray, 8%);
+  background: color.adjust($gray, $lightness: 8%);
   padding: clamp(1rem, 2vh, 1.5rem);
   border-radius: 0.8vw;
   border: 1px solid color.adjust($white, $alpha: -0.95);
@@ -1040,7 +1040,7 @@ onMounted(() => {
 }
 
 .performance-item:hover {
-  background: lighten($gray, 5%);
+  background: color.adjust($gray, $lightness: 5%);
   border-color: color.adjust($white, $alpha: -0.9);
 }
 
@@ -1134,7 +1134,7 @@ onMounted(() => {
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 
   &:hover {
-    background: lighten($gray, 5%);
+    background: color.adjust($gray, $lightness: 5%);
     color: $white;
   }
 
@@ -1197,7 +1197,7 @@ onMounted(() => {
   transition: background 0.2s ease;
 
   &:hover {
-    background: lighten($gray, 3%);
+    background: color.adjust($gray, $lightness: 3%);
   }
 }
 
@@ -1233,7 +1233,7 @@ onMounted(() => {
 
 .bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, $sub_4, lighten($sub_4, 10%));
+  background: linear-gradient(90deg, $sub_4, color.adjust($sub_4, $lightness: 10%));
   border-radius: 0.3vw;
   transition: width 0.3s ease;
 }
@@ -1288,7 +1288,7 @@ onMounted(() => {
 
 .utility-fill {
   height: 100%;
-  background: linear-gradient(90deg, $sub_4 0%, lighten($sub_4, 15%) 100%);
+  background: linear-gradient(90deg, $sub_4 0%, color.adjust($sub_4, $lightness: 15%) 100%);
   transition: width 0.3s ease;
 }
 
@@ -1383,7 +1383,7 @@ onMounted(() => {
   gap: 0.8vw;
   padding: clamp(0.8rem, 1.5vh, 1rem) clamp(1rem, 2vw, 1.25rem);
   border-top: 1px solid color.adjust($white, $alpha: -0.95);
-  background: linear-gradient(145deg, lighten($gray, 10%), lighten($gray, 6%));
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 10%), color.adjust($gray, $lightness: 6%));
 }
 
 .action-btn {
@@ -1403,7 +1403,7 @@ onMounted(() => {
 }
 
 .action-btn.edit:hover {
-  background: darken($sub_6, 10%);
+  background: color.adjust($sub_6, $lightness: -10%);
   transform: translateY(-0.1vh);
   box-shadow: 0 0.3vh 1vh color.adjust($sub_6, $alpha: -0.5);
 }
@@ -1414,7 +1414,7 @@ onMounted(() => {
 }
 
 .action-btn.copy:hover {
-  background: darken($sub_3, 10%);
+  background: color.adjust($sub_3, $lightness: -10%);
   transform: translateY(-0.1vh);
   box-shadow: 0 0.3vh 1vh color.adjust($sub_3, $alpha: -0.5);
 }
@@ -1425,7 +1425,7 @@ onMounted(() => {
 }
 
 .action-btn.delete:hover {
-  background: darken($sub_1, 10%);
+  background: color.adjust($sub_1, $lightness: -10%);
   transform: translateY(-0.1vh);
   box-shadow: 0 0.3vh 1vh color.adjust($sub_1, $alpha: -0.5);
 }
