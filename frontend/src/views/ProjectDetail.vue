@@ -100,6 +100,11 @@
           <div v-show="activeTab === 'demo'">
             <NetworkDemo ref="networkDemoRef" />
           </div>
+
+          <!-- 比較 -->
+          <div v-show="activeTab === 'compare'">
+            <ComparisonView />
+          </div>
         </div>
       </div>
 
@@ -125,6 +130,7 @@ import NeedPerformanceMatrix from '../components/matrix/NeedPerformanceMatrix.vu
 import NetworkDemo from '../components/demo/NetworkDemo.vue'
 import MountainView from '../components/mountain/MountainView.vue'
 import OPM3DView from '../components/opm3d/OPM3DView.vue'
+import ComparisonView from '../components/comparison/ComparisonView.vue'
 
 import TwoAxisEvaluation from '../components/twoaxis/TwoAxisEvaluation.vue'
 
@@ -208,6 +214,7 @@ const tabs = [
   { key: 'twoaxis', label: '2-axis' },
   { key: 'opm3d', label: '3D OPM' },
   { key: 'demo', label: 'WL Kernel' },
+  { key: 'compare', label: '比較' },
 ];
 
 function handleTabChange(tabKey: string) {
