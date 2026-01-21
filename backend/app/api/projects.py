@@ -777,8 +777,8 @@ def create_design_case(
         if network['nodes']:
             scc_result = analyze_scc(network)
             scc_analysis_json = json.dumps(scc_result_to_dict(scc_result), ensure_ascii=False)
-    except Exception as e:
-        print(f"SCC analysis error: {e}")
+    except Exception:
+        pass  # SCC analysis error - continue without SCC data
 
     db_design_case = DesignCaseModel(
         id=str(uuid.uuid4()),
@@ -832,7 +832,7 @@ def create_design_case(
                 db.commit()
                 break
     except Exception as e:
-        print(f"Mountain calculation error: {e}")
+        pass  # Mountain calculation error - continue
         # 計算エラーでも設計案は作成する
     
     db.refresh(db_design_case)
@@ -911,8 +911,7 @@ def update_design_case(
             db_design_case.scc_analysis_json = json.dumps(scc_result_to_dict(scc_result), ensure_ascii=False)
         else:
             db_design_case.scc_analysis_json = None
-    except Exception as e:
-        print(f"SCC analysis error: {e}")
+    except Exception:
         db_design_case.scc_analysis_json = None
 
     db.commit()
@@ -955,7 +954,7 @@ def update_design_case(
                 db.commit()
                 break
     except Exception as e:
-        print(f"Mountain calculation error: {e}")
+        pass  # Mountain calculation error - continue
 
     db.refresh(db_design_case)
     return format_design_case_response(db_design_case)
@@ -1025,12 +1024,9 @@ def delete_design_case(
                     remaining_case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
 
             db.commit()
-            print(f"✓ Updated coordinates for {len(positions)} remaining design cases\n")
-    except Exception as e:
-        import traceback
-        print(f"❌ Mountain calculation error after delete: {e}")
-        print(f"   Traceback: {traceback.format_exc()}")
+    except Exception:
         # 削除自体は成功しているので、座標計算エラーでもロールバックしない
+        pass
     
     return {"message": "Design case deleted successfully"}
 
@@ -1242,7 +1238,7 @@ def copy_design_case(
                 db.commit()
                 break
     except Exception as e:
-        print(f"Mountain calculation error: {e}")
+        pass  # Mountain calculation error - continue
 
     db.refresh(db_copy)
     return format_design_case_response(db_copy)
@@ -1854,14 +1850,6 @@ def recalculate_mountains(
 
         api_total = (time.time() - api_start) * 1000
 
-        # API timing report
-        print(f"\n{'='*60}")
-        print(f"⏱️  API Timing Report (recalculate-mountains)")
-        print(f"{'='*60}")
-        print(f"  Mountain calculation: {calc_time:.2f} ms")
-        print(f"  API total: {api_total:.2f} ms")
-        print(f"{'='*60}\n")
-
         # positionsをシリアライズ可能な形式に変換
         serializable_positions = []
         for pos in positions:
@@ -1894,9 +1882,6 @@ def recalculate_mountains(
         }
 
     except Exception as e:
-        import traceback
-        print(f"❌ Recalculation error: {str(e)}")
-        print(f"   Traceback: {traceback.format_exc()}")
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Recalculation failed: {str(e)}")
 
@@ -1968,9 +1953,6 @@ def get_h_max(project_id: str, db: Session = Depends(get_db)):
         }
     
     except Exception as e:
-        import traceback
-        print(f"❌ H_max calculation error: {str(e)}")
-        print(f"   Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"H_max calculation failed: {str(e)}")
 
 
@@ -2040,9 +2022,6 @@ def create_network_node(
     db: Session = Depends(get_db)
 ):
     """新しいノードを作成"""
-    print(f"📥 Received node_create: {node_create}")
-    print(f"📥 node_create.dict(): {node_create.dict()}")
-    
     design_case = db.query(DesignCaseModel).filter(
         DesignCaseModel.id == case_id,
         DesignCaseModel.project_id == project_id
@@ -2082,8 +2061,6 @@ def create_network_node(
         # Y座標: レイヤーの中央に配置（少しランダムに分散）
         import random
         default_y = layer_center_y[node_create.layer] + random.randint(-30, 30)
-        
-        print(f"📍 自動配置: レイヤー{node_create.layer}, X={default_x:.1f}, Y={default_y:.1f}")
     else:
         default_x = node_create.x
         default_y = node_create.y
@@ -2151,7 +2128,7 @@ def create_network_node(
 
         db.commit()
     except Exception as e:
-        print(f"Mountain calculation error: {e}")
+        pass  # Mountain calculation error - continue
 
     return NetworkNode(**new_node)
 
@@ -2244,7 +2221,7 @@ def update_network_node(
 
         db.commit()
     except Exception as e:
-        print(f"Mountain calculation error: {e}")
+        pass  # Mountain calculation error - continue
 
     return {"message": "Node updated successfully"}
 
@@ -2337,7 +2314,7 @@ def delete_network_node(
 
         db.commit()
     except Exception as e:
-        print(f"Mountain calculation error: {e}")
+        pass  # Mountain calculation error - continue
 
     return {"message": "Node deleted successfully"}
 
@@ -2417,7 +2394,7 @@ def delete_network_edge(
 
         db.commit()
     except Exception as e:
-        print(f"Mountain calculation error: {e}")
+        pass  # Mountain calculation error - continue
 
     return {"message": "Edge deleted successfully"}
 
@@ -2576,7 +2553,7 @@ def create_network_edge(
 
         db.commit()
     except Exception as e:
-        print(f"Mountain calculation error: {e}")
+        pass  # Mountain calculation error - continue
 
     return NetworkEdge(**new_edge)
 
@@ -2663,6 +2640,6 @@ def update_network_edge(
 
         db.commit()
     except Exception as e:
-        print(f"Mountain calculation error: {e}")
+        pass  # Mountain calculation error - continue
     
     return {"message": "Edge updated successfully"}

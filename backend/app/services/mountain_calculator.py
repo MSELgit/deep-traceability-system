@@ -39,16 +39,9 @@ class Timer:
         return self.timings.copy()
 
     def print_report(self, prefix: str = ""):
-        print(f"\n{'='*60}")
-        print(f"⏱️  {prefix}Timing Report")
-        print(f"{'='*60}")
-        total = 0
-        for name, ms in self.timings.items():
-            print(f"  {name}: {ms:.2f} ms")
-            total += ms
-        print(f"{'─'*60}")
-        print(f"  TOTAL: {total:.2f} ms")
-        print(f"{'='*60}\n")
+        """Print timing report (disabled in production)"""
+        # Debug timing report disabled
+        pass
 
 def calculate_network_kernel(networks: List[Dict]) -> np.ndarray:
     """
@@ -405,7 +398,6 @@ def calculate_mountain_positions(
     design_cases = project.design_cases
     n_cases = len(design_cases)
     n_networks = len(networks) if networks else 0
-    print(f"\n📊 Mountain calculation: {n_cases} design cases, {n_networks} networks")
 
     if len(design_cases) == 0:
         return {'positions': [], 'H_max': 1.0, 'timings': {}}
@@ -502,7 +494,6 @@ def calculate_mountain_positions(
             n_workers=None  # 自動でCPU数に応じて設定
         )
         timer.stop("3c_circular_mds")
-        print(f"   Circular MDS stress: {circular_stress:.6f}")
 
         mds_angles = circular_mds_angles
     else:
