@@ -344,6 +344,7 @@ import { ref, onMounted, nextTick } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import NetworkViewer from '../network/NetworkViewer.vue';
 import type { NetworkStructure, NetworkNode, NetworkEdge } from '../../types/project';
+import { CONFIG } from '../../config/environment';
 
 defineExpose({
   resetAllViewers
@@ -1007,7 +1008,7 @@ async function calculateDistances(iterations: number): Promise<ComputationResult
   }));
   
   try {
-    const response = await fetch('http://localhost:8000/api/mds/compute_network_comparison', {
+    const response = await fetch(`${CONFIG.apiBaseUrl}/mds/compute_network_comparison`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

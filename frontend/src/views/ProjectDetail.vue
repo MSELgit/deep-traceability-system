@@ -228,9 +228,10 @@ function handleTabChange(tabKey: string) {
 // プロジェクトをエクスポート
 async function exportProject() {
   if (!currentProject.value) return
-  
+
   try {
     const response = await projectApi.export(currentProject.value.id)
+    const exportedPath = response.data._exported_path
     const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -240,6 +241,10 @@ async function exportProject() {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
+
+    if (exportedPath) {
+      alert(`エクスポート完了\nサーバー保存先: ${exportedPath}`)
+    }
   } catch (error) {
     console.error('Failed to export project:', error)
     alert('Failed to export project')

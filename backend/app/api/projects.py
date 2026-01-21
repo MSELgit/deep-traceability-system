@@ -1391,12 +1391,15 @@ def export_project(
         ]
     }
     
-    # JSONファイルに保存（デバッグ用）
-    output_file = "/Users/shimamon/deep-traceability-system/backend/exported_project.json"
+    # JSONファイルに保存
+    from pathlib import Path
+    output_file = Path(__file__).parent.parent.parent / "exported_project.json"
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(export_data, f, ensure_ascii=False, indent=2)
-    print(f"\nExported data saved to: {output_file}")
-    
+
+    # レスポンスに保存先パスを追加
+    export_data["_exported_path"] = str(output_file.resolve())
+
     return export_data
 
 

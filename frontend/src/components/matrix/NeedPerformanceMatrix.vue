@@ -778,6 +778,7 @@ import { computed, ref, onMounted, nextTick, watch } from 'vue'
 import { useProjectStore } from '../../stores/projectStore'
 import { storeToRefs } from 'pinia'
 import type { Performance } from '../../types/project'
+import { CONFIG } from '../../config/environment'
 import noUiSlider from 'nouislider'
 import 'nouislider/dist/nouislider.css'
 import type { target as noUiSliderTarget } from 'nouislider'
@@ -2529,7 +2530,7 @@ async function resetUtilityFunction() {
     }
     
     const response = await fetch(
-      `http://localhost:8000/api/projects/${projectId}/utility-functions/${needId}/${performanceId}`,
+      `${CONFIG.apiBaseUrl}/projects/${projectId}/utility-functions/${needId}/${performanceId}`,
       {
         method: 'DELETE',
         headers: {

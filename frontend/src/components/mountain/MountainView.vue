@@ -138,6 +138,7 @@ import { useRoute } from 'vue-router';
 import { useProjectStore } from '../../stores/projectStore';
 import { storeToRefs } from 'pinia';
 import type { DesignCase, DesignCaseCreate, Performance as ProjectPerformance } from '../../types/project';
+import { CONFIG } from '../../config/environment';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import DesignCaseList from './DesignCaseList.vue';
@@ -274,7 +275,7 @@ async function fetchHMax() {
   
   try {
     const response = await fetch(
-      `http://localhost:8000/api/projects/${currentProject.value.id}/h-max`
+      `${CONFIG.apiBaseUrl}/projects/${currentProject.value.id}/h-max`
     );
     
     if (response.ok) {
@@ -734,7 +735,7 @@ async function handleRecalculate() {
 
     const apiStart = performance.now();
     const response = await fetch(
-      `http://localhost:8000/api/projects/${currentProject.value.id}/recalculate-mountains`,
+      `${CONFIG.apiBaseUrl}/projects/${currentProject.value.id}/recalculate-mountains`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
