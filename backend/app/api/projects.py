@@ -2643,3 +2643,118 @@ def update_network_edge(
         pass  # Mountain calculation error - continue
     
     return {"message": "Edge updated successfully"}
+
+
+# ========== 論文用：ネットワークフィルタリング（一時的） ==========
+
+@router.get("/{project_id}/design-cases/{design_case_id}/network/filtered")
+def get_filtered_network_for_paper(
+    project_id: str,
+    design_case_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    論文用に特定のノードとエッジのみを抽出したネットワークを返す（一時的エンドポイント）
+
+    抽出対象：
+    - 浮体、浮体サイズ、流体抵抗、センターボード、センターボード面積、
+      浮体速度(横)、発電出力、P7_耐波性、P1_エネルギー変換効率
+    - 発電出力→P1への直接エッジを追加（元は発電出力→ネット発電量→P1）
+    """
+    # 設計案を取得
+    design_case = db.query(DesignCaseModel).filter(
+        DesignCaseModel.id == design_case_id,
+        DesignCaseModel.project_id == project_id
+    ).first()
+
+    if not design_case:
+        raise HTTPException(status_code=404, detail="Design case not found")
+
+    # ネットワークデータを取得
+    network = json.loads(design_case.network_json) if design_case.network_json else {'nodes': [], 'edges': []}
+
+    # 抜き出したいノードのラベル
+    target_labels = [
+        "浮体",
+        "浮体サイズ",
+        "流体抵抗",
+        "センターボード",
+        "センターボード面積",
+        "浮体速度(横)",
+        "発電出力",
+        "P7_耐波性",
+        "P1_エネルギー変換効率"
+    ]
+
+    # ノードをフィルタリング
+    all_nodes = network.get('nodes', [])
+    filtered_nodes = [node for node in all_nodes if node.get('label') in target_labels]
+    filtered_node_ids = {node['id'] for node in filtered_nodes}
+
+    # エッジをフィルタリング（sourceもtargetも対象ノードに含まれる）
+    all_edges = network.get('edges', [])
+    filtered_edges = [
+        edge for edge in all_edges
+        if edge.get('source_id') in filtered_node_ids and edge.get('target_id') in filtered_node_ids
+    ]
+
+    # 発電出力 → P1 への直接エッジを追加
+    output_node = next((n for n in filtered_nodes if n.get('label') == '発電出力'), None)
+    p1_node = next((n for n in filtered_nodes if n.get('label') == 'P1_エネルギー変換効率'), None)
+
+    if output_node and p1_node:
+        # ネット発電量を経由するパスのエッジを確認
+        net_output_node = next((n for n in all_nodes if n.get('label') == 'ネット発電量'), None)
+
+        # 発電出力 → ネット発電量 のエッジからweightを取得
+        edge_to_net = next(
+            (e for e in all_edges
+             if e.get('source_id') == output_node['id'] and e.get('target_id') == net_output_node['id']),
+            None
+        ) if net_output_node else None
+
+        # 重みを決定（デフォルトは5.0）
+        weight = edge_to_net.get('weight', 5.0) if edge_to_net else 5.0
+
+        # 直接エッジを追加
+        new_edge = {
+            'id': f"edge-paper-output-to-p1",
+            'source_id': output_node['id'],
+            'target_id': p1_node['id'],
+            'type': 'type4',
+            'weight': weight
+        }
+        filtered_edges.append(new_edge)
+
+    # ノード位置を調整（論文用レイアウト）
+    # 浮体とセンターボードのx座標を取得
+    float_node = next((n for n in filtered_nodes if n.get('label') == '浮体'), None)
+    center_board_node = next((n for n in filtered_nodes if n.get('label') == 'センターボード'), None)
+
+    if float_node and center_board_node:
+        x1 = float_node.get('x', 120.0)
+        x2 = center_board_node.get('x', 360.0)
+        x_mid = (x1 + x2) / 2
+
+        # x1に配置: 浮体サイズ、発電出力、P1
+        x1_nodes = ['浮体サイズ', '発電出力', 'P1_エネルギー変換効率']
+        for node in filtered_nodes:
+            if node.get('label') in x1_nodes:
+                node['x'] = x1
+
+        # x2に配置: センターボード面積、流体抵抗、P7
+        x2_nodes = ['センターボード面積', '流体抵抗', 'P7_耐波性']
+        for node in filtered_nodes:
+            if node.get('label') in x2_nodes:
+                node['x'] = x2
+
+        # x_midに配置: 浮体速度(横)
+        for node in filtered_nodes:
+            if node.get('label') == '浮体速度(横)':
+                node['x'] = x_mid
+
+    # フィルタリングされたネットワークを返す
+    return {
+        'nodes': filtered_nodes,
+        'edges': filtered_edges
+    }

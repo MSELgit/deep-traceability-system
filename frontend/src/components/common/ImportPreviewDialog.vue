@@ -338,6 +338,7 @@ function handleConfirm() {
 
 <style scoped lang="scss">
 @use '@/style/_color.scss' as *;
+@use "sass:color";
 
 .modal-overlay {
   position: fixed;
