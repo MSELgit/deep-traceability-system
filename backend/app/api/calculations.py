@@ -89,13 +89,15 @@ def calculate_project_energy(project_id: str, db: Session = Depends(get_db)):
         for case in project.design_cases:
             network = case.network
             perf_weights = case.performance_weights or {}
+            perf_deltas = case.performance_deltas or {}
             weight_mode = getattr(case, 'weight_mode', 'discrete_7') or 'discrete_7'
 
             if network and 'nodes' in network and 'edges' in network:
                 energy_result = compute_structural_energy(
                     network=network,
                     performance_weights=perf_weights,
-                    weight_mode=weight_mode
+                    weight_mode=weight_mode,
+                    performance_deltas=perf_deltas
                 )
 
                 # 性能ごとの部分エネルギーを集計（正規化済み）
@@ -164,13 +166,15 @@ def calculate_case_energy(
     try:
         network = design_case.network
         perf_weights = design_case.performance_weights or {}
+        perf_deltas = design_case.performance_deltas or {}
         weight_mode = getattr(design_case, 'weight_mode', 'discrete_7') or 'discrete_7'
 
         if network and 'nodes' in network and 'edges' in network:
             energy_result = compute_structural_energy(
                 network=network,
                 performance_weights=perf_weights,
-                weight_mode=weight_mode
+                weight_mode=weight_mode,
+                performance_deltas=perf_deltas
             )
 
             # 性能ごとの部分エネルギーを集計（正規化済み）
@@ -348,12 +352,14 @@ def get_structural_tradeoff(
 
         # 性能の重みを取得（E_ij計算用）
         performance_weights = design_case.performance_weights or {}
+        performance_deltas = design_case.performance_deltas or {}
 
         result = calculate_structural_tradeoff_for_case(
             design_case.network,
             performances_data,
             weight_mode,
-            performance_weights
+            performance_weights,
+            performance_deltas
         )
 
         return result
@@ -593,6 +599,7 @@ def get_paper_metrics(
     try:
         # 性能の重みを取得
         performance_weights = design_case.performance_weights or {}
+        performance_deltas = design_case.performance_deltas or {}
 
         # ネットワーク
         network = design_case.network
@@ -602,11 +609,12 @@ def get_paper_metrics(
         # 設計案のweight_modeを取得
         weight_mode = getattr(design_case, 'weight_mode', 'discrete_7') or 'discrete_7'
 
-        # 1. 論文準拠エネルギー計算
+        # 1. エネルギー計算（4象限分解）
         structural_energy_result = compute_structural_energy(
             network,
             performance_weights,
-            weight_mode
+            weight_mode,
+            performance_deltas=performance_deltas
         )
 
         # 2. 従来のエネルギー計算（比較用）

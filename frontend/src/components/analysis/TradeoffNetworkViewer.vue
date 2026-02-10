@@ -20,6 +20,20 @@
           <FontAwesomeIcon :icon="['fas', 'camera']" />
         </button>
       </div>
+      <div v-if="lambdaIJ !== undefined && (perfIId || perfJId)" class="mode-toggle">
+        <button
+          :class="['mode-btn', { active: networkMode === 'structure' }]"
+          @click="networkMode = 'structure'"
+        >
+          構造 (φ)
+        </button>
+        <button
+          :class="['mode-btn', { active: networkMode === 'energy' }]"
+          @click="networkMode = 'energy'"
+        >
+          エネルギー (λφ)
+        </button>
+      </div>
     </div>
 
     <div class="network-viewer" ref="viewerContainer">
@@ -47,26 +61,48 @@
               />
             </pattern>
 
-            <!-- Arrow markers for negative φ (tradeoff) - red -->
+            <!-- Arrow markers for negative φ (opposition) - blue -->
             <marker id="arrow-neg-strong" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-              <path d="M 0 0 L 0 6 L 9 3 z" fill="#c62828" />
+              <path d="M 0 0 L 0 6 L 9 3 z" fill="#1565C0" />
             </marker>
             <marker id="arrow-neg-medium" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-              <path d="M 0 0 L 0 6 L 9 3 z" fill="#e57373" />
+              <path d="M 0 0 L 0 6 L 9 3 z" fill="#64B5F6" />
             </marker>
             <marker id="arrow-neg-weak" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-              <path d="M 0 0 L 0 6 L 9 3 z" fill="#ffcdd2" />
+              <path d="M 0 0 L 0 6 L 9 3 z" fill="#BBDEFB" />
             </marker>
 
-            <!-- Arrow markers for positive φ (synergy) - green -->
+            <!-- Arrow markers for positive φ (cooperation) - orange -->
             <marker id="arrow-pos-strong" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-              <path d="M 0 0 L 0 6 L 9 3 z" fill="#2e7d32" />
+              <path d="M 0 0 L 0 6 L 9 3 z" fill="#EF6C00" />
             </marker>
             <marker id="arrow-pos-medium" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-              <path d="M 0 0 L 0 6 L 9 3 z" fill="#81c784" />
+              <path d="M 0 0 L 0 6 L 9 3 z" fill="#FFB74D" />
             </marker>
             <marker id="arrow-pos-weak" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-              <path d="M 0 0 L 0 6 L 9 3 z" fill="#c8e6c9" />
+              <path d="M 0 0 L 0 6 L 9 3 z" fill="#FFE0B2" />
+            </marker>
+
+            <!-- Arrow markers for energy positive (worsening) - red -->
+            <marker id="arrow-epos-strong" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M 0 0 L 0 6 L 9 3 z" fill="#C62828" />
+            </marker>
+            <marker id="arrow-epos-medium" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M 0 0 L 0 6 L 9 3 z" fill="#E57373" />
+            </marker>
+            <marker id="arrow-epos-weak" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M 0 0 L 0 6 L 9 3 z" fill="#FFCDD2" />
+            </marker>
+
+            <!-- Arrow markers for energy negative (alleviating) - teal -->
+            <marker id="arrow-eneg-strong" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M 0 0 L 0 6 L 9 3 z" fill="#00695C" />
+            </marker>
+            <marker id="arrow-eneg-medium" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M 0 0 L 0 6 L 9 3 z" fill="#4DB6AC" />
+            </marker>
+            <marker id="arrow-eneg-weak" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M 0 0 L 0 6 L 9 3 z" fill="#B2DFDB" />
             </marker>
 
             <!-- Arrow markers for fallback (orange) -->
@@ -226,11 +262,92 @@
                 >
                   {{ node.label }}
                 </text>
+                <!-- Direction icon for performance nodes -->
+                <text
+                  v-if="node.layer === 1 && getDirectionIcon(node) !== ''"
+                  :x="node.x"
+                  :y="node.y + 18 + 27"
+                  text-anchor="middle"
+                  class="direction-icon"
+                  :fill="getDirectionColor(node)"
+                  :opacity="getNodeOpacity(node)"
+                  font-size="12"
+                >
+                  {{ getDirectionIcon(node) }}
+                </text>
               </g>
             </g>
           </g>
         </svg>
       </div>
+    </div>
+
+    <!-- Contribution color legend (shown when pair selected) -->
+    <div v-if="perfIId || perfJId" class="contribution-legend">
+      <template v-if="networkMode === 'structure'">
+        <div class="contrib-group">
+          <span class="contrib-group-title">Node φ</span>
+          <div class="contrib-items">
+            <div class="contrib-item">
+              <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="#ffe3e3" stroke="#d32f2f" stroke-width="2"/></svg>
+              <span>Selected P</span>
+            </div>
+            <div class="contrib-item">
+              <svg width="14" height="14" viewBox="0 0 14 14"><polygon points="7,2 12,7 7,12 2,7" fill="#1565C0" stroke="#0D47A1" stroke-width="1.5"/></svg>
+              <span>−φ (opposition)</span>
+            </div>
+            <div class="contrib-item">
+              <svg width="14" height="14" viewBox="0 0 14 14"><polygon points="7,2 12,7 7,12 2,7" fill="#EF6C00" stroke="#E65100" stroke-width="1.5"/></svg>
+              <span>+φ (cooperation)</span>
+            </div>
+          </div>
+        </div>
+        <div class="contrib-group">
+          <span class="contrib-group-title">Edge φ</span>
+          <div class="contrib-items">
+            <div class="contrib-item">
+              <svg width="20" height="14" viewBox="0 0 20 14"><line x1="2" y1="7" x2="18" y2="7" stroke="#1565C0" stroke-width="3"/></svg>
+              <span>−φ (opposition)</span>
+            </div>
+            <div class="contrib-item">
+              <svg width="20" height="14" viewBox="0 0 20 14"><line x1="2" y1="7" x2="18" y2="7" stroke="#EF6C00" stroke-width="3"/></svg>
+              <span>+φ (cooperation)</span>
+            </div>
+          </div>
+        </div>
+      </template>
+      <template v-else>
+        <div class="contrib-group">
+          <span class="contrib-group-title">Node λφ</span>
+          <div class="contrib-items">
+            <div class="contrib-item">
+              <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="#ffe3e3" stroke="#d32f2f" stroke-width="2"/></svg>
+              <span>Selected P</span>
+            </div>
+            <div class="contrib-item">
+              <svg width="14" height="14" viewBox="0 0 14 14"><polygon points="7,2 12,7 7,12 2,7" fill="#C62828" stroke="#B71C1C" stroke-width="1.5"/></svg>
+              <span>+λφ (worsening)</span>
+            </div>
+            <div class="contrib-item">
+              <svg width="14" height="14" viewBox="0 0 14 14"><polygon points="7,2 12,7 7,12 2,7" fill="#00695C" stroke="#004D40" stroke-width="1.5"/></svg>
+              <span>−λφ (alleviating)</span>
+            </div>
+          </div>
+        </div>
+        <div class="contrib-group">
+          <span class="contrib-group-title">Edge λφ</span>
+          <div class="contrib-items">
+            <div class="contrib-item">
+              <svg width="20" height="14" viewBox="0 0 20 14"><line x1="2" y1="7" x2="18" y2="7" stroke="#C62828" stroke-width="3"/></svg>
+              <span>+λφ (worsening)</span>
+            </div>
+            <div class="contrib-item">
+              <svg width="20" height="14" viewBox="0 0 20 14"><line x1="2" y1="7" x2="18" y2="7" stroke="#00695C" stroke-width="3"/></svg>
+              <span>−λφ (alleviating)</span>
+            </div>
+          </div>
+        </div>
+      </template>
     </div>
 
     <!-- Layer legend -->
@@ -269,6 +386,9 @@ interface Props {
   perfJId?: string;  // Second selected performance
   nodeShapleyValues?: NodeShapleyValue[];  // Shapley contribution values for V ∪ A nodes
   edgeShapleyValues?: EdgeShapleyValue[];  // Shapley contribution values for edges
+  performanceConsensus?: { [perfId: string]: number };  // δ_i/W_i per performance
+  performanceIdMap?: { [networkNodeId: string]: string };  // network_node_id -> db_performance_id
+  lambdaIJ?: number;  // λ_ij = E_ij / C_ij for energy mode
   topN?: number;  // Number of top contributors to highlight
 }
 
@@ -282,6 +402,15 @@ const zoom = ref(1);
 const minZoom = ref(0.3);
 const svgCanvas = ref<SVGSVGElement>();
 const viewerContainer = ref<HTMLDivElement>();
+const networkMode = ref<'structure' | 'energy'>('structure');
+
+const isEnergyMode = computed(() => networkMode.value === 'energy');
+
+// Energy mode: determine if λφ is positive (worsening) or negative (alleviating)
+function getEnergySign(phi: number): 'positive' | 'negative' {
+  if (props.lambdaIJ === undefined) return 'positive';
+  return (phi * props.lambdaIJ) >= 0 ? 'positive' : 'negative';
+}
 
 // Layer definitions
 const layers = [
@@ -551,22 +680,37 @@ function getNodeFill(node: NetworkNode): string {
 
     if (nodeInfo && contribution > 0) {
       const intensity = Math.min(1, contribution);
-      const isNegative = nodeInfo.sign === 'negative';
 
-      if (isNegative) {
-        // Negative φ (tradeoff contributor): red tones
-        // Light red (#ffcdd2) to deep red (#c62828)
-        const r = Math.round(255 - (255 - 198) * intensity);
-        const g = Math.round(205 - (205 - 40) * intensity);
-        const b = Math.round(210 - (210 - 40) * intensity);
-        return `rgb(${r}, ${g}, ${b})`;
+      if (isEnergyMode.value) {
+        const isWorsening = getEnergySign(nodeInfo.phi) === 'positive';
+        if (isWorsening) {
+          // Red tones: #FFCDD2 to #C62828
+          const r = Math.round(255 - (255 - 198) * intensity);
+          const g = Math.round(205 - (205 - 40) * intensity);
+          const b = Math.round(210 - (210 - 40) * intensity);
+          return `rgb(${r}, ${g}, ${b})`;
+        } else {
+          // Teal tones: #B2DFDB to #00695C
+          const r = Math.round(178 - (178 - 0) * intensity);
+          const g = Math.round(223 - (223 - 105) * intensity);
+          const b = Math.round(219 - (219 - 92) * intensity);
+          return `rgb(${r}, ${g}, ${b})`;
+        }
       } else {
-        // Positive φ (synergy contributor): green tones
-        // Light green (#c8e6c9) to deep green (#2e7d32)
-        const r = Math.round(200 - (200 - 46) * intensity);
-        const g = Math.round(230 - (230 - 125) * intensity);
-        const b = Math.round(201 - (201 - 50) * intensity);
-        return `rgb(${r}, ${g}, ${b})`;
+        const isNegative = nodeInfo.sign === 'negative';
+        if (isNegative) {
+          // Negative φ (opposition contributor): blue tones
+          const r = Math.round(187 - (187 - 21) * intensity);
+          const g = Math.round(222 - (222 - 101) * intensity);
+          const b = Math.round(251 - (251 - 192) * intensity);
+          return `rgb(${r}, ${g}, ${b})`;
+        } else {
+          // Positive φ (cooperation contributor): orange tones
+          const r = Math.round(255 - (255 - 239) * intensity);
+          const g = Math.round(224 - (224 - 108) * intensity);
+          const b = Math.round(178 - (178 - 0) * intensity);
+          return `rgb(${r}, ${g}, ${b})`;
+        }
       }
     }
     // No contribution data: use layer base color
@@ -583,8 +727,11 @@ function getNodeStroke(node: NetworkNode): string {
 
   const nodeInfo = nodeShapleyMap.value.get(node.id);
   if (isHighContributionNode(node) && nodeInfo) {
-    // Stroke color based on sign
-    return nodeInfo.sign === 'negative' ? '#b71c1c' : '#1b5e20';
+    if (isEnergyMode.value) {
+      const isWorsening = getEnergySign(nodeInfo.phi) === 'positive';
+      return isWorsening ? '#B71C1C' : '#004D40';
+    }
+    return nodeInfo.sign === 'negative' ? '#0D47A1' : '#E65100';
   }
   return '#333';
 }
@@ -605,6 +752,29 @@ function getNodeLabelColor(node: NetworkNode): string {
   if (isSelectedPerformance(node)) return '#d32f2f';
   if (isHighContributionNode(node)) return '#e65100';
   return '#333';
+}
+
+// Direction icons for performance nodes
+function getDirectionIcon(node: NetworkNode): string {
+  if (node.layer !== 1 || !props.performanceConsensus) return '';
+  const networkId = node.performance_id || node.id;
+  const dbId = props.performanceIdMap?.[networkId] || networkId;
+  const consensus = props.performanceConsensus[dbId];
+  if (consensus === undefined) return '';
+  if (Math.abs(consensus - 1.0) < 1e-6) return '↑';
+  if (Math.abs(consensus + 1.0) < 1e-6) return '↓';
+  return '⇅';
+}
+
+function getDirectionColor(node: NetworkNode): string {
+  if (node.layer !== 1 || !props.performanceConsensus) return '#666';
+  const networkId = node.performance_id || node.id;
+  const dbId = props.performanceIdMap?.[networkId] || networkId;
+  const consensus = props.performanceConsensus[dbId];
+  if (consensus === undefined) return '#666';
+  // 混在票は紫, 全票同方向はグレー
+  if (Math.abs(consensus) < 1 - 1e-6) return '#AB47BC';
+  return '#666';
 }
 
 // Get edge contribution from Shapley values
@@ -685,19 +855,21 @@ function getEdgeColor(edge: any): string {
 
     // If this edge has Shapley data, use sign-based coloring
     if (edgeInfo) {
-      const isNegative = edgeInfo.sign === 'negative';
-
-      if (level === 'strong') {
-        return isNegative ? '#c62828' : '#2e7d32';  // Deep red / Deep green
+      if (isEnergyMode.value) {
+        // Energy mode: red (worsening) / teal (alleviating)
+        const isWorsening = getEnergySign(edgeInfo.phi) === 'positive';
+        if (level === 'strong') return isWorsening ? '#C62828' : '#00695C';
+        if (level === 'medium') return isWorsening ? '#E57373' : '#4DB6AC';
+        if (level === 'weak') return isWorsening ? '#FFCDD2' : '#B2DFDB';
+        return 'silver';
+      } else {
+        // Structure mode: blue (opposition) / orange (cooperation)
+        const isNegative = edgeInfo.sign === 'negative';
+        if (level === 'strong') return isNegative ? '#1565C0' : '#EF6C00';
+        if (level === 'medium') return isNegative ? '#64B5F6' : '#FFB74D';
+        if (level === 'weak') return isNegative ? '#BBDEFB' : '#FFE0B2';
+        return 'silver';
       }
-      if (level === 'medium') {
-        return isNegative ? '#e57373' : '#81c784';  // Medium red / Medium green
-      }
-      if (level === 'weak') {
-        return isNegative ? '#ffcdd2' : '#c8e6c9';  // Light red / Light green
-      }
-      // Has Shapley data but low contribution - use neutral color
-      return 'silver';
     }
   }
 
@@ -741,7 +913,12 @@ function getEdgeMarker(edge: any): string | undefined {
     const edgeInfo = edgeShapleyMap.value.get(edge.id);
 
     if (edgeInfo) {
-      const prefix = edgeInfo.sign === 'negative' ? 'neg' : 'pos';
+      let prefix: string;
+      if (isEnergyMode.value) {
+        prefix = getEnergySign(edgeInfo.phi) === 'positive' ? 'epos' : 'eneg';
+      } else {
+        prefix = edgeInfo.sign === 'negative' ? 'neg' : 'pos';
+      }
       if (level === 'strong') return `url(#arrow-${prefix}-strong)`;
       if (level === 'medium') return `url(#arrow-${prefix}-medium)`;
       if (level === 'weak') return `url(#arrow-${prefix}-weak)`;
@@ -1057,6 +1234,80 @@ onMounted(() => {
   font-size: 11px;
   pointer-events: none;
   user-select: none;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 2px;
+  background: color.adjust($gray, $lightness: 12%);
+  border-radius: 4px;
+  padding: 2px;
+  margin-left: auto;
+}
+
+.mode-btn {
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: color.adjust($white, $alpha: -0.4);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+
+  &:hover:not(.active) {
+    color: $white;
+    background: color.adjust($gray, $lightness: 18%);
+  }
+
+  &.active {
+    background: color.adjust($gray, $lightness: 22%);
+    color: $white;
+    font-weight: 600;
+  }
+}
+
+.contribution-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  background: linear-gradient(145deg, color.adjust($gray, $lightness: 8%), color.adjust($gray, $lightness: 5%));
+  border-top: 1px solid color.adjust($white, $alpha: -0.9);
+  flex-shrink: 0;
+}
+
+.contrib-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.contrib-group-title {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: color.adjust($white, $alpha: -0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.contrib-items {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.contrib-item {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.65rem;
+  color: color.adjust($white, $alpha: -0.2);
+
+  svg {
+    flex-shrink: 0;
+  }
 }
 
 .layer-legend {

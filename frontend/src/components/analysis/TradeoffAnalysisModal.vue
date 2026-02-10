@@ -58,6 +58,8 @@
                 :cell-size="cellSize"
                 :hide-toggle="true"
                 :external-mode="currentMode"
+                :performance-consensus="performanceConsensus"
+                :performance-id-map="performanceIdMap"
                 @cell-click="onCellClick"
               />
               <div v-else class="matrix-placeholder">
@@ -134,6 +136,10 @@
                   :error="nodeShapleyError"
                   :hide-header="false"
                   :top-n="5"
+                  :consensus-i="selectedPair.consensusI"
+                  :consensus-j="selectedPair.consensusJ"
+                  :offset-rate="selectedPair.offsetRate"
+                  :lambda-i-j="selectedPair.lambdaIJ"
                 />
                 <div v-else class="select-prompt">
                   Click a cell in the matrix to see contribution breakdown
@@ -170,58 +176,15 @@
                   :perf-j-id="selectedPair?.perfJId"
                   :node-shapley-values="nodeShapleyValues"
                   :edge-shapley-values="edgeShapleyValues"
+                  :performance-consensus="performanceConsensus"
+                  :performance-id-map="performanceIdMap"
+                  :lambda-i-j="selectedPair?.lambdaIJ"
                   :top-n="5"
                 />
                 <div v-else class="network-placeholder">
                   No network data available
                 </div>
 
-                <!-- Network Highlight Legend -->
-                <div class="network-legend">
-                  <!-- Node Contribution -->
-                  <div class="legend-group">
-                    <span class="legend-group-title">Node φ</span>
-                    <div class="legend-items">
-                      <div class="legend-item">
-                        <svg width="14" height="14" viewBox="0 0 14 14">
-                          <circle cx="7" cy="7" r="5" fill="#ffe3e3" stroke="#d32f2f" stroke-width="2"/>
-                        </svg>
-                        <span>Selected P</span>
-                      </div>
-                      <div class="legend-item">
-                        <svg width="14" height="14" viewBox="0 0 14 14">
-                          <polygon points="7,2 12,7 7,12 2,7" fill="#c62828" stroke="#b71c1c" stroke-width="1.5"/>
-                        </svg>
-                        <span>−φ (tradeoff)</span>
-                      </div>
-                      <div class="legend-item">
-                        <svg width="14" height="14" viewBox="0 0 14 14">
-                          <polygon points="7,2 12,7 7,12 2,7" fill="#2e7d32" stroke="#1b5e20" stroke-width="1.5"/>
-                        </svg>
-                        <span>+φ (synergy)</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Edge Contribution -->
-                  <div class="legend-group">
-                    <span class="legend-group-title">Edge φ</span>
-                    <div class="legend-items">
-                      <div class="legend-item">
-                        <svg width="20" height="14" viewBox="0 0 20 14">
-                          <line x1="2" y1="7" x2="18" y2="7" stroke="#c62828" stroke-width="3"/>
-                        </svg>
-                        <span>−φ (tradeoff)</span>
-                      </div>
-                      <div class="legend-item">
-                        <svg width="20" height="14" viewBox="0 0 20 14">
-                          <line x1="2" y1="7" x2="18" y2="7" stroke="#2e7d32" stroke-width="3"/>
-                        </svg>
-                        <span>+φ (synergy)</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               <!-- Coupling & Clustering -->
@@ -301,6 +264,10 @@ interface SelectedPair {
   cosTheta: number;
   cij: number;
   eij: number;
+  consensusI?: number;
+  consensusJ?: number;
+  offsetRate?: number;
+  lambdaIJ?: number;
 }
 
 interface Props {
@@ -315,6 +282,7 @@ interface Props {
   performanceIds?: string[];
   performanceIdMap?: { [networkNodeId: string]: string };
   performanceWeights?: { [dbPerfId: string]: number };
+  performanceConsensus?: { [perfId: string]: number };
   totalEnergy?: number;
   spectralRadius?: number;
   network?: any;
@@ -424,6 +392,30 @@ async function onCellClick(payload: { i: number; j: number; perfIId?: string; pe
   const cij = props.innerProductMatrix?.[i]?.[j] || 0;
   const eij = props.energyMatrix?.[i]?.[j] || 0;
 
+  // 方向合意度を取得
+  let consensusI: number | undefined;
+  let consensusJ: number | undefined;
+  if (props.performanceConsensus && perfIId && perfJId) {
+    const dbPerfIId = props.performanceIdMap?.[perfIId] || perfIId;
+    const dbPerfJId = props.performanceIdMap?.[perfJId] || perfJId;
+    consensusI = props.performanceConsensus[dbPerfIId];
+    consensusJ = props.performanceConsensus[dbPerfJId];
+  }
+
+  // λ_ij = E_ij / C_ij（フロントエンド側で計算）
+  let lambdaIJ: number | undefined;
+  if (Math.abs(cij) > 1e-12) {
+    lambdaIJ = eij / cij;
+  }
+
+  // 相殺率: offset_rate = (1 + c_i * c_j * sign(C_ij)) / 2
+  // consensus値とC_ijの符号のみで計算可能（正規化因子が消える）
+  let offsetRate: number | undefined;
+  if (consensusI !== undefined && consensusJ !== undefined && Math.abs(cij) > 1e-12) {
+    const signC = cij > 0 ? 1 : -1;
+    offsetRate = (1 + consensusI * consensusJ * signC) / 2;
+  }
+
   selectedPair.value = {
     i,
     j,
@@ -436,6 +428,10 @@ async function onCellClick(payload: { i: number; j: number; perfIId?: string; pe
     cosTheta,
     cij,
     eij,
+    consensusI,
+    consensusJ,
+    offsetRate,
+    lambdaIJ,
   };
 
   if (perfIId && perfJId) {
@@ -932,48 +928,6 @@ onUnmounted(() => {
   &:hover {
     background: linear-gradient(135deg, $main_1 0%, $main_2 100%);
     border-color: $main_1;
-  }
-}
-
-.network-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding: 0.5rem 0.75rem;
-  background: color.adjust($gray, $lightness: 5%);
-  border-radius: 6px;
-  flex-shrink: 0;
-}
-
-.legend-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.legend-group-title {
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: color.adjust($white, $alpha: -0.4);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.legend-items {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.7rem;
-  color: color.adjust($white, $alpha: -0.2);
-
-  svg {
-    flex-shrink: 0;
   }
 }
 

@@ -129,26 +129,28 @@ def circular_mds_one_iteration(K: np.ndarray, initial_theta: np.ndarray = None) 
     return theta_updated
 
 
-# HHI calculatorから移植した関数
+# HHI calculatorから移植した関数 — 廃止
+# エントロピー関数 I(a,b) = (a+b)(1+H(x)) は4象限分解エネルギーのδ_iに理論的に内包されるため廃止
+# 後方互換のため関数は残置するが、新コードでは使用しない
 def calculate_effective_votes(up_votes: float, down_votes: float) -> float:
     """
-    有効投票数を計算（方向性を考慮）
-    
-    I(a, b) = (a + b) * [1 + H(x)]
-    where H(x) = -x*log2(x) - (1-x)*log2(1-x) (Shannon entropy)
+    有効投票数を計算 — 廃止（後方互換のため残置）
+
+    旧式: I(a, b) = (a + b) * [1 + H(x)]
+    新式では W_i = up + down（単純合計）と δ_i = up - down（正味方向票）に置き換え
     """
     total = up_votes + down_votes
     if total == 0:
         return 0.0
-    
+
     x = up_votes / total
-    
+
     # Shannon entropy
     if x == 0 or x == 1:
         entropy = 0
     else:
         entropy = -x * np.log2(x) - (1 - x) * np.log2(1 - x)
-    
+
     return total * (1 + entropy)
 
 
@@ -419,8 +421,14 @@ def calculate_mountain_positions(
     for key, votes in performance_need_votes.items():
         weight = votes['up'] + votes['down']
         performance_need_weights_all[key] = weight
-    
-    
+
+    # 性能ごとの正味方向票 δ_i = Σ(n_i↑ - n_i↓) を集計
+    performance_deltas = {}
+    for key, votes in performance_need_votes.items():
+        perf_id, _ = key
+        delta = votes['up'] - votes['down']
+        performance_deltas[perf_id] = performance_deltas.get(perf_id, 0.0) + delta
+
     # 効用関数が設定されているペアの重み（標高計算用）
     performance_need_weights = {}
     for key, weight in performance_need_weights_all.items():
@@ -600,36 +608,41 @@ def calculate_mountain_positions(
             'H': float(H),
             'utility_vector': utility_vectors[i],
             'partial_heights': partial_heights,  # 性能ごとの部分標高
-            'performance_weights': performance_total_weights  # 性能ごとの合計票数
+            'performance_weights': performance_total_weights,  # 性能ごとの合計票数
+            'performance_deltas': performance_deltas  # 性能ごとの正味方向票 δ_i
         })
     timer.stop("4_position_calculation")
 
     # 7. データベースに座標を保存（オプション）
     timer.start("5_energy_and_db")
     for i, case in enumerate(design_cases):
-        # 論文準拠エネルギーを計算
-        # E = Σ(i<j) W_i × W_j × L(C_ij) / (Σ W_i)²
+        # 4象限分解エネルギーを計算
+        # E = Σ(i<j) (W_i W_j |C_ij| - δ_i δ_j C_ij) / (2 (Σ W_k)²)
         network = case.network
         perf_weights = case.performance_weights or {}
+        perf_deltas = case.performance_deltas or {}
         weight_mode = getattr(case, 'weight_mode', 'discrete_7') or 'discrete_7'
 
         if network and 'nodes' in network and 'edges' in network:
             energy_result = compute_structural_energy(
                 network=network,
                 performance_weights=perf_weights,
-                weight_mode=weight_mode
+                weight_mode=weight_mode,
+                performance_deltas=perf_deltas
             )
             total_energy = energy_result['E']
 
             # 性能ごとの部分エネルギーを集計（論文準拠: E_ij から E_i を導出）
             partial_energies = {}
+            norm_factor = energy_result.get('normalization_factor', 1.0)
             for contrib in energy_result.get('energy_contributions', []):
                 perf_i_id = contrib['perf_i_id']
                 perf_j_id = contrib['perf_j_id']
                 contribution = contrib['contribution']
-                # 各性能に半分ずつ配分
-                partial_energies[perf_i_id] = partial_energies.get(perf_i_id, 0) + contribution / 2
-                partial_energies[perf_j_id] = partial_energies.get(perf_j_id, 0) + contribution / 2
+                # 正規化後の E_ij を各性能に半分ずつ配分
+                normalized_half = (contribution / norm_factor) / 2 if norm_factor > 0 else 0
+                partial_energies[perf_i_id] = partial_energies.get(perf_i_id, 0) + normalized_half
+                partial_energies[perf_j_id] = partial_energies.get(perf_j_id, 0) + normalized_half
         else:
             total_energy = 0.0
             partial_energies = {}
@@ -661,6 +674,9 @@ def calculate_mountain_positions(
 
         # 性能ごとの合計票数も保存
         case.performance_weights_json = json.dumps(positions[i]['performance_weights'])
+
+        # 性能ごとの正味方向票 δ_i も保存
+        case.performance_deltas_json = json.dumps(positions[i]['performance_deltas'])
 
     db.commit()
     timer.stop("5_energy_and_db")

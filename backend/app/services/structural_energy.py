@@ -25,12 +25,10 @@ from .matrix_utils import (
 
 def loss_function(x: float) -> float:
     """
-    損失関数 L(x)
+    損失関数 L(x) — 廃止（後方互換のため残置）
 
-    論文 式5800-5805:
-    L(x) = |x| if x < 0, else 0
-
-    正の相互作用（シナジー）は無視し、負の相互作用（トレードオフ）のみをペナルティとして計上
+    旧式 L(x) = |x| if x < 0, else 0
+    新式では4象限分解エネルギー E_ij = (W_i W_j |C_ij| - δ_i δ_j C_ij) / 2 に置き換え
     """
     if x < 0:
         return abs(x)
@@ -41,22 +39,27 @@ def compute_structural_energy(
     network: Dict,
     performance_weights: Dict[str, float],
     weight_mode: str = 'discrete_7',
+    performance_deltas: Dict[str, float] = None,
 ) -> Dict:
     """
-    論文Chapter 7の定義に従うエネルギー計算
+    4象限分解エネルギー計算
 
-    E = Σ(i<j) W_i × W_j × L(C_ij) / (Σ W_i)²
+    E = Σ(i<j) (W_i W_j |C_ij| - δ_i δ_j C_ij) / (2 (Σ W_k)²)
+
+    δ_i = n_i↑ - n_i↓ (正味方向票)
+    全票同方向の場合 δ_i = W_i となり旧式と一致（後方互換）
 
     Args:
         network: ネットワーク構造 {'nodes': [...], 'edges': [...]}
-        weight_mode: 重みモード ('discrete_3', 'discrete_5', 'discrete_7', 'continuous')
         performance_weights: 性能の重み {performance_id: W_i}
+        weight_mode: 重みモード ('discrete_3', 'discrete_5', 'discrete_7', 'continuous')
+        performance_deltas: 性能の正味方向票 {performance_id: δ_i}（Noneの場合W_iにフォールバック）
 
     Returns:
         {
-            'E': float,  # 総エネルギー（論文定義）
+            'E': float,  # 総エネルギー
             'total_energy_unnormalized': float,  # 正規化前の総エネルギー
-            'normalization_factor': float,  # (Σ W_i)²
+            'normalization_factor': float,  # 2 * (Σ W_i)²
             'energy_contributions': [  # 各ペアの寄与
                 {
                     'perf_i_id': str,
@@ -65,9 +68,10 @@ def compute_structural_energy(
                     'perf_j_label': str,
                     'W_i': float,
                     'W_j': float,
+                    'delta_i': float,
+                    'delta_j': float,
                     'C_ij': float,  # 内積
-                    'L_ij': float,  # 損失関数値
-                    'contribution': float,  # W_i × W_j × L(C_ij)
+                    'contribution': float,  # (W_i W_j |C_ij| - δ_i δ_j C_ij) / 2
                 }
             ],
             'inner_product_matrix': List[List[float]],  # C_ij 行列
@@ -75,7 +79,7 @@ def compute_structural_energy(
             'norms': List[float],  # 各性能のノルム ||T_i·||
             'metadata': {
                 'n_performances': int,
-                'n_tradeoff_pairs': int,  # L(C_ij) > 0 のペア数
+                'n_tradeoff_pairs': int,  # エネルギー正のペア数
                 'total_weight': float,  # Σ W_i
             }
         }
@@ -108,17 +112,23 @@ def compute_structural_energy(
     cos_theta = inner_products['cos_theta']
     norms = inner_products['norms']
 
-    # Step 4: 重みを取得（node_id → performance_id → W_i）
+    # Step 4: 重みベクトルW_iとδベクトルを構築（node_id → performance_id → 値）
+    _deltas = performance_deltas or {}
     W = []
+    D = []
     for node_id in perf_ids:
         perf_id = perf_id_map.get(node_id, node_id)
-        W.append(performance_weights.get(perf_id, 0.0))
+        w_i = performance_weights.get(perf_id, 0.0)
+        W.append(w_i)
+        # δ_iが未指定の場合はW_iにフォールバック（後方互換: 全票同方向と仮定）
+        D.append(_deltas.get(perf_id, w_i))
     W = np.array(W)
+    D = np.array(D)
 
-    # Step 5: エネルギー計算
-    # E = Σ(i<j) W_i × W_j × L(C_ij) / (Σ W_i)²
+    # Step 5: 4象限分解エネルギー計算
+    # E = Σ(i<j) (W_i W_j |C_ij| - δ_i δ_j C_ij) / (2 (Σ W_k)²)
     total_weight = np.sum(W)
-    normalization_factor = total_weight ** 2 if total_weight > 0 else 1.0
+    normalization_factor = 2.0 * total_weight ** 2 if total_weight > 0 else 1.0
 
     energy_contributions = []
     total_energy_unnormalized = 0.0
@@ -127,18 +137,34 @@ def compute_structural_energy(
     for i in range(n_perf):
         for j in range(i + 1, n_perf):
             C_ij = float(C[i, j])
-            L_ij = loss_function(C_ij)
-
             W_i = float(W[i])
             W_j = float(W[j])
-            contribution = W_i * W_j * L_ij
+            delta_i = float(D[i])
+            delta_j = float(D[j])
 
-            if L_ij > 0:
+            # 非正規化寄与: E_ij = contribution / normalization_factor
+            contribution = W_i * W_j * abs(C_ij) - delta_i * delta_j * C_ij
+
+            if contribution > 0:
                 n_tradeoff_pairs += 1
                 total_energy_unnormalized += contribution
 
-            # 寄与が0でないものと、トレードオフペアを記録
-            if L_ij > 0 or C_ij < 0:
+            # 方向合意度
+            consensus_i = delta_i / W_i if W_i > 1e-10 else 0.0
+            consensus_j = delta_j / W_j if W_j > 1e-10 else 0.0
+
+            # λ_ij = E_ij / C_ij（エネルギー強度）
+            if abs(C_ij) > 1e-12:
+                lambda_ij = contribution / C_ij
+            else:
+                lambda_ij = 0.0
+
+            # 相殺率: 全票同方向時のE_ij_maxに対する減少率
+            E_max = W_i * W_j * abs(C_ij)
+            offset_rate = 1.0 - contribution / E_max if E_max > 1e-12 else 0.0
+
+            # エネルギー正のペアを記録
+            if contribution > 0:
                 energy_contributions.append({
                     'perf_i_id': perf_id_map.get(perf_ids[i], perf_ids[i]),
                     'perf_j_id': perf_id_map.get(perf_ids[j], perf_ids[j]),
@@ -146,10 +172,15 @@ def compute_structural_energy(
                     'perf_j_label': perf_labels[j],
                     'W_i': W_i,
                     'W_j': W_j,
+                    'delta_i': delta_i,
+                    'delta_j': delta_j,
                     'C_ij': C_ij,
                     'cos_theta': float(cos_theta[i, j]),
-                    'L_ij': L_ij,
                     'contribution': contribution,
+                    'consensus_i': consensus_i,
+                    'consensus_j': consensus_j,
+                    'lambda_ij': lambda_ij,
+                    'offset_rate': offset_rate,
                 })
 
     # 寄与の大きい順にソート
@@ -181,20 +212,25 @@ def compute_structural_energy(
 def compute_structural_energy_for_case(
     network: Dict,
     performance_weights: Dict[str, float],
-    classic_energy: Optional[float] = None
+    classic_energy: Optional[float] = None,
+    performance_deltas: Dict[str, float] = None
 ) -> Dict:
     """
-    設計案の論文準拠エネルギーを計算（従来エネルギーとの比較用）
+    設計案のエネルギーを計算（従来エネルギーとの比較用）
 
     Args:
         network: ネットワーク構造
         performance_weights: 性能の重み
         classic_energy: 従来のエネルギー値（比較用、オプション）
+        performance_deltas: 性能の正味方向票 {performance_id: δ_i}
 
     Returns:
         compute_structural_energy の結果 + classic_energy との比較
     """
-    result = compute_structural_energy(network, performance_weights)
+    result = compute_structural_energy(
+        network, performance_weights,
+        performance_deltas=performance_deltas
+    )
 
     if classic_energy is not None:
         result['comparison'] = {

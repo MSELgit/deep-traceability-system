@@ -1,7 +1,7 @@
 # Deep Traceability System - 詳細技術ドキュメント
 
 **作成日**: 2025年12月23日
-**バージョン**: 1.1 (Coupling/Clustering機能追加)
+**バージョン**: 1.2 (望ましさ方向対応・エネルギー4象限分解・構造/エネルギーモード切替)
 
 ---
 
@@ -40,7 +40,9 @@ Deep Traceability System は、複雑なシステム設計における**多目�
 | **トレードオフ分析** | 性能間の競合関係の定量化 |
 | **Shapley値分解** | トレードオフへの属性寄与度分析 |
 | **カップリング/クラスタリング** | トレードオフ間の結合度と性能グループ化 |
-| **エネルギー計算** | 設計案の内部整合性評価 |
+| **エネルギー計算** | 設計案の内部整合性評価（4象限分解対応） |
+| **望ましさ方向対応** | 性能の望大/望小混在への対応 |
+| **構造/エネルギーモード切替** | Shapley・ネットワークで2視点の切替表示 |
 
 ### 1.3 想定ユースケース
 
@@ -132,21 +134,44 @@ H = Σ (票数_i × 効用値_i) / Σ 票数_i
 - **正の値**: 増加→増加の関係
 - **負の値**: 増加→減少の関係（トレードオフ）
 
-### 2.6 エネルギー計算
+### 2.6 構造的エネルギー計算
 
-エネルギーは設計案の**内部整合性**を測定します。
+エネルギーは設計案の**内部整合性**を、ステークホルダーの望ましさ方向を考慮して測定します。
+
+#### 4象限エネルギー式
 
 ```
-Match(i,j) = -tanh(ln(3/2) × Σ sgn(W) × √|W|)
+E_ij = (W_i × W_j × |C_ij| - δ_i × δ_j × C_ij) / (2 × (ΣW_k)²)
 
 ここで：
-- i, j: 性能ペア
-- W: 共通特性を経由するエッジ重みの積
-
-Energy = Σ (q_i × q_j × Match(i,j)) / r_ij
+- W_i: 性能iの重み（望大票数 + 望小票数）
+- δ_i: 性能iの正味方向票（望大票数 - 望小票数）
+- C_ij: 性能i,jの内積（総効果行列T_iとT_jの内積）
+- ΣW_k: 全性能の重みの合計
 ```
 
-エネルギーが低いほど、性能間の整合性が高い設計です。
+#### 特殊ケース
+
+- **全票同方向**（|δ_i| = W_i）：旧式 `W_i × W_j × max(0, -C_ij) / (ΣW_k)²` と完全一致
+- **混在票あり**：構造的対立の一部がシナジーとして相殺され、エネルギーが減少
+
+#### 方向合意度
+
+各性能の望ましさ方向の一貫性を `consensus_i = δ_i / W_i` （[-1, +1]の範囲）で表します。
+
+| 値 | 意味 |
+|----|------|
+| +1.0 | 全票望大 |
+| -1.0 | 全票望小 |
+| 0.0 | 望大票と望小票が同数 |
+
+#### 旧式エネルギー（Coulomb型）
+
+旧式のエネルギー計算（`energy_calculator.py`）はCoulomb型モデルで、比較用エンドポイントでのみ使用されます。
+
+```
+Energy = Σ (q_i × q_j × Match(i,j)) / r_ij
+```
 
 ### 2.7 トレードオフ比率
 
@@ -173,22 +198,39 @@ Tradeoff Ratio = 競合パス数 / 総パス数
 
 ### 2.9 Shapley値分解
 
-トレードオフの原因となる属性の**寄与度**をゲーム理論的に分解します。
+トレードオフの原因となるノード/エッジの**寄与度**をゲーム理論的に分解します。
 
 ```
 φ_k = Σ_{S⊆N\{k}} [|S|!(n-|S|-1)!/n!] × [v(S∪{k}) - v(S)]
 
 ここで：
-- k: 対象の属性ノード
-- N: 全属性ノードの集合
+- k: 対象のノードまたはエッジ
+- N: 全要素の集合
 - S: kを含まない連合（部分集合）
 - v(S): 連合Sのみを使用した場合の内積 C_ij
 ```
 
 **特徴：**
-- φ_k > 0: 属性kがトレードオフを強化
-- φ_k < 0: 属性kがトレードオフを緩和
-- Σ φ_k = C_ij（総内積と一致）
+- φ_k > 0: 要素kが協調方向に寄与
+- φ_k < 0: 要素kが対立方向に寄与
+- Σ φ_k = C_ij（総内積と一致 — 加法性）
+
+#### ノードShapley と エッジShapley
+
+2種類のShapley分解を提供します：
+- **ノードShapley（V ∪ A）**：変数・属性ノードの寄与度
+- **エッジShapley**：エッジの寄与度
+
+#### 構造/エネルギーモード
+
+Shapley値は2つの視点で表示できます：
+
+| モード | 表示値 | 色 | 意味 |
+|--------|--------|-----|------|
+| 構造寄与 (φ) | φ_e | 青(−)/橙(+) | C_ijへの構造的寄与（中立） |
+| エネルギー寄与 (λφ) | λ_ij × φ_e | 赤(+)/ティール(−) | E_ijへの価値的寄与 |
+
+ここで `λ_ij = E_ij / C_ij` はエネルギー強度係数。λは定数スカラーなので、寄与の順位・割合は両モードで同一です。
 
 ### 2.10 カップリングとクラスタリング
 
@@ -284,6 +326,7 @@ deep-traceability-system/
 │   │   │   ├── mountain/        # 山の可視化
 │   │   │   ├── twoaxis/         # 2軸評価
 │   │   │   ├── network/         # ネットワーク編集
+│   │   │   ├── analysis/        # トレードオフ分析
 │   │   │   ├── opm3d/           # 3Dネットワーク
 │   │   │   └── common/          # 共通コンポーネント
 │   │   ├── views/               # ページコンポーネント
@@ -304,8 +347,15 @@ deep-traceability-system/
 │   │   │   └── project.py       # データ検証スキーマ
 │   │   ├── services/            # ビジネスロジック
 │   │   │   ├── mountain_calculator.py   # 山座標計算
-│   │   │   ├── energy_calculator.py     # エネルギー計算
-│   │   │   └── tradeoff_calculator.py   # トレードオフ計算
+│   │   │   ├── energy_calculator.py     # エネルギー計算（旧Coulomb型）
+│   │   │   ├── structural_energy.py     # 構造的エネルギー計算（4象限分解）
+│   │   │   ├── structural_tradeoff.py   # 構造的トレードオフ分析
+│   │   │   ├── matrix_utils.py          # 隣接行列・総効果行列ユーティリティ
+│   │   │   ├── shapley_calculator.py    # Shapley値分解
+│   │   │   ├── coupling_calculator.py   # カップリング/クラスタリング
+│   │   │   ├── tradeoff_calculator.py   # トレードオフ比率計算
+│   │   │   ├── weight_normalization.py  # 重み正規化
+│   │   │   └── scc_analyzer.py          # 強連結成分分析
 │   │   └── main.py              # アプリケーションエントリ
 │   └── requirements.txt         # Python依存関係
 │
@@ -515,8 +565,10 @@ deep-traceability-system/
 | POST | `/energy/{id}` | 全設計案のエネルギー計算 |
 | GET | `/energy/{id}/{case_id}` | 単一設計案のエネルギー |
 | POST | `/tradeoff/{id}` | トレードオフ比率計算 |
-| GET | `/structural-tradeoff/{id}/{case_id}` | 構造的トレードオフ分析 |
-| GET | `/shapley/{id}/{case_id}/{pi}/{pj}` | Shapley値分解 |
+| GET | `/structural-tradeoff/{id}/{case_id}` | 構造的トレードオフ分析（cosθ, E_ij, consensus） |
+| GET | `/structural-energy/{id}/{case_id}` | 構造的エネルギー計算（4象限分解） |
+| GET | `/shapley/{id}/{case_id}/{pi}/{pj}` | ノードShapley値分解（V ∪ A） |
+| GET | `/edge-shapley/{id}/{case_id}/{pi}/{pj}` | エッジShapley値分解 |
 | GET | `/coupling/{id}/{case_id}` | カップリング/クラスタリング |
 
 #### MDS/カーネル (`/api/mds`)
@@ -586,14 +638,14 @@ def distribute_votes_to_performances(needs, performances, relations):
     """
 ```
 
-#### energy_calculator.py
+#### energy_calculator.py（旧式Coulomb型）
 
-**エネルギー計算の詳細：**
+**旧式エネルギー計算（比較用）：**
 
 ```python
 def calculate_energy_for_case(case, performances, db):
     """
-    設計案のエネルギーを計算
+    Coulomb型モデルによるエネルギー計算（比較用エンドポイントでのみ使用）
 
     アルゴリズム:
     1. Layer1（性能）とLayer2（特性）のノードを抽出
@@ -601,13 +653,51 @@ def calculate_energy_for_case(case, performances, db):
     3. 共通特性を経由するパスの重みを計算
     4. Match値を算出: Match = -tanh(ln(3/2) × Σ sgn(W) × √|W|)
     5. エネルギー = Σ (q_i × q_j × Match) / distance
+    """
+```
+
+#### structural_energy.py（主要エネルギー計算）
+
+**4象限エネルギー分解：**
+
+```python
+def compute_structural_energy(network, performance_weights, performance_deltas, weight_mode):
+    """
+    構造的エネルギーを4象限分解で計算
+
+    エネルギー式:
+    E_ij = (W_i * W_j * |C_ij| - δ_i * δ_j * C_ij) / (2 * (ΣW_k)²)
+
+    各ペアの追加情報:
+    - consensus_i/j: 方向合意度 (δ/W)
+    - lambda_ij: エネルギー強度係数 (E_ij / C_ij)
+    - offset_rate: 相殺率 (1 - E_ij / E_max)
 
     戻り値:
     {
         'total_energy': float,
-        'partial_energies': {perf_id: float, ...},
-        'match_matrix': [[float, ...], ...]
+        'energy_contributions': [{perf_i_id, perf_j_id, contribution, lambda_ij, ...}],
+        'normalization_factor': float
     }
+    """
+```
+
+#### structural_tradeoff.py
+
+**構造的トレードオフ分析：**
+
+```python
+class StructuralTradeoffCalculator:
+    """
+    総効果行列による統合的なトレードオフ分析
+
+    分析結果:
+    - total_effect_matrix: 総効果行列 T
+    - cos_theta_matrix: cosθ行列（構造的対立/協調）
+    - inner_product_matrix: 内積行列 C_ij = T_i · T_j
+    - energy_matrix: エネルギー行列 E_ij（4象限分解）
+    - performance_consensus: 方向合意度マップ {perf_id: δ/W}
+    - tradeoff_pairs / synergy_pairs: ペア情報
     """
 ```
 
@@ -801,18 +891,29 @@ const sphereRadius = 0.35 + normalizedEnergy * 0.4;
 -0.33 (弱い負), -1 (負), -3 (強い負)
 ```
 
-#### TradeoffAnalysisPanel.vue
+#### TradeoffAnalysisModal.vue
 **機能：**
-- 構造的トレードオフ分析の結果表示
-- cos θ 行列のヒートマップ
-- トレードオフペアの一覧
+- 構造的トレードオフ分析のモーダルダイアログ
+- cos θ / Energy マトリクス切替ヒートマップ
+- 4タブ構成の詳細パネル
+
+**タブ構成：**
+1. **Contribution** - Shapley値分解（構造/エネルギーモード切替）
+2. **Network** - ネットワーク上でのShapley寄与ハイライト（構造/エネルギーモード切替）
+3. **Coupling** - カップリング/クラスタリング分析
+4. **Confidence** - 離散化信頼度
 
 **サブコンポーネント：**
-- `ShapleyBreakdown.vue` - Shapley値の棒グラフ
+- `MatrixHeatmap.vue` - 行列ヒートマップ（青/橙cosθ、白/赤Energy、方向インジケータ行）
+- `ShapleyBreakdown.vue` - Shapley値の棒グラフ（構造φ: 青/橙、エネルギーλφ: 赤/ティール）
+- `TradeoffNetworkViewer.vue` - ネットワーク寄与ハイライト（構造/エネルギーモード切替、凡例付き）
 - `CouplingClusteringPanel.vue` - カップリング/クラスタリング
-- `InteractiveDendrogram.vue` - デンドログラム可視化
-- `MatrixHeatmap.vue` - 行列ヒートマップ
+- `DiscretizationConfidence.vue` - 離散化信頼度
 - `SCCWarningBanner.vue` - SCC警告表示
+
+**色設計原則：**
+- 構造的量（cosθ, φ_e）→ 青(対立)/橙(協調) — 中立色
+- 価値的量（E_ij, λφ_e）→ 赤(悪化)/ティール(緩和) — 価値判断色
 
 #### CouplingClusteringPanel.vue
 **機能：**
@@ -1212,4 +1313,4 @@ find . -name "__pycache__" -exec rm -rf {} +
 ---
 
 *このドキュメントは Deep Traceability System の技術仕様を記載したものです。*
-*最終更新: 2026年1月20日*
+*最終更新: 2026年2月10日*

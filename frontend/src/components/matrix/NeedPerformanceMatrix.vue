@@ -2185,22 +2185,10 @@ function getDownVotesForPerformance(performanceId: string): number {
   return total
 }
 
-function calculateEntropy(x: number): number {
-  if (x === 0 || x === 1) return 0
-  return -x * Math.log2(x) - (1 - x) * Math.log2(1 - x)
-}
-
 function getEffectiveVotesForPerformance(performanceId: string): number {
   const upVotes = getUpVotesForPerformance(performanceId)
   const downVotes = getDownVotesForPerformance(performanceId)
-  const total = upVotes + downVotes
-  
-  if (total === 0) return 0
-  
-  const x = upVotes / total
-  const entropy = calculateEntropy(x)
-  
-  return total * (1 + entropy)
+  return upVotes + downVotes
 }
 
 // 正規化されたValid Votesを計算

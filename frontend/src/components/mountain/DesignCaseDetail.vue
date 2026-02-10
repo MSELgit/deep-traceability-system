@@ -256,6 +256,7 @@
       :performance-ids="tradeoffData.performance_ids"
       :performance-id-map="tradeoffData.performance_id_map"
       :performance-weights="designCase.performance_weights"
+      :performance-consensus="tradeoffData.performance_consensus"
       :total-energy="tradeoffData.total_energy"
       :spectral-radius="tradeoffData.spectral_radius"
       :network="designCase.network"
@@ -436,6 +437,7 @@ interface TradeoffData {
   performance_names: string[];
   performance_ids: string[];
   performance_id_map?: { [networkNodeId: string]: string };  // network_node_id -> db_performance_id
+  performance_consensus?: { [perfId: string]: number };  // δ_i/W_i per performance
   total_energy?: number;
   spectral_radius?: number;
 }
@@ -463,13 +465,25 @@ async function loadTradeoffData() {
       props.designCase.id
     );
 
+    const energyMat = response.data.energy_matrix || [];
+    // Compute total energy from energy matrix (sum of upper triangle)
+    let totalE = 0;
+    for (let i = 0; i < energyMat.length; i++) {
+      for (let j = i + 1; j < (energyMat[i]?.length || 0); j++) {
+        totalE += energyMat[i][j] || 0;
+      }
+    }
+
     tradeoffData.value = {
       cos_theta_matrix: response.data.cos_theta_matrix,
       inner_product_matrix: response.data.inner_product_matrix || [],
-      energy_matrix: response.data.energy_matrix || [],
+      energy_matrix: energyMat,
       performance_names: response.data.performance_labels,  // API returns performance_labels
       performance_ids: response.data.performance_ids,
       performance_id_map: response.data.performance_id_map,
+      performance_consensus: response.data.performance_consensus || {},
+      total_energy: totalE > 0 ? totalE : undefined,
+      spectral_radius: (response.data as any).metadata?.spectral_radius,
     };
   } catch (error: any) {
     console.error('Failed to load tradeoff data:', error);

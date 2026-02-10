@@ -378,7 +378,8 @@ export interface HHIResult {
  */
 export interface VoteDistribution {
   need_id: string;
-  effective_votes: number; // 有効投票数
+  weight: number; // 合計票数 W_i = up + down
+  delta: number; // 正味方向票 δ_i = up - down
   up_votes: number;
   down_votes: number;
 }

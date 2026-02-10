@@ -21,6 +21,17 @@
           E_ij = {{ formatEnergy(eij, 4) }}
         </span>
       </div>
+      <!-- Direction mixing warning -->
+      <div v-if="hasMixedConsensus" class="direction-warning">
+        <span class="warning-icon">⚠</span>
+        <span v-for="(info, idx) in mixedConsensusInfos" :key="idx">
+          {{ info.name }} の望ましさ方向が混在（δ/W = {{ info.value >= 0 ? '+' : '' }}{{ info.value.toFixed(2) }}）
+          <span v-if="idx < mixedConsensusInfos.length - 1">、</span>
+        </span>
+        <span v-if="offsetRate !== undefined && offsetRate > 0.01">
+          ：構造的対立の約{{ Math.round(offsetRate * 100) }}%がシナジーとして相殺
+        </span>
+      </div>
     </div>
 
     <!-- Loading State -->
@@ -36,6 +47,22 @@
 
     <!-- Contribution Sections -->
     <div v-else-if="nodeShapleyValues.length > 0" class="contributions">
+      <!-- Shapley Mode Toggle -->
+      <div v-if="lambdaIJ !== undefined" class="shapley-mode-toggle">
+        <button
+          :class="['toggle-btn', { active: shapleyMode === 'structure' }]"
+          @click="shapleyMode = 'structure'"
+        >
+          構造寄与 (φ)
+        </button>
+        <button
+          :class="['toggle-btn', { active: shapleyMode === 'energy' }]"
+          @click="shapleyMode = 'energy'"
+        >
+          エネルギー寄与 (λφ)
+        </button>
+      </div>
+
       <!-- Node Contributions (V ∪ A) -->
       <div class="section">
         <div class="section-title">
@@ -61,12 +88,13 @@
             </div>
             <div class="bar-track">
               <div
-                :class="['bar-fill', item.sign]"
-                :style="{ width: Math.abs(item.percentage) + '%' }"
+                :class="['bar-fill', shapleyMode === 'energy' ? energySignClass(item.phi) : item.sign]"
+                :style="shapleyMode === 'energy' ? energyBarStyle(item.phi, 'node') : { width: Math.abs(item.percentage) + '%' }"
               ></div>
             </div>
-            <div :class="['bar-value', item.sign]">
-              {{ formatPhi(item.phi) }} ({{ item.percentage.toFixed(0) }}%)
+            <div :class="['bar-value', shapleyMode === 'energy' ? energySignClass(item.phi) : item.sign]">
+              {{ shapleyMode === 'energy' ? formatLambdaPhi(item.phi) : formatPhi(item.phi) }}
+              ({{ shapleyMode === 'energy' ? energyPercentage(item.phi, 'node') : item.percentage.toFixed(0) }}%)
             </div>
           </div>
         </div>
@@ -97,12 +125,13 @@
             </div>
             <div class="bar-track">
               <div
-                :class="['bar-fill', item.sign]"
-                :style="{ width: Math.abs(item.percentage) + '%' }"
+                :class="['bar-fill', shapleyMode === 'energy' ? energySignClass(item.phi) : item.sign]"
+                :style="shapleyMode === 'energy' ? energyBarStyle(item.phi, 'edge') : { width: Math.abs(item.percentage) + '%' }"
               ></div>
             </div>
-            <div :class="['bar-value', item.sign]">
-              {{ formatPhi(item.phi) }} ({{ item.percentage.toFixed(0) }}%)
+            <div :class="['bar-value', shapleyMode === 'energy' ? energySignClass(item.phi) : item.sign]">
+              {{ shapleyMode === 'energy' ? formatLambdaPhi(item.phi) : formatPhi(item.phi) }}
+              ({{ shapleyMode === 'energy' ? energyPercentage(item.phi, 'edge') : item.percentage.toFixed(0) }}%)
             </div>
           </div>
         </div>
@@ -152,7 +181,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { NodeShapleyValue, EdgeShapleyValue } from '@/utils/api';
 import { formatEnergy } from '@/utils/energyFormat';
 
@@ -180,6 +209,10 @@ interface Props {
   hideHeader?: boolean;
   maxNameLength?: number;
   topN?: number;  // Show top N items
+  consensusI?: number;  // 方向合意度 P_i
+  consensusJ?: number;  // 方向合意度 P_j
+  offsetRate?: number;  // 相殺率
+  lambdaIJ?: number;  // λ_ij = E_ij / C_ij
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -196,10 +229,29 @@ const props = withDefaults(defineProps<Props>(), {
   topN: 5,
 });
 
+const shapleyMode = ref<'structure' | 'energy'>('structure');
+
 const relationshipClass = computed(() => {
   if (props.cosTheta < -0.1) return 'tradeoff';
   if (props.cosTheta > 0.1) return 'synergy';
   return 'neutral';
+});
+
+// Direction mixing detection
+const hasMixedConsensus = computed(() => {
+  if (props.consensusI === undefined || props.consensusJ === undefined) return false;
+  return Math.abs(props.consensusI) < 1 - 1e-6 || Math.abs(props.consensusJ) < 1 - 1e-6;
+});
+
+const mixedConsensusInfos = computed(() => {
+  const infos: Array<{ name: string; value: number }> = [];
+  if (props.consensusI !== undefined && Math.abs(props.consensusI) < 1 - 1e-6) {
+    infos.push({ name: props.perfIName, value: props.consensusI });
+  }
+  if (props.consensusJ !== undefined && Math.abs(props.consensusJ) < 1 - 1e-6) {
+    infos.push({ name: props.perfJName, value: props.consensusJ });
+  }
+  return infos;
 });
 
 // Node Shapley values (V ∪ A) - sorted and limited to top N
@@ -293,6 +345,62 @@ function formatPhi(phi: number): string {
   const sign = phi >= 0 ? '+' : '';
   return sign + phi.toFixed(3);
 }
+
+// Energy mode (λφ) helpers
+// ノード群・エッジ群で別々に分母を計算（構造モードのpercentageと一致させるため）
+const nodeTotalAbsLambdaPhi = computed(() => {
+  if (props.lambdaIJ === undefined) return 1;
+  const lambda = props.lambdaIJ;
+  return props.nodeShapleyValues.reduce((sum, item) => sum + Math.abs(item.phi * lambda), 0) || 1;
+});
+
+const edgeTotalAbsLambdaPhi = computed(() => {
+  if (props.lambdaIJ === undefined || !props.edgeShapleyValues) return 1;
+  const lambda = props.lambdaIJ;
+  return props.edgeShapleyValues.reduce((sum, item) => sum + Math.abs(item.phi * lambda), 0) || 1;
+});
+
+// エネルギー寄与の符号: positive=悪化(赤), negative=緩和(ティール)
+function energySignClass(phi: number): string {
+  if (props.lambdaIJ === undefined) return 'energy-positive';
+  return (phi * props.lambdaIJ) >= 0 ? 'energy-positive' : 'energy-negative';
+}
+
+function formatLambdaPhi(phi: number): string {
+  if (props.lambdaIJ === undefined) return formatPhi(phi);
+  const lambdaPhi = phi * props.lambdaIJ;
+  const sign = lambdaPhi >= 0 ? '+' : '';
+  return sign + lambdaPhi.toFixed(4);
+}
+
+function energyPercentage(phi: number, group: 'node' | 'edge'): string {
+  if (props.lambdaIJ === undefined) return '0';
+  const lambdaPhi = Math.abs(phi * props.lambdaIJ);
+  const total = group === 'node' ? nodeTotalAbsLambdaPhi.value : edgeTotalAbsLambdaPhi.value;
+  return ((lambdaPhi / total) * 100).toFixed(0);
+}
+
+function energyBarStyle(phi: number, group: 'node' | 'edge'): Record<string, string> {
+  if (props.lambdaIJ === undefined) return { width: '0%' };
+  const lambdaPhi = phi * props.lambdaIJ;
+  const absLambdaPhi = Math.abs(lambdaPhi);
+  const total = group === 'node' ? nodeTotalAbsLambdaPhi.value : edgeTotalAbsLambdaPhi.value;
+  const pct = (absLambdaPhi / total) * 100;
+  const intensity = Math.min(1, pct / 100 * 2);
+  if (lambdaPhi >= 0) {
+    // 正: エネルギー悪化 → 赤
+    return {
+      width: pct + '%',
+      background: `linear-gradient(90deg, rgba(211,47,47,${0.3 + intensity * 0.3}), rgba(211,47,47,${0.4 + intensity * 0.6}))`,
+    };
+  } else {
+    // 負: エネルギー緩和 → ティール
+    return {
+      width: pct + '%',
+      background: `linear-gradient(90deg, rgba(0,150,136,${0.3 + intensity * 0.3}), rgba(0,150,136,${0.4 + intensity * 0.6}))`,
+    };
+  }
+}
 </script>
 
 <style scoped>
@@ -351,13 +459,13 @@ function formatPhi(phi: number): string {
 }
 
 .metric.tradeoff {
-  background: rgba(198, 40, 40, 0.3);
-  color: #ef9a9a;
+  background: rgba(21, 101, 192, 0.3);
+  color: #90CAF9;
 }
 
 .metric.synergy {
-  background: rgba(46, 125, 50, 0.3);
-  color: #a5d6a7;
+  background: rgba(239, 108, 0, 0.3);
+  color: #FFB74D;
 }
 
 .metric.neutral {
@@ -368,6 +476,21 @@ function formatPhi(phi: number): string {
 .metric.energy {
   background: rgba(230, 81, 0, 0.3);
   color: #ffcc80;
+}
+
+.direction-warning {
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: rgba(171, 71, 188, 0.15);
+  border: 1px solid rgba(171, 71, 188, 0.3);
+  border-radius: 4px;
+  font-size: 10px;
+  color: #CE93D8;
+  line-height: 1.4;
+}
+
+.warning-icon {
+  margin-right: 4px;
 }
 
 .loading {
@@ -535,35 +658,79 @@ function formatPhi(phi: number): string {
 }
 
 .bar-fill.positive {
-  background: linear-gradient(90deg, #81c784, #4caf50);
+  background: linear-gradient(90deg, #FFB74D, #EF6C00);
 }
 
 .bar-fill.negative {
-  background: linear-gradient(90deg, #e57373, #f44336);
+  background: linear-gradient(90deg, #64B5F6, #1565C0);
 }
 
 .bar-fill.neutral {
   background: rgba(255, 255, 255, 0.3);
 }
 
+.bar-fill.energy-positive,
+.bar-fill.energy-negative {
+  /* Dynamically styled via :style binding */
+  border-radius: 3px;
+}
+
+.shapley-mode-toggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.toggle-btn {
+  padding: 4px 10px;
+  font-size: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.toggle-btn.active {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+}
+
 .bar-value {
-  width: 80px;
+  width: 95px;
   flex-shrink: 0;
   text-align: right;
   font-size: 11px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .bar-value.positive {
-  color: #a5d6a7;
+  color: #FFB74D;
 }
 
 .bar-value.negative {
-  color: #ef9a9a;
+  color: #90CAF9;
 }
 
 .bar-value.neutral {
   color: rgba(255, 255, 255, 0.6);
+}
+
+.bar-value.energy-positive {
+  color: #EF9A9A;
+}
+
+.bar-value.energy-negative {
+  color: #80CBC4;
 }
 
 .summary {

@@ -186,6 +186,7 @@ class DesignCase(DesignCaseBase):
     utility_vector: Optional[Dict[str, float]] = None
     partial_heights: Optional[Dict[str, float]] = None  # 性能ごとの部分標高
     performance_weights: Optional[Dict[str, float]] = None  # 性能ごとの合成票数
+    performance_deltas: Optional[Dict[str, float]] = None  # 性能ごとの正味方向票 δ_i
 
     # Phase 4: 新規追加フィールド
     structural_analysis: Optional[Dict] = None  # 構造的トレードオフ分析結果
@@ -222,6 +223,7 @@ class DesignCase(DesignCaseBase):
             'utility_vector': obj.utility_vector,
             'partial_heights': obj.partial_heights,
             'performance_weights': obj.performance_weights,
+            'performance_deltas': obj.performance_deltas if hasattr(obj, 'performance_deltas') else None,
             # Phase 4: 新規追加フィールド
             'structural_analysis': obj.structural_analysis if hasattr(obj, 'structural_analysis') else None,
             'paper_metrics': obj.paper_metrics if hasattr(obj, 'paper_metrics') else None,

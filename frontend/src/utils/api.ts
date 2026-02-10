@@ -554,10 +554,11 @@ export const nodeShapleyApi = {
 export interface StructuralTradeoffResult {
   cos_theta_matrix: number[][];
   inner_product_matrix?: number[][];
-  energy_matrix?: number[][];  // E_ij = max(0, -C_ij)
+  energy_matrix?: number[][];  // E_ij = (W_i W_j |C_ij| - δ_i δ_j C_ij) / (2(ΣW_k)²)
   performance_ids: string[];
   performance_labels: string[];  // API returns performance_labels
   performance_id_map?: { [networkNodeId: string]: string };  // network_node_id -> db_performance_id
+  performance_consensus?: { [perfId: string]: number };  // δ_i/W_i per performance
   variable_ids?: string[];
   variable_labels?: string[];
   attribute_ids?: string[];

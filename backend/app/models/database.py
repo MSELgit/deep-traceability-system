@@ -177,6 +177,7 @@ class DesignCaseModel(Base):
     utility_vector_json = Column(Text, nullable=True)
     partial_heights_json = Column(Text, nullable=True)  # 性能ごとの部分標高
     performance_weights_json = Column(Text, nullable=True)  # 性能ごとの合計票数
+    performance_deltas_json = Column(Text, nullable=True)  # 性能ごとの正味方向票 δ_i = n_i↑ - n_i↓
 
     # Phase 4: 新規追加フィールド（全てOptional、既存データとの互換性維持）
     structural_analysis_json = Column(Text, nullable=True)  # 構造的トレードオフ分析結果
@@ -230,6 +231,12 @@ class DesignCaseModel(Base):
         return json.loads(self.performance_weights_json) if self.performance_weights_json else None
 
     @property
+    def performance_deltas(self):
+        """performance_deltas_jsonをパース（正味方向票 δ_i）"""
+        import json
+        return json.loads(self.performance_deltas_json) if self.performance_deltas_json else None
+
+    @property
     def structural_analysis(self):
         """structural_analysis_jsonをパース"""
         import json
@@ -273,6 +280,7 @@ def _auto_migrate():
 
         # Phase 4で追加したカラム
         new_columns = [
+            ('performance_deltas_json', 'TEXT'),
             ('structural_analysis_json', 'TEXT'),
             ('paper_metrics_json', 'TEXT'),
             ('scc_analysis_json', 'TEXT'),

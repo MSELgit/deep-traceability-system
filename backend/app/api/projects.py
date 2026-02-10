@@ -829,6 +829,7 @@ def create_design_case(
                 db_design_case.utility_vector_json = json.dumps(pos['utility_vector'])
                 db_design_case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 db_design_case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+                db_design_case.performance_deltas_json = json.dumps(pos.get('performance_deltas', {}))
                 db.commit()
                 break
     except Exception as e:
@@ -951,6 +952,7 @@ def update_design_case(
                 db_design_case.utility_vector_json = json.dumps(pos['utility_vector'])
                 db_design_case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 db_design_case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+                db_design_case.performance_deltas_json = json.dumps(pos.get('performance_deltas', {}))
                 db.commit()
                 break
     except Exception as e:
@@ -1022,6 +1024,7 @@ def delete_design_case(
                     remaining_case.utility_vector_json = json.dumps(utility_vec_str_keys)
                     remaining_case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                     remaining_case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+                    remaining_case.performance_deltas_json = json.dumps(pos.get('performance_deltas', {}))
 
             db.commit()
     except Exception:
@@ -1235,6 +1238,7 @@ def copy_design_case(
                 db_copy.utility_vector_json = json.dumps(pos['utility_vector'])
                 db_copy.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 db_copy.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+                db_copy.performance_deltas_json = json.dumps(pos.get('performance_deltas', {}))
                 db.commit()
                 break
     except Exception as e:
@@ -1381,6 +1385,7 @@ def export_project(
                 "utility_vector_json": d.utility_vector_json,
                 "partial_heights_json": d.partial_heights_json,
                 "performance_weights_json": d.performance_weights_json,
+                "performance_deltas_json": d.performance_deltas_json,
                 "created_at": d.created_at.isoformat(),
                 "updated_at": d.updated_at.isoformat()
             }, d) for d in design_cases
@@ -1634,6 +1639,7 @@ def import_project(
                 utility_vector_json=design_case.get("utility_vector_json"),
                 partial_heights_json=design_case.get("partial_heights_json"),
                 performance_weights_json=design_case.get("performance_weights_json"),
+                performance_deltas_json=design_case.get("performance_deltas_json"),
                 # Phase 4: 新規フィールド（マイグレーション後はデフォルト値で設定済み）
                 structural_analysis_json=design_case.get("structural_analysis_json"),
                 paper_metrics_json=design_case.get("paper_metrics_json"),
@@ -1740,6 +1746,10 @@ def format_design_case_response(db_design_case: DesignCaseModel) -> DesignCase:
     if hasattr(db_design_case, 'performance_weights_json') and db_design_case.performance_weights_json:
         performance_weights = json.loads(db_design_case.performance_weights_json)
 
+    performance_deltas = None
+    if hasattr(db_design_case, 'performance_deltas_json') and db_design_case.performance_deltas_json:
+        performance_deltas = json.loads(db_design_case.performance_deltas_json)
+
     # performance_snapshotを@propertyから取得
     performance_snapshot = db_design_case.performance_snapshot if hasattr(db_design_case, 'performance_snapshot') else None
 
@@ -1759,6 +1769,7 @@ def format_design_case_response(db_design_case: DesignCaseModel) -> DesignCase:
         utility_vector=utility_vector,
         partial_heights=partial_heights,
         performance_weights=performance_weights,
+        performance_deltas=performance_deltas,
         performance_snapshot=performance_snapshot,  # 追加！
         weight_mode=weight_mode
     )
@@ -2125,6 +2136,7 @@ def create_network_node(
                 case.utility_vector_json = json.dumps(utility_vec_str_keys)
                 case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+                case.performance_deltas_json = json.dumps(pos.get('performance_deltas', {}))
 
         db.commit()
     except Exception as e:
@@ -2218,6 +2230,7 @@ def update_network_node(
                 case.utility_vector_json = json.dumps(utility_vec_str_keys)
                 case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+                case.performance_deltas_json = json.dumps(pos.get('performance_deltas', {}))
 
         db.commit()
     except Exception as e:
@@ -2311,6 +2324,7 @@ def delete_network_node(
                 case.utility_vector_json = json.dumps(utility_vec_str_keys)
                 case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+                case.performance_deltas_json = json.dumps(pos.get('performance_deltas', {}))
 
         db.commit()
     except Exception as e:
@@ -2391,6 +2405,7 @@ def delete_network_edge(
                 case.utility_vector_json = json.dumps(utility_vec_str_keys)
                 case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+                case.performance_deltas_json = json.dumps(pos.get('performance_deltas', {}))
 
         db.commit()
     except Exception as e:
@@ -2550,6 +2565,7 @@ def create_network_edge(
                 case.utility_vector_json = json.dumps(utility_vec_str_keys)
                 case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+                case.performance_deltas_json = json.dumps(pos.get('performance_deltas', {}))
 
         db.commit()
     except Exception as e:
@@ -2637,6 +2653,7 @@ def update_network_edge(
                 case.utility_vector_json = json.dumps(utility_vec_str_keys)
                 case.partial_heights_json = json.dumps(pos.get('partial_heights', {}))
                 case.performance_weights_json = json.dumps(pos.get('performance_weights', {}))
+                case.performance_deltas_json = json.dumps(pos.get('performance_deltas', {}))
 
         db.commit()
     except Exception as e:
