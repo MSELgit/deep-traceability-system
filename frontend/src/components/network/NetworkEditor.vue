@@ -116,6 +116,19 @@
         </div>
       </template>
 
+      <!-- JSON Import (always visible) -->
+      <div class="tool-divider"></div>
+      <div class="tool-group">
+        <button
+          class="tool-btn"
+          @click="showJsonImportDialog = true"
+          title="Import network from JSON"
+        >
+          <span class="tool-icon"><FontAwesomeIcon :icon="['fas', 'code']" /></span>
+          JSON Import
+        </button>
+      </div>
+
     </div>
     
     <div class="network-editor-wrapper">
@@ -601,6 +614,16 @@
         </div>
       </div>
     </div> <!-- End network-editor-wrapper -->
+
+    <!-- JSON Import Dialog -->
+    <NetworkJsonImportDialog
+      :visible="showJsonImportDialog"
+      :performances="performances"
+      :current-network="network"
+      :current-weight-mode="currentWeightMode"
+      @import="handleJsonImport"
+      @cancel="showJsonImportDialog = false"
+    />
   </div>
 </template>
 
@@ -609,6 +632,7 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import type { NetworkStructure, NetworkNode, NetworkEdge, Performance, WeightMode } from '../../types/project';
 import { WEIGHT_MODE_OPTIONS, migrateNodeType } from '../../types/project';
 import * as XLSX from 'xlsx';
+import NetworkJsonImportDialog from './NetworkJsonImportDialog.vue';
 
 /**
  * Migrate network data: 'property' → 'attribute' for PAVE compliance
@@ -900,6 +924,7 @@ const svgCanvas = ref<SVGSVGElement>();
 const canvasContainer = ref<HTMLDivElement>();
 const weightModeSelectRef = ref<HTMLSelectElement>();
 const excelFileInput = ref<HTMLInputElement>();
+const showJsonImportDialog = ref(false);
 
 // Layer definition (PAVE model)
 const layers = [
@@ -1664,6 +1689,20 @@ function emitUpdate() {
   nextTick(() => {
     isUpdating.value = false;
   });
+}
+
+// JSON Import handler
+function handleJsonImport(result: { network: NetworkStructure; weightMode?: WeightMode }) {
+  network.value = result.network;
+
+  if (result.weightMode) {
+    currentWeightMode.value = result.weightMode;
+    emit('update:weightMode', result.weightMode);
+  }
+
+  autoLayout();
+  showJsonImportDialog.value = false;
+  emitUpdate();
 }
 
 // ズーム機能
