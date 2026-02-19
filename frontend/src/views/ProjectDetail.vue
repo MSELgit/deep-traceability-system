@@ -91,6 +91,21 @@
             </div>
           </div>
 
+          <!-- Dashboard -->
+          <div v-show="activeTab === 'dashboard'">
+            <div v-if="energyCalculated">
+              <DesignCaseDashboard
+                :projectId="(route.params.id as string)"
+                :designCases="currentProject?.design_cases || []"
+                :performances="currentProject?.performances || []"
+              />
+            </div>
+            <div v-else class="loading">
+              <div class="spinner"></div>
+              <p>Calculating energy...</p>
+            </div>
+          </div>
+
           <!-- 立体OPM -->
           <div v-show="activeTab === 'opm3d'">
             <OPM3DView />
@@ -133,6 +148,7 @@ import OPM3DView from '../components/opm3d/OPM3DView.vue'
 import ComparisonView from '../components/comparison/ComparisonView.vue'
 
 import TwoAxisEvaluation from '../components/twoaxis/TwoAxisEvaluation.vue'
+import DesignCaseDashboard from '../components/dashboard/DesignCaseDashboard.vue'
 
 
 const route = useRoute()
@@ -212,6 +228,7 @@ const tabs = [
   { key: 'matrix', label: 'Matrix' },
   { key: 'mountain', label: 'Mountain View' },
   { key: 'twoaxis', label: '2-axis' },
+  { key: 'dashboard', label: 'Dashboard' },
   { key: 'opm3d', label: '3D OPM' },
   { key: 'demo', label: 'WL Kernel' },
   { key: 'compare', label: '比較' },
